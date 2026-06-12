@@ -584,7 +584,14 @@ body{
     </div>
     <div class="admin-tab-content" id="adm-members">
       <div class="admin-fg"><label>姓名</label><input id="adm-m-name"></div>
-      <div class="admin-fg"><label>职务</label><input id="adm-m-role"></div>
+      <div class="admin-fg"><label>职务</label><select id="adm-m-role" style="width:100%;padding:8px 12px;border:1px solid var(--bdr);border-radius:var(--rs);background:var(--card2);color:var(--text);font-size:13px;outline:none">
+        <option value="">请选择职务</option>
+        <option value="永青一页">永青一页</option>
+        <option value="瞬灭二页">瞬灭二页</option>
+        <option value="不朽四页">不朽四页</option>
+        <option value="未来八页">未来八页</option>
+        <option value="黑塔学徒">黑塔学徒</option>
+      </select></div>
       <div class="admin-fg"><label>简介</label><textarea id="adm-m-info"></textarea></div>
       <div class="admin-fg"><label>头像（可选，最大20MB）</label><input type="file" id="adm-m-avatar" accept="image/*" onchange="previewAvatar(this)"><div id="avatarPreview" style="margin-top:6px;display:none"><img id="avatarPreviewImg" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid var(--gold)"><span id="avatarSizeHint" style="font-size:11px;color:var(--muted);margin-left:8px"></span></div></div>
       <div style="display:flex;gap:8px;margin-top:14px">
