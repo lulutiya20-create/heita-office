@@ -1261,11 +1261,11 @@ function importData(event) {
       const merged = { ...DEFAULTS, ...data };
       app = merged;
       saveLocal(app);
-      pushToCloud(app);
+      pushToCloud(app, true);
       refreshAll();
       if (currentPage === '/') navigate('/');
       else navigate(currentPage);
-      toast('数据已导入并同步到云端！');
+      toast('数据已导入并强制同步到云端！');
     } catch(err) { toast('文件格式错误'); }
   };
   reader.readAsText(file);

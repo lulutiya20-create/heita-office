@@ -1,28 +1,27 @@
 const express = require('express');
-const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const fs = require('fs');
+
+// ===================== MongoDB 配置 =====================
+const MONGODB_URI = process.env.MONGODB_URI || '';
+const DB_NAME = 'heita_office';
+const COLLECTION_NAME = 'appdata';
+
+let mongoClient = null;
+let mongoDb = null;
+let useMongo = false;
+
+// ===================== 本地文件回退配置 =====================
+const DATA_FILE = path.join(__dirname, 'data.json');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const DATA_FILE = path.join(__dirname, 'data.json');
 
-// 内存写锁，防止并发写入冲突
-let writeLock = false;
-const writeQueue = [];
-
-// 始终从磁盘读取最新数据（Render 免费版内存/磁盘不同步时使用）
-let cachedData = null;
-let cachedFingerprint = null;
-
-// 解析 JSON body（限制 50MB，支持头像 base64 和压缩图片）
 app.use(express.json({ limit: '50mb' }));
-
-// ===================== 静态文件服务 =====================
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ===================== CORS 头 =====================
-// 同源部署时不需要 CORS，但加上以防不同端口访问
+// CORS
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, PUT, OPTIONS');
@@ -31,121 +30,164 @@ app.use((req, res, next) => {
   next();
 });
 
-// ===================== 数据读写 =====================
+// ===================== 数据读写层 =====================
 
-function readData() {
+// 从 MongoDB 读取数据
+async function readFromMongo() {
+  if (!useMongo || !mongoDb) return null;
+  try {
+    const doc = await mongoDb.collection(COLLECTION_NAME).findOne({ _id: 'main' });
+    return doc ? doc.data : null;
+  } catch (e) {
+    console.error('[MongoDB] 读取失败:', e.message);
+    return null;
+  }
+}
+
+// 写入 MongoDB
+async function writeToMongo(data) {
+  if (!useMongo || !mongoDb) return false;
+  try {
+    const fingerprint = crypto.createHash('md5').update(JSON.stringify(data)).digest('hex');
+    const now = new Date().toISOString();
+    await mongoDb.collection(COLLECTION_NAME).updateOne(
+      { _id: 'main' },
+      {
+        $set: {
+          data,
+          _fingerprint: fingerprint,
+          _updatedAt: now
+        },
+        $setOnInsert: { _id: 'main' }
+      },
+      { upsert: true }
+    );
+    console.log('[MongoDB] ✅ 写入成功, 大小:', JSON.stringify(data).length, 'bytes');
+    return { success: true, fingerprint, updatedAt: now };
+  } catch (e) {
+    console.error('[MongoDB] ❌ 写入失败:', e.message);
+    return false;
+  }
+}
+
+// 从本地文件读取（回退方案）
+function readFromFile() {
   try {
     if (fs.existsSync(DATA_FILE)) {
-      const raw = fs.readFileSync(DATA_FILE, 'utf-8');
-      return JSON.parse(raw);
+      return JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
     }
   } catch (e) {
-    console.error('读取数据文件失败:', e.message);
+    console.error('[文件] 读取失败:', e.message);
   }
   return null;
 }
 
-function writeData(data, callback) {
-  const doWrite = () => {
-    writeLock = true;
-    try {
-      const tempFile = DATA_FILE + '.tmp';
-      fs.writeFileSync(tempFile, JSON.stringify(data), 'utf-8');
-      fs.renameSync(tempFile, DATA_FILE); // 原子操作
-      console.log('[数据] 写入成功, 大小:', JSON.stringify(data).length, 'bytes');
-      writeLock = false;
-      if (callback) callback(null);
-      // 处理队列中的下一个写入
-      if (writeQueue.length > 0) {
-        const next = writeQueue.shift();
-        writeData(next.data, next.callback);
-      }
-    } catch (e) {
-      writeLock = false;
-      console.error('[数据] 写入失败:', e.message);
-      if (callback) callback(e);
-    }
-  };
-
-  if (writeLock) {
-    writeQueue.push({ data, callback });
-  } else {
-    doWrite();
+// 写入本地文件（回退方案）
+function writeToFile(data) {
+  try {
+    const tempFile = DATA_FILE + '.tmp';
+    fs.writeFileSync(tempFile, JSON.stringify(data, null, 2), 'utf-8');
+    fs.renameSync(tempFile, DATA_FILE);
+    return true;
+  } catch (e) {
+    console.error('[文件] 写入失败:', e.message);
+    return false;
   }
+}
+
+// 统一读取数据
+async function readData() {
+  if (useMongo) {
+    const d = await readFromMongo();
+    if (d) return d;
+    console.log('[数据] MongoDB 无数据，尝试从本地文件恢复...');
+    const local = readFromFile();
+    if (local) {
+      await writeToMongo(local);
+      console.log('[数据] ✅ 已从本地文件恢复到 MongoDB');
+    }
+    return local;
+  }
+  return readFromFile();
+}
+
+// 统一写入数据（返回 {fingerprint, updatedAt} 或 false）
+async function writeData(data) {
+  if (useMongo) {
+    return await writeToMongo(data);
+  }
+  // 文件模式：写入文件并添加元数据
+  const fingerprint = crypto.createHash('md5').update(JSON.stringify(data)).digest('hex');
+  const now = new Date().toISOString();
+  const savedData = { ...data, _updatedAt: now, _fingerprint: fingerprint };
+  const ok = writeToFile(savedData);
+  return ok ? { fingerprint, updatedAt: now } : false;
 }
 
 // ===================== API 路由 =====================
 
 // GET /api/data — 获取云端数据
-app.get('/api/data', (req, res) => {
-  const data = readData();
+app.get('/api/data', async (req, res) => {
+  const data = await readData();
   if (data) {
-    // 计算数据指纹
-    const fingerprint = crypto
-      .createHash('md5')
-      .update(JSON.stringify(data))
-      .digest('hex');
+    const fingerprint = crypto.createHash('md5').update(JSON.stringify(data)).digest('hex');
     res.json({ success: true, data, fingerprint, updatedAt: data._updatedAt || null });
   } else {
     res.json({ success: false, data: null, message: '暂无云端数据' });
   }
 });
 
-// PUT /api/data — 更新云端数据（带指纹冲突检测 + 冲突时返回最新数据）
-app.put('/api/data', (req, res) => {
+// PUT /api/data — 更新云端数据（带指纹冲突检测）
+app.put('/api/data', async (req, res) => {
   const { data: newData, fingerprint, force } = req.body;
 
   if (!newData) {
     return res.status(400).json({ success: false, message: '缺少数据' });
   }
 
-  const existing = readData();
+  const existing = await readData();
 
-  // 冲突检测：如果提供了指纹且与当前数据不匹配，说明有其他设备先更新了
+  // 冲突检测
   if (existing && fingerprint && existing._fingerprint && fingerprint !== existing._fingerprint && !force) {
-    console.log('[冲突] 检测到并发修改，返回冲突标记让客户端合并');
-    // 返回当前最新数据，让客户端自行合并
+    console.log('[冲突] 检测到并发修改');
     return res.status(409).json({
       success: false,
       conflict: true,
-      message: '数据已被其他设备修改，请合并后再提交',
+      message: '数据已被其他设备修改，请重新加载后重试',
       data: existing,
       fingerprint: existing._fingerprint
     });
   }
 
-  // 添加服务端元数据
-  const savedData = {
-    ...newData,
-    _updatedAt: new Date().toISOString(),
-    _fingerprint: crypto.createHash('md5').update(JSON.stringify(newData)).digest('hex'),
-    _deviceCount: (existing?._deviceCount || 0) + 1
-  };
+  const result = await writeData(newData);
 
-  writeData(savedData, (err) => {
-    if (err) {
-      return res.status(500).json({ success: false, message: '保存失败: ' + err.message });
-    }
+  if (result && result.fingerprint) {
     res.json({
       success: true,
-      fingerprint: savedData._fingerprint,
-      updatedAt: savedData._updatedAt
+      fingerprint: result.fingerprint,
+      updatedAt: result.updatedAt
     });
-  });
+  } else if (result === false) {
+    res.status(500).json({ success: false, message: '保存失败' });
+  } else {
+    res.json({ success: true });
+  }
 });
 
-// GET /api/status — 健康检查 + 数据指纹（轻量轮询）
-app.get('/api/status', (req, res) => {
-  const data = readData();
+// GET /api/status — 健康检查
+app.get('/api/status', async (req, res) => {
+  const data = await readData();
   if (data) {
-    const fingerprint = crypto
-      .createHash('md5')
-      .update(JSON.stringify(data))
-      .digest('hex');
-    res.json({ ok: true, fingerprint, updatedAt: data._updatedAt });
+    const fingerprint = crypto.createHash('md5').update(JSON.stringify(data)).digest('hex');
+    res.json({ ok: true, fingerprint, updatedAt: data._updatedAt || null, storage: useMongo ? 'mongodb' : 'file' });
   } else {
-    res.json({ ok: true, fingerprint: null, updatedAt: null });
+    res.json({ ok: true, fingerprint: null, updatedAt: null, storage: useMongo ? 'mongodb' : 'file' });
   }
+});
+
+// GET /api/health — 简单健康检查（供 Render 唤醒使用）
+app.get('/api/health', (req, res) => {
+  res.json({ ok: true, mongo: useMongo, timestamp: new Date().toISOString() });
 });
 
 // ===================== SPA 回退 =====================
@@ -154,43 +196,33 @@ app.get('*', (req, res) => {
 });
 
 // ===================== 启动 =====================
-app.listen(PORT, () => {
-  console.log(`🏰 黑塔办事处服务器已启动: http://localhost:${PORT}`);
-  // 初始化数据文件
-  if (!fs.existsSync(DATA_FILE)) {
-    const initData = {
-      adminPassword: 'admin123',
-      carouselImages: [
-        { id: 1, title: '黑塔办事处全景', url: 'https://picsum.photos/seed/heita1/1200/480' },
-        { id: 2, title: '团队合影', url: 'https://picsum.photos/seed/heita2/1200/480' },
-        { id: 3, title: '训练基地', url: 'https://picsum.photos/seed/heita3/1200/480' }
-      ],
-      members: [
-        { id: 1, name: '张建国', role: '主任', info: '黑塔办事处主任，负责全面工作，经验丰富，作风严谨。', avatar: '', relations: [{ targetId: 2, label: '上级' }, { targetId: 3, label: '战友' }] },
-        { id: 2, name: '李志强', role: '副主任', info: '协助主任处理日常事务，主管后勤保障工作。', avatar: '', relations: [{ targetId: 1, label: '下属' }, { targetId: 4, label: '搭档' }] },
-        { id: 3, name: '王建军', role: '队长', info: '负责外勤任务执行，行动力强，善于应急处理。', avatar: '', relations: [{ targetId: 1, label: '战友' }, { targetId: 5, label: '上级' }] },
-        { id: 4, name: '刘思远', role: '指导员', info: '负责思想政治工作和团队文化建设。', avatar: '', relations: [{ targetId: 2, label: '搭档' }, { targetId: 5, label: '同事' }] },
-        { id: 5, name: '陈晓峰', role: '队员', info: '年轻骨干，计算机技术专长，负责信息化建设。', avatar: '', relations: [{ targetId: 3, label: '下属' }, { targetId: 4, label: '同事' }] }
-      ],
-      events: [
-        { id: 1, title: '2026年春季团建活动', date: '2026-04-15', description: '全体成员前往郊外开展为期两天的团建活动，包括野外拉练、团队协作游戏和篝火晚会。', image: 'https://picsum.photos/seed/event1/600/400' },
-        { id: 2, title: '新成员入职欢迎会', date: '2026-03-20', description: '欢迎新成员加入黑塔办事处大家庭，举办了简朴而温馨的欢迎仪式。', image: 'https://picsum.photos/seed/event2/600/400' },
-        { id: 3, title: '年终总结大会', date: '2026-01-10', description: '回顾过去一年的工作成果，表彰先进，展望未来发展方向。', image: 'https://picsum.photos/seed/event3/600/400' }
-      ],
-      mentors: [
-        { id: 1, memberId: 1, specialty: '行政管理', extraInfo: '从事管理工作20余年，拥有丰富的团队领导经验。曾多次荣获优秀管理者称号，擅长战略规划和危机处理。' },
-        { id: 2, memberId: 3, specialty: '战术指挥', extraInfo: '具备优秀的现场指挥能力，参与过多项重大任务的策划与执行。注重实战训练，培养了一批优秀骨干。' }
-      ],
-      messages: [
-        { id: 1, name: '访客小王', content: '黑塔办事处的工作氛围真好，希望有机会能够加入！', time: '2026-06-10 14:30' },
-        { id: 2, name: '老战友', content: '看到大家都很精神，感到很欣慰。继续保持！', time: '2026-06-08 09:15' }
-      ],
-      _updatedAt: new Date().toISOString(),
-      _fingerprint: '',
-      _deviceCount: 0
-    };
-    writeData(initData, () => {
-      console.log('[初始化] 已创建默认数据文件');
-    });
+async function startServer() {
+  // 尝试连接 MongoDB
+  if (MONGODB_URI) {
+    try {
+      const { MongoClient } = require('mongodb');
+      mongoClient = new MongoClient(MONGODB_URI);
+      await mongoClient.connect();
+      mongoDb = mongoClient.db(DB_NAME);
+      useMongo = true;
+      console.log('✅ MongoDB Atlas 连接成功！');
+      // 测试写入
+      await mongoDb.collection(COLLECTION_NAME).findOne({ _id: 'main' });
+    } catch (e) {
+      console.error('❌ MongoDB 连接失败，使用本地文件模式:', e.message);
+      useMongo = false;
+    }
+  } else {
+    console.log('⚠️ 未配置 MONGODB_URI，使用本地文件存储（仅开发环境）');
   }
+
+  app.listen(PORT, () => {
+    console.log(`🏰 黑塔办事处服务器已启动: http://localhost:${PORT}`);
+    console.log(`📦 存储模式: ${useMongo ? 'MongoDB Atlas ☁️' : '本地文件 💾'}`);
+  });
+}
+
+startServer().catch(e => {
+  console.error('启动失败:', e);
+  process.exit(1);
 });
