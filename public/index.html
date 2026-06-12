@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="cache-control" content="no-cache, no-store, must-revalidate">
+<meta name="pragma" content="no-cache">
+<meta name="expires" content="0">
 <title>黑塔办事处</title> <!-- v261214-fix-pc-v5 -->
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -1799,12 +1802,17 @@ function changeMemberPwd(){
 
 // ==================== 个人中心 ====================
 function openPersonalCenter(){
+  // 最优先：立即显示 toast 确认函数被调用
+  if(typeof toast==='function') toast('✅ openPersonalCenter() 已触发');
+  try {
   if(!currentUser||!currentUser.memberId){toast('请先登录');return;}
   const m = app.members.find(x=>x.id===currentUser.memberId);
   if(!m){toast('成员数据异常');return;}
 
   // 显示个人中心遮罩 + 面板
-  document.getElementById('pcOverlay').classList.remove('hidden');
+  const ov=document.getElementById('pcOverlay');
+  if(!ov){toast('⚠️ 找不到 pcOverlay 元素');console.error('pcOverlay missing');return;}
+  ov.classList.remove('hidden');
 
   // 填充当前数据
   const avDisplay = document.getElementById('pcAvatarDisplay');
