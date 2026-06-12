@@ -408,10 +408,12 @@ body{
   <span>设备ID: <strong class="device-id" id="deviceIdDisplay"></strong></span>
   <button class="btn btn-sync btn-sm" onclick="forceCloudRefresh()" title="从云端拉取最新数据">🔄 拉取云端</button>
   <button class="btn btn-sync btn-sm" onclick="exportData()">📥 导出备份</button>
+  <span id="adminSyncBtns" style="display:none;gap:10px;flex-wrap:wrap">
   <button class="btn btn-sync btn-sm" onclick="document.getElementById('importFileInput').click()">📤 导入备份</button>
   <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importData(event)">
   <span style="font-size:10px;color:var(--muted)">数据自动保存到本地 · 有云服务器时自动实时同步 · 多设备共享</span>
   <button class="btn btn-sync btn-sm" onclick="forcePushToCloud()" title="立即将本地数据强制推送到云端（覆盖云端）" style="background:var(--gold);color:var(--bg);font-weight:600">☁️ 强制同步到云端</button>
+  </span>
 </div>
 
 <!-- HOME PAGE -->
@@ -507,7 +509,7 @@ body{
     <div class="page-header"><h2>留言板</h2><p>欢迎留下您的宝贵意见</p></div>
     <div class="msg-board">
       <div class="msg-form">
-        <input type="text" id="msgName" placeholder="您的称呼" maxlength="20">
+        <div id="msgIdentity" style="font-size:12px;color:var(--gold2);margin-bottom:8px;display:none"></div>
         <textarea id="msgContent" placeholder="请在此输入留言..." maxlength="500"></textarea>
         <button class="btn btn-red" onclick="submitMsg()">提交</button>
       </div>
@@ -1475,11 +1477,27 @@ function mentorLike(mentorId){
 // Messages
 function renderMessages() {
   const l=document.getElementById('msgList'),msgs=[...app.messages].reverse();
+  // 更新留言身份显示
+  const idEl=document.getElementById('msgIdentity');
+  if(idEl){
+    if(currentUser&&currentUser.memberId){
+      const m=app.members.find(x=>x.id===currentUser.memberId);
+      idEl.textContent='🖊 当前留言身份：'+(m?m.name:'未知');
+      idEl.style.display='block';
+    } else {
+      idEl.textContent='⚠️ 请先登录后再留言';
+      idEl.style.display='block';
+      idEl.style.color='var(--danger)';
+    }
+  }
   if(!msgs.length){l.innerHTML='<div class="empty"><p>暂无留言，欢迎留下第一条</p></div>';return;}
   l.innerHTML=msgs.map(m=>`<div class="msg-item"><div class="mh"><span class="mn">${esc(m.name||'匿名')}</span><span class="mt">${esc(m.time)}</span></div><div class="mc">${esc(m.content)}</div></div>`).join('');
 }
 function submitMsg() {
-  const name=document.getElementById('msgName').value.trim()||'匿名',content=document.getElementById('msgContent').value.trim();
+  if(!currentUser||!currentUser.memberId){toast('请先登录后再留言');return;}
+  const m = app.members.find(x=>x.id===currentUser.memberId);
+  const name = m? m.name : '匿名';
+  const content=document.getElementById('msgContent').value.trim();
   if(!content){toast('请输入留言内容');return;}
   const now=new Date(),time=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   app.messages.push({id:genNextId(),name,content,time});saveApp(app);document.getElementById('msgContent').value='';renderMessages();toast('留言已提交');
@@ -1630,6 +1648,9 @@ function afterLoginSuccess(){
         renderFamilyTree();
       }
     }
+    // 显示管理员专属同步按钮
+    const adminBtns = document.getElementById('adminSyncBtns');
+    if(adminBtns) adminBtns.style.display = 'inline-flex';
   } else {
     updateFtSubtitle();
     btnPanel.classList.add('hidden');
@@ -1637,6 +1658,9 @@ function afterLoginSuccess(){
     btnToggle.textContent='退出登录';
     btnToggle.className='btn btn-del btn-sm';
     btnToggle.onclick = doLogout;
+    // 隐藏管理员专属同步按钮
+    const adminBtns = document.getElementById('adminSyncBtns');
+    if(adminBtns) adminBtns.style.display='none';
   }
 }
 function openAdminPanel(){
@@ -1665,6 +1689,9 @@ function doLogout(){
   document.getElementById('userBadge').className='hidden';
   document.getElementById('btnAdminPanel').classList.add('hidden');
   document.getElementById('btnAdminToggle').classList.add('hidden');
+  // 隐藏管理员专属同步按钮
+  const adminBtns = document.getElementById('adminSyncBtns');
+  if(adminBtns) adminBtns.style.display='none';
   refreshAll();toast('已退出');updateFtSubtitle();
 }
 // 根据当前用户权限更新族谱副标题
