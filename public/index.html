@@ -51,7 +51,7 @@ body{
 
 .container{max-width:1100px;margin:0 auto;padding:0 20px}
 
-.carousel{position:relative;height:580px;overflow:hidden;background:#000}
+.carousel{position:relative;height:700px;overflow:hidden;background:#000}
 .carousel-track{display:flex;height:100%;transition:transform .6s cubic-bezier(.4,0,.2,1)}
 .carousel-slide{min-width:100%;height:100%;position:relative}
 .carousel-slide img{width:100%;height:100%;object-fit:contain;background:#000}
@@ -67,7 +67,7 @@ body{
 .carousel-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:17px;gap:10px}
 
 .home-section{padding:60px 0}
-.home-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px;margin-top:30px}
+.home-cards{display:grid;grid-template-columns:repeat(5,1fr);gap:24px;margin-top:30px}
 .home-card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:36px 24px;text-align:center;cursor:pointer;transition:var(--tr);position:relative;overflow:hidden}
 .home-card:hover{transform:translateY(-6px);border-color:var(--gold);box-shadow:0 12px 40px rgba(212,167,116,.12)}
 .home-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--red),var(--gold));transform:scaleX(0);transition:transform .4s ease}
@@ -147,6 +147,7 @@ body{
 .mc-card.mc-center{width:320px;box-shadow:0 8px 40px rgba(212,167,116,.25);border-color:var(--gold);z-index:5;transform:translateX(-50%) scale(1)}
 .mc-card.mc-left{transform:translateX(calc(-50% - 260px)) rotateY(28deg) scale(.72);z-index:3;opacity:.65;filter:brightness(.55)}
 .mc-card.mc-right{transform:translateX(calc(-50% + 260px)) rotateY(-28deg) scale(.72);z-index:3;opacity:.65;filter:brightness(.55)}
+.mc-card.mc-hidden{display:none}
 .mc-card img{width:100%;aspect-ratio:9/16;object-fit:cover;display:block;border-radius:20px}
 .mc-card.mc-center img{border-radius:20px 20px 0 0}
 .mc-card .mc-simple-overlay{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(10,10,20,.95),transparent);padding:20px 12px 14px;text-align:center;border-radius:0 0 20px 20px}
@@ -281,7 +282,7 @@ body{
   .header-nav{display:none}
   .hamburger{display:flex}
   .nav-btn{padding:6px 12px;font-size:11px}
-  .carousel{height:280px}
+  .carousel{height:320px}
   .carousel-btn{width:32px;height:32px;font-size:14px}
   .carousel-slide .cap h3{font-size:18px}
   .home-cards{grid-template-columns:1fr 1fr;gap:14px}
@@ -327,7 +328,7 @@ body{
 @media(max-width:480px){
   .home-cards{grid-template-columns:1fr}
   .member-grid{grid-template-columns:1fr}
-  .carousel{height:220px}
+  .carousel{height:240px}
   .header-logo h1{font-size:14px}
   .header-actions .btn{font-size:10px;padding:4px 8px}
   .admin-tabs{gap:2px}
@@ -381,7 +382,7 @@ body{
   <button class="nav-btn" data-path="/members" onclick="navigate('/members');closeMobileNav()">👥 成员</button>
   <button class="nav-btn" data-path="/familytree" onclick="navigate('/familytree');closeMobileNav()">🌳 黑塔族谱</button>
   <button class="nav-btn" data-path="/events" onclick="navigate('/events');closeMobileNav()">📅 事件</button>
-    <button class="nav-btn" data-path="/mentors" onclick="navigate('/mentors');closeMobileNav()"><img src="data:image/png;base64,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" alt="" style="width:16px;height:16px;vertical-align:middle;margin-right:2px"> 导师</button>
+    <button class="nav-btn" data-path="/mentors" onclick="navigate('/mentors');closeMobileNav()">📋 导师</button>
   <button class="nav-btn" data-path="/messages" onclick="navigate('/messages');closeMobileNav()">💬 留言</button>
 </div>
 
@@ -410,7 +411,7 @@ body{
         <div class="home-card" onclick="navigate('/members')"><div class="hc-icon">👥</div><h3>成员名录</h3><p>查看全体成员信息</p></div>
         <div class="home-card" onclick="navigate('/familytree')"><div class="hc-icon">🌳</div><h3>黑塔族谱</h3><p>全员关系图谱</p></div>
         <div class="home-card" onclick="navigate('/events')"><div class="hc-icon">📅</div><h3>部队事件</h3><p>团建活动与重要事件</p></div>
-        <div class="home-card" onclick="navigate('/mentors')"><div class="hc-icon"><img src="data:image/png;base64,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" alt="" style="width:48px;height:auto"></div><h3>导师信息</h3><p>导师团队与专长</p></div>
+        <div class="home-card" onclick="navigate('/mentors')"><div class="hc-icon">📋</div><h3>导师信息</h3><p>导师团队与专长</p></div>
         <div class="home-card" onclick="navigate('/messages')"><div class="hc-icon">💬</div><h3>留言板</h3><p>欢迎留下宝贵意见</p></div>
       </div>
     </div>
@@ -470,7 +471,7 @@ body{
 <!-- MENTORS PAGE -->
 <div class="page" id="page-mentors">
   <div class="mentor-carousel-container">
-    <div class="page-header"><h2><img src="data:image/png;base64,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" alt="" style="width:28px;height:28px;vertical-align:middle;margin-right:6px"> 导师信息</h2><p>黑塔办事处的导师团队</p></div>
+    <div class="page-header"><h2>导师信息</h2><p>黑塔办事处的导师团队</p></div>
     <div class="mentor-carousel" id="mentorCarousel">
       <button class="mc-arrow mc-prev" onclick="mentorCarouselPrev()" aria-label="上一个">◀</button>
       <div class="mc-viewport" id="mcViewport">
@@ -526,7 +527,7 @@ body{
       <button class="admin-tab active" onclick="sAT('carousel')">轮播图</button>
       <button class="admin-tab" onclick="sAT('members')">成员</button>
       <button class="admin-tab" onclick="sAT('events')">事件</button>
-      <button class="admin-tab" onclick="sAT('mentors')"><img src="data:image/png;base64,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" alt="" style="width:14px;height:14px;vertical-align:middle;margin-right:2px"> 导师</button>
+      <button class="admin-tab" onclick="sAT('mentors')">导师</button>
       <button class="admin-tab" onclick="sAT('msgs')">留言</button>
     </div>
     <div class="admin-tab-content active" id="adm-carousel">
@@ -551,14 +552,6 @@ body{
       <div class="admin-fg"><label>职务</label><input id="adm-m-role"></div>
       <div class="admin-fg"><label>简介</label><textarea id="adm-m-info"></textarea></div>
       <div class="admin-fg"><label>头像（可选，最大20MB）</label><input type="file" id="adm-m-avatar" accept="image/*" onchange="previewAvatar(this)"><div id="avatarPreview" style="margin-top:6px;display:none"><img id="avatarPreviewImg" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid var(--gold)"><span id="avatarSizeHint" style="font-size:11px;color:var(--muted);margin-left:8px"></span></div></div>
-      <div class="admin-fg" style="display:flex;align-items:center;gap:8px;margin-bottom:0">
-        <input type="checkbox" id="adm-m-isMentor" onchange="toggleMentorFields()" style="width:auto">
-        <label for="adm-m-isMentor" style="margin:0;cursor:pointer">同时设为导师 🎓</label>
-      </div>
-      <div id="mentorFields" style="display:none">
-        <div class="admin-fg"><label>专长领域</label><input id="adm-m-specialty" placeholder="如：行政管理、战术指挥..."></div>
-        <div class="admin-fg"><label>详细介绍</label><textarea id="adm-m-extra" placeholder="导师的详细背景、经验介绍等"></textarea></div>
-      </div>
       <div style="display:flex;gap:8px;margin-top:14px">
         <button class="btn btn-red btn-sm" id="adm-m-btn" onclick="admUpsertMember()">添加成员</button>
         <button class="btn btn-outline btn-sm hidden" id="adm-m-cancel" onclick="cancelEditMember()">取消编辑</button>
@@ -1190,13 +1183,12 @@ function updateNavHighlight() {
   if(a) a.classList.add('active');
 }
 function renderNav() {
-  const c='<img src="data:image/png;base64,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" alt="" style="width:16px;height:16px;vertical-align:middle;margin-right:2px">';
   document.getElementById('headerNav').innerHTML = `
     <button class="nav-btn${currentPage==='/'?' active':''}" data-path="/" onclick="navigate('/')">首页</button>
     <button class="nav-btn${currentPage==='/members'?' active':''}" data-path="/members" onclick="navigate('/members')">成员</button>
     <button class="nav-btn${currentPage==='/familytree'?' active':''}" data-path="/familytree" onclick="navigate('/familytree')">族谱</button>
     <button class="nav-btn${currentPage==='/events'?' active':''}" data-path="/events" onclick="navigate('/events')">事件</button>
-    <button class="nav-btn${currentPage==='/mentors'?' active':''}" data-path="/mentors" onclick="navigate('/mentors')">${c}导师</button>
+    <button class="nav-btn${currentPage==='/mentors'?' active':''}" data-path="/mentors" onclick="navigate('/mentors')">导师</button>
     <button class="nav-btn${currentPage==='/messages'?' active':''}" data-path="/messages" onclick="navigate('/messages')">留言</button>`;
 }
 
@@ -1226,11 +1218,9 @@ function renderMembers() {
     const im=app.mentors.find(mt=>mt.memberId===m.id);
     const avatarHtml=m.avatar?`<div class="av" style="overflow:hidden;padding:0"><img src="${esc(m.avatar)}" style="width:100%;height:100%;object-fit:cover" alt=""></div>`:`<div class="av">${m.name.charAt(0)}</div>`;
     return `<div class="member-card" onclick="showMemberDetail(${m.id})" style="cursor:pointer">
-      ${im?'<span class="mentor-badge">导师</span>':''}
       ${avatarHtml}<h4>${esc(m.name)}</h4>
       <div class="rl">${esc(m.role||'成员')}</div>
       <div class="inf">${esc((m.info||'').substring(0,60))}${(m.info||'').length>60?'...':''}</div>
-      ${(m.relations||[]).length?`<div class="rels">${m.relations.map(r=>{const t=app.members.find(x=>x.id===r.targetId);return `<span class="rel-tag">${t?esc(t.name):'?'}·${esc(r.label)}</span>`}).join('')}</div>`:''}
     </div>`;
   }).join('');
 }
@@ -1242,10 +1232,9 @@ function showMemberDetail(id) {
   document.getElementById('memberModalBody').innerHTML=`
     <div style="text-align:center">
       ${avatarDisp}
-      <h3 style="color:var(--gold2);margin-bottom:4px">${esc(m.name)}${im?' <span style="font-size:13px;color:var(--gold)">🎓导师</span>':''}</h3>
+      <h3 style="color:var(--gold2);margin-bottom:4px">${esc(m.name)}</h3>
       <div style="color:var(--red2);margin-bottom:12px">${esc(m.role||'成员')}</div>
       <div style="background:var(--bg);padding:14px;border-radius:var(--rs);color:var(--text);font-size:13px;line-height:1.8;margin-bottom:14px">${esc(m.info||'暂无简介')}</div>
-      ${(m.relations||[]).length?`<div><h4 style="color:var(--gold2);margin-bottom:8px">成员关系</h4><div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center">${m.relations.map(r=>{const t=app.members.find(x=>x.id===r.targetId);return `<span style="padding:5px 12px;border-radius:20px;background:rgba(212,167,116,.1);border:1px solid rgba(212,167,116,.3);color:var(--gold);font-size:12px">${t?esc(t.name):'?'} · ${esc(r.label)}</span>`}).join('')}</div></div>`:''}
       ${im?`<div style="margin-top:14px"><h4 style="color:var(--gold2);margin-bottom:8px">导师信息</h4><div style="background:var(--bg);padding:14px;border-radius:var(--rs);font-size:13px;line-height:1.8;color:var(--text)">专长：${esc(im.specialty||'无')}<br><br>${esc(im.extraInfo||'暂无')}</div></div>`:''}
     </div>`;
   document.getElementById('memberModal').classList.remove('hidden');
@@ -1292,8 +1281,7 @@ function renderEvents() {
 // Mentors
 function renderMentors() {
   const track=document.getElementById('mcTrack'), dots=document.getElementById('mcDots');
-  const crownImg='<img src="data:image/png;base64,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" alt="👑" style="width:20px;height:20px;vertical-align:middle;display:inline-block">';
-  if(!app.mentors.length){track.innerHTML='<div class="empty" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"><div class="ic">'+crownImg+'</div><p>暂无导师</p></div>';dots.innerHTML='';return;}
+  if(!app.mentors.length){track.innerHTML='<div class="empty" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"><div class="ic"></div><p>暂无导师</p></div>';dots.innerHTML='';return;}
   mCarouselIdx=Math.min(mCarouselIdx,app.mentors.length-1);
   const total=app.mentors.length;
   track.innerHTML=app.mentors.map((mt,i)=>{
@@ -1305,14 +1293,9 @@ function renderMentors() {
         <div class="mc-sp">${esc(mt.specialty||'导师')}</div>
         <div class="mc-xt">${esc(mt.extraInfo||'暂无介绍')}</div>
       </div>`;
-    const simpleOverlay=`<div class="mc-simple-overlay"><h4>${m?esc(m.name):'未知'}</h4></div>`;
-    const isCenter=i===mCarouselIdx;
-    const leftIdx=(mCarouselIdx-1+total)%total;
-    const rightIdx=(mCarouselIdx+1)%total;
-    const isSide=i===leftIdx||i===rightIdx;
-    return `<div class="mc-card" id="mc-${i}" onclick="mentorCarouselGo(${i})">
+    return `<div class="mc-card${i===mCarouselIdx?' mc-center':' mc-hidden'}" id="mc-${i}" onclick="mentorCarouselGo(${i})">
       ${imgHtml}
-      ${isCenter?centerBody:(isSide?simpleOverlay:'')}
+      ${centerBody}
     </div>`;
   }).join('');
   // Dots
@@ -1323,17 +1306,11 @@ function renderMentors() {
 let mCarouselIdx=0;
 function mentorCarouselRender(){
   const total=app.mentors.length;if(!total)return;
-  const track=document.getElementById('mcTrack');
-  // Clear all positions
-  for(let i=0;i<total;i++){const c=document.getElementById('mc-'+i);if(c)c.className='mc-card';}
-  const center=document.getElementById('mc-'+mCarouselIdx);
-  if(center)center.className='mc-card mc-center';
-  const leftIdx=(mCarouselIdx-1+total)%total;
-  const left=document.getElementById('mc-'+leftIdx);
-  if(left)left.className='mc-card mc-left';
-  const rightIdx=(mCarouselIdx+1)%total;
-  const right=document.getElementById('mc-'+rightIdx);
-  if(right)right.className='mc-card mc-right';
+  // 只显示居中卡片，隐藏所有侧边卡片
+  for(let i=0;i<total;i++){
+    const c=document.getElementById('mc-'+i);
+    if(c)c.className='mc-card'+(i===mCarouselIdx?' mc-center':' mc-hidden');
+  }
   // Dots
   document.querySelectorAll('.mc-dot').forEach((d,i)=>{d.classList.toggle('active',i===mCarouselIdx);});
 }
@@ -1452,22 +1429,6 @@ function admUpsertMember(){
       m.role = memberData.role;
       m.info = memberData.info;
       if (avatarDataUrl) m.avatar = avatarDataUrl;
-      // 成员编辑界面不保存导师的专长和详细信息，这些只能在导师设置面板编辑
-      const isMentor = document.getElementById('adm-m-isMentor').checked;
-      const wasMentor = app.mentors.find(mt => mt.memberId === editingAdminMemberId);
-      if (isMentor && !wasMentor) {
-        // 新设为导师：使用成员表单中的值（仅首次）
-        app.mentors.push({
-          id: genNextId(),
-          memberId: editingAdminMemberId,
-          specialty: document.getElementById('adm-m-specialty').value.trim(),
-          extraInfo: document.getElementById('adm-m-extra').value.trim()
-        });
-      } else if (!isMentor && wasMentor) {
-        // 取消导师身份
-        app.mentors = app.mentors.filter(mt => mt.memberId !== editingAdminMemberId);
-      }
-      // 若已是导师，不更新 specialty/extraInfo（必须在导师设置面板编辑）
       saveApp(app);
       cancelEditMember();
       renderMembers(); renderFamilyTree(); renderMentors(); refreshAdminPanel();
@@ -1477,21 +1438,9 @@ function admUpsertMember(){
       const newMember = { id: genNextId(), ...memberData, relations: [] };
       app.members.push(newMember);
       saveApp(app);
-
-      // 同时设为导师
-      const isMentor = document.getElementById('adm-m-isMentor').checked;
-      if (isMentor) {
-        app.mentors.push({
-          id: genNextId(),
-          memberId: newMember.id,
-          specialty: document.getElementById('adm-m-specialty').value.trim(),
-          extraInfo: document.getElementById('adm-m-extra').value.trim()
-        });
-        saveApp(app);
-      }
       clearMemberForm();
       renderMembers(); renderFamilyTree(); renderMentors(); refreshAdminPanel();
-      toast('✅ 成员已添加' + (isMentor ? '并设为导师' : ''));
+      toast('✅ 成员已添加');
     }
   };
 
@@ -1516,10 +1465,6 @@ function clearMemberForm(){
   document.getElementById('adm-m-info').value='';
   document.getElementById('adm-m-avatar').value='';
   document.getElementById('avatarPreview').style.display='none';
-  document.getElementById('adm-m-isMentor').checked=false;
-  document.getElementById('mentorFields').style.display='none';
-  document.getElementById('adm-m-specialty').value='';
-  document.getElementById('adm-m-extra').value='';
   document.getElementById('adm-m-btn').textContent='添加成员';
   document.getElementById('adm-m-btn').className='btn btn-red btn-sm';
   document.getElementById('adm-m-cancel').classList.add('hidden');
@@ -1537,19 +1482,6 @@ function editAdminMember(id) {
   document.getElementById('adm-m-btn').textContent = '💾 保存修改';
   document.getElementById('adm-m-btn').className = 'btn btn-ok btn-sm';
   document.getElementById('adm-m-cancel').classList.remove('hidden');
-  // 检查是否已为导师
-  const im = app.mentors.find(mt => mt.memberId === id);
-  if (im) {
-    document.getElementById('adm-m-isMentor').checked = true;
-    document.getElementById('mentorFields').style.display = 'block';
-    document.getElementById('adm-m-specialty').value = im.specialty || '';
-    document.getElementById('adm-m-extra').value = im.extraInfo || '';
-  } else {
-    document.getElementById('adm-m-isMentor').checked = false;
-    document.getElementById('mentorFields').style.display = 'none';
-    document.getElementById('adm-m-specialty').value = '';
-    document.getElementById('adm-m-extra').value = '';
-  }
   document.getElementById('avatarPreview').style.display = 'none';
   document.getElementById('adm-m-avatar').value = '';
   // 显示当前头像预览
@@ -1566,10 +1498,6 @@ function cancelEditMember() {
   clearMemberForm();
 }
 
-function toggleMentorFields() {
-  const checked = document.getElementById('adm-m-isMentor').checked;
-  document.getElementById('mentorFields').style.display = checked ? 'block' : 'none';
-}
 function previewAvatar(input){
   const preview=document.getElementById('avatarPreview');
   const img=document.getElementById('avatarPreviewImg');
@@ -1748,17 +1676,20 @@ function loadFtPositions(){
 function renderFamilyTree(){
   loadFtPositions();
   const svg=document.getElementById('ftSvg'),empty=document.getElementById('ftEmpty');
-  const members=app.members;
-  if(!members.length){svg.style.display='none';empty.style.display='flex';return;}
-  empty.style.display='none';svg.style.display='block';
+  // 只渲染有关系的成员（自己有计划或其他成员计划到ta）
+  const allTargets=new Set();app.members.forEach(m=>{(m.relations||[]).forEach(r=>allTargets.add(r.targetId));});
+  const relatedMembers=app.members.filter(m=>(m.relations||[]).length>0||allTargets.has(m.id));
+  if(!relatedMembers.length){svg.style.display='none';empty.style.display='flex'; empty.innerHTML='<div class="ic">🌳</div><p>暂无关联网员</p>';}
+  else{empty.style.display='none';svg.style.display='block';}
 
-  // Canvas size
+  // Canvas size — 根据实际关联成员数量动态调整
   const canvas=document.getElementById('ftCanvas');
-  const w=Math.max(canvas.clientWidth||900, 900);
-  const h=Math.max(600, members.length*100+200);
+  const minW=Math.max(canvas.clientWidth-170||700, 700);
+  const w=relatedMembers.length<=2?minW:Math.max(minW,relatedMembers.length*260);
+  const h=Math.max(500,relatedMembers.length*130+200);
 
   // Compute layout (use saved positions if available)
-  const positions = computeFtLayout(members, w, h);
+  const positions = computeFtLayout(relatedMembers, w, h);
 
   // Draw
   let lines='', nodes='';
@@ -1766,7 +1697,7 @@ function renderFamilyTree(){
 
   // Lines first (with arrow markers)
   let defs='<defs><marker id="arrow-red" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#e74c3c"/></marker><marker id="arrow-gold" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#d4a574"/></marker></defs>';
-  members.forEach(m=>{
+  relatedMembers.forEach(m=>{
     (m.relations||[]).forEach(r=>{
       if(positions[m.id]&&positions[r.targetId]){
         const a=positions[m.id], b=positions[r.targetId];
@@ -1784,7 +1715,7 @@ function renderFamilyTree(){
 
   // Nodes
   const mentorIds=new Set(app.mentors.map(mt=>mt.memberId));
-  members.forEach(m=>{
+  relatedMembers.forEach(m=>{
     const p=positions[m.id];if(!p)return;
     const im=mentorIds.has(m.id);
 
@@ -1834,7 +1765,8 @@ function renderFamilyTree(){
   const dock=document.getElementById('ftDock');
   const dockList=document.getElementById('ftDockList');
   const dockEmpty=document.getElementById('ftDockEmpty');
-  const unrelated=app.members.filter(m=>!m.relations||!m.relations.length);
+  const allTgts=new Set();app.members.forEach(m=>{(m.relations||[]).forEach(r=>allTgts.add(r.targetId));});
+  const unrelated=app.members.filter(m=>(!m.relations||!m.relations.length)&&!allTgts.has(m.id));
   if(unrelated.length){
     dock.style.display='flex';
     canvas.classList.add('has-dock');
