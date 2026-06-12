@@ -58,7 +58,7 @@ body{
 
 .container{max-width:1100px;margin:0 auto;padding:0 20px}
 
-.carousel{position:relative;height:700px;overflow:hidden;background:#000}
+.carousel{position:relative;height:420px;overflow:hidden;background:linear-gradient(180deg,#0a0a15 0%,#1a1025 50%,#0f0f1a 100%)}
 .carousel-track{display:flex;height:100%;transition:transform .6s cubic-bezier(.4,0,.2,1)}
 .carousel-slide{min-width:100%;height:100%;position:relative}
 .carousel-slide img{width:100%;height:100%;object-fit:contain;background:#000}
@@ -1284,7 +1284,7 @@ function renderNav() {
 function renderCarousel() {
   const track = document.getElementById('carouselTrack'), dots = document.getElementById('carouselDots');
   const imgs = app.carouselImages;
-  if(!imgs.length){track.innerHTML='<div class="carousel-empty"><span style="font-size:44px">🖼️</span><span>暂无轮播图片</span><span style="font-size:12px">管理员可添加图片</span></div>';dots.innerHTML='';stopCarousel();return;}
+  if(!imgs.length){track.innerHTML='<div class="carousel-empty" style="background:linear-gradient(180deg,#0a0a15,#1a1025)"><div style="font-size:48px;margin-bottom:16px">🖼️</div><div style="font-size:18px;color:var(--gold2);margin-bottom:8px">欢迎来到黑塔办事处</div><div style="font-size:13px;color:var(--muted)">暂无轮播图片 &middot; 管理员可添加</div></div>';dots.innerHTML='';stopCarousel();return;}
   track.innerHTML=imgs.map((img,i)=>`<div class="carousel-slide"><img src="${esc(img.url)}" alt="${esc(img.title||'')}" onerror="this.onerror=null;this.nextElementSibling.style.display='flex'"><div style="display:none;position:absolute;inset:0;background:linear-gradient(135deg,#1a1a2e,#2a1a3e);align-items:center;justify-content:center;font-size:40px;z-index:1">🖼️</div>${img.title?`<div class="ol"></div><div class="cap"><h3>${esc(img.title)}</h3></div>`:''}</div>`).join('');
   dots.innerHTML=imgs.map((_,i)=>`<span class="carousel-dot${i===currentSlide?' active':''}" onclick="goToSlide(${i})"></span>`).join('');
   if(currentSlide>=imgs.length)currentSlide=0;
@@ -2561,6 +2561,26 @@ function loadAppFallback() {
   return d;
 }
 </script>
+
+<!-- 页面加载遮罩保险：防止任何遮罩阻挡点击 -->
+<script>
+(function(){
+  function clean(){
+    try{
+      var els=['adminOverlay','adminLoginBox','adminPanelBox','panelOverlay','mobileNav'];
+      els.forEach(function(id){var el=document.getElementById(id);if(el){el.classList.add('hidden');el.classList.remove('open','show');}});
+    }catch(e){}
+  }
+  // DOM就绪后立即执行
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',clean);
+  else clean();
+  // 额外延迟清理
+  setTimeout(clean,100);
+  setTimeout(clean,500);
+  setTimeout(clean,1000);
+})();
+</script>
+
 </body>
 <!-- deploy-trigger: 2026-06-13 02:37:37 -->
 </html>
