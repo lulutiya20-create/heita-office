@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>黑塔办事处</title> <!-- v261213-personal-center -->
+<title>黑塔办事处</title> <!-- v261214-fix-pc-v2 -->
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -643,7 +643,8 @@ body{
     </div>
   </div>
   <!-- 个人中心面板（普通成员） -->
-  <div class="admin-box hidden" id="personalCenterBox" style="max-width:420px">
+  <div class="admin-overlay hidden" id="pcOverlay" onclick="if(event.target===this)closePersonalCenter()">
+  <div class="admin-box" id="personalCenterBox" style="max-width:420px">
     <h2 style="margin-bottom:16px">👤 个人中心</h2>
     <div id="pcAvatarArea" style="text-align:center;margin-bottom:16px">
       <div id="pcAvatarDisplay" style="width:80px;height:80px;border-radius:50%;background:var(--bdr);display:inline-flex;align-items:center;justify-content:center;font-size:28px;color:var(--muted);overflow:hidden;margin:0 auto"></div>
@@ -670,6 +671,7 @@ body{
       <button class="btn btn-ok" onclick="savePersonalCenter()" style="flex:1">💾 保存修改</button>
       <button class="btn btn-outline" onclick="closePersonalCenter()" style="flex:1">取消</button>
     </div>
+  </div>
   </div>
 </div>
 
@@ -1597,6 +1599,7 @@ function adminLogin(){
   const pwd=document.getElementById('adminPassInput').value;
   if(pwd===app.adminPassword){
     currentUser={type:'super'};
+    try{localStorage.setItem('heita_login', JSON.stringify(currentUser));}catch(e){}
     afterLoginSuccess();
     refreshAdminPanel();toast('🔐 超级管理员登录成功');
   }else{toast('密码错误');}
@@ -1612,6 +1615,7 @@ function memberLogin(){
   const memberPwd=m.password||'abc123';
   if(pwd!==memberPwd){toast('密码错误');return;}
   currentUser={type:m.isAdmin?'admin':'normal', memberId:m.id};
+  try{localStorage.setItem('heita_login', JSON.stringify(currentUser));}catch(e){}
   afterLoginSuccess();
   toast(`欢迎回来，${m.name}`);
 }
@@ -1637,6 +1641,7 @@ function closeAllOverlays(){
     document.getElementById('adminLoginBox').classList.add('hidden');
     document.getElementById('adminPanelBox').classList.add('hidden');
     document.getElementById('personalCenterBox').classList.add('hidden');
+    document.getElementById('pcOverlay').classList.add('hidden');
     // 如果关系面板没开，也关闭 panelOverlay
     if(!document.getElementById('relationPanel').classList.contains('open')){
       document.getElementById('panelOverlay').classList.remove('show');
@@ -1735,6 +1740,7 @@ function openAdminPanel(){
 }
 function closeAdmin(){document.getElementById('adminOverlay').classList.add('hidden');closeAllOverlays();}
 function doLogout(){
+  try{localStorage.removeItem('heita_login');}catch(e){}
   currentUser=null;isAdmin=false;closeAdmin();ftAdminMode=false;
   if(currentPage==='/familytree'){
     const btn=document.getElementById('ftAdminBtn');
@@ -1795,12 +1801,8 @@ function openPersonalCenter(){
   const m = app.members.find(x=>x.id===currentUser.memberId);
   if(!m){toast('成员数据异常');return;}
 
-  // 隐藏其他面板
-  document.getElementById('adminLoginBox').classList.add('hidden');
-  document.getElementById('adminPanelBox').classList.add('hidden');
-  // 显示个人中心面板
-  document.getElementById('personalCenterBox').classList.remove('hidden');
-  document.getElementById('adminOverlay').classList.remove('hidden');
+  // 显示个人中心遮罩 + 面板
+  document.getElementById('pcOverlay').classList.remove('hidden');
 
   // 填充当前数据
   const avDisplay = document.getElementById('pcAvatarDisplay');
@@ -1820,8 +1822,7 @@ function openPersonalCenter(){
   _pendingAvatarDataUrl = null;
 }
 function closePersonalCenter(){
-  document.getElementById('personalCenterBox').classList.add('hidden');
-  closeAdmin();
+  document.getElementById('pcOverlay').classList.add('hidden');
 }
 // 个人中心头像预览
 let _pendingAvatarDataUrl = null;
@@ -2732,6 +2733,21 @@ function toggleFtAdmin(){
   navigate('/');
   updateSyncStatus(cloudEnabled ? 'synced' : 'offline');
 
+  // 恢复登录状态（刷新页面后保持登录）
+  try{
+    const saved=localStorage.getItem('heita_login');
+    if(saved){
+      const u=JSON.parse(saved);
+      if(u&&(u.type==='super'||(u.memberId&&app.members&&app.members.find(m=>m.id===u.memberId)))){
+        currentUser=u;
+        afterLoginSuccess();
+        console.log('[登录] ✅ 已自动恢复登录状态:',u.type,u.memberId);
+      }else{
+        localStorage.removeItem('heita_login');
+      }
+    }
+  }catch(e){try{localStorage.removeItem('heita_login');}catch(e2){}}
+
   // 只有云服务器可用时才启动轮询
   if (cloudEnabled) {
     setTimeout(() => startPolling(), 2000);
@@ -2744,6 +2760,14 @@ function toggleFtAdmin(){
     if (ov && !ov.classList.contains('hidden')) {
       if (lb.classList.contains('hidden') && pb.classList.contains('hidden')) {
         ov.classList.add('hidden');
+      }
+    }
+    // 个人中心遮罩保险
+    const pcOv = document.getElementById('pcOverlay');
+    const pcBox = document.getElementById('personalCenterBox');
+    if (pcOv && !pcOv.classList.contains('hidden')) {
+      if (pcBox.classList.contains('hidden')) {
+        pcOv.classList.add('hidden');
       }
     }
   }, 3000);
