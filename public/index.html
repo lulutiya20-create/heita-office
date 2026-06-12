@@ -151,7 +151,8 @@ body{
 .mc-card img{width:100%;aspect-ratio:9/16;object-fit:cover;display:block;border-radius:20px}
 .mc-card.mc-center img{border-radius:20px 20px 0 0}
 .mc-card.no-img .mc-card-body{border-radius:20px;padding-top:36px;padding-bottom:36px}
-.mc-card.no-img.mc-center .mc-card-body{min-height:380px;display:flex;flex-direction:column;justify-content:center}
+.mc-card.no-img.mc-center{aspect-ratio:9/16;display:flex;flex-direction:column;justify-content:center;align-items:center}
+.mc-card.no-img.mc-center .mc-card-body{min-height:auto;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:40px 24px;box-sizing:border-box}
 .mc-card .mc-simple-overlay{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(10,10,20,.95),transparent);padding:20px 12px 14px;text-align:center;border-radius:0 0 20px 20px}
 .mc-card .mc-simple-overlay h4{font-size:15px;color:#fff;font-weight:600;text-shadow:0 2px 6px rgba(0,0,0,.8)}
 .mc-card-body{padding:20px;text-align:left}
@@ -243,7 +244,7 @@ body{
 /* Family tree page */
 .familytree-container{max-width:1200px;margin:0 auto;padding:20px}
 .familytree-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:16px}
-.familytree-canvas{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);overflow:auto;position:relative;min-height:500px;max-height:70vh;touch-action:none;cursor:grab}
+.familytree-canvas{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);overflow:auto;position:relative;min-height:500px;touch-action:none;cursor:grab}
 .familytree-canvas::-webkit-scrollbar{width:10px;height:10px}
 .familytree-canvas::-webkit-scrollbar-track{background:rgba(0,0,0,.2);border-radius:5px}
 .familytree-canvas::-webkit-scrollbar-thumb{background:var(--gold);border-radius:5px}
@@ -1532,7 +1533,22 @@ function compressMentorImg(dataUrl,callback){compressImage(dataUrl,1080,1920,0.9
 function admDelMember(id){if(!confirm('确定删除该成员？'))return;app.mentors=app.mentors.filter(mt=>mt.memberId!==id);app.members.forEach(m=>{m.relations=(m.relations||[]).filter(r=>r.targetId!==id);});app.members=app.members.filter(m=>m.id!==id);if(app.treeNodePositions)delete app.treeNodePositions[id];saveApp(app);renderMembers();renderFamilyTree();renderMentors();refreshAdminPanel();toast('已删除');}
 // admAddEvent replaced below with file upload support
 function admDelEvent(id){if(!confirm('确定删除？'))return;app.events=app.events.filter(e=>e.id!==id);saveApp(app);renderEvents();refreshAdminPanel();toast('已删除');}
-function updateMentorSelect(){const sel=document.getElementById('adm-mt-member'),exclude=editingAdminMentorId?app.mentors.filter(mt=>mt.id!==editingAdminMentorId):app.mentors;const free=app.members.filter(m=>!exclude.find(mt=>mt.memberId===m.id));sel.innerHTML='<option value="">-- 选择 --</option>'+free.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');if(editingAdminMentorId){const mt=app.mentors.find(mt=>mt.id===editingAdminMentorId);if(mt)sel.value=mt.memberId;}}
+function updateMentorSelect(){
+  const sel=document.getElementById('adm-mt-member');
+  // 编辑模式下排除其他导师，但保留当前编辑的导师成员
+  let exclude;
+  if(editingAdminMentorId){
+    exclude = app.mentors.filter(mt => mt.id !== editingAdminMentorId);
+  } else {
+    exclude = app.mentors;
+  }
+  const free=app.members.filter(m=>!exclude.find(mt=>mt.memberId===m.id));
+  sel.innerHTML='<option value="">-- 选择 --</option>'+free.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');
+  if(editingAdminMentorId){
+    const mt=app.mentors.find(mt=>mt.id===editingAdminMentorId);
+    if(mt)sel.value=mt.memberId;
+  }
+}
 let editingAdminMentorId = null; // 正在编辑的导师 ID
 
 function admAddMentor(){
@@ -1583,7 +1599,8 @@ function editAdminMentor(id){
   const mt = app.mentors.find(x => x.id === id);
   if (!mt) return;
   editingAdminMentorId = id;
-  document.getElementById('adm-mt-member').value = mt.memberId;
+  // 先重建下拉选项（包含当前导师的成员）
+  updateMentorSelect();
   document.getElementById('adm-mt-specialty').value = mt.specialty || '';
   document.getElementById('adm-mt-extra').value = mt.extraInfo || '';
   document.getElementById('adm-mt-image').value = '';
@@ -1743,9 +1760,11 @@ function loadFtPositions(){
 function renderFamilyTree(){
   loadFtPositions();
   const svg=document.getElementById('ftSvg'),empty=document.getElementById('ftEmpty');
-  // 只渲染有关系的成员（自己有计划或其他成员计划到ta）
+  // 只渲染有关系的成员 + 已手动放置到画布的成员
   const allTargets=new Set();app.members.forEach(m=>{(m.relations||[]).forEach(r=>allTargets.add(r.targetId));});
-  const relatedMembers=app.members.filter(m=>(m.relations||[]).length>0||allTargets.has(m.id));
+  const hasPositions = app.treeNodePositions && Object.keys(app.treeNodePositions).length>0;
+  const positionedIds = hasPositions ? new Set(Object.keys(app.treeNodePositions).map(Number)) : new Set();
+  const relatedMembers=app.members.filter(m=>(m.relations||[]).length>0||allTargets.has(m.id)||positionedIds.has(m.id));
   if(!relatedMembers.length){svg.style.display='none';empty.style.display='flex'; empty.innerHTML='<div class="ic">🌳</div><p>暂无关联网员</p>';}
   else{empty.style.display='none';svg.style.display='block';}
 
@@ -2081,11 +2100,13 @@ function onFtDockDragEnd(evt){
   const cRect=canvas.getBoundingClientRect();
   const inCanvas=clientX>=cRect.left+160 && clientX<=cRect.right && clientY>=cRect.top && clientY<=cRect.bottom;
   if(inCanvas&&ftAdminMode){
-    // Place the node at this position relative to SVG
+    // Place the node at this position relative to SVG (accounting for scroll)
     const svg=document.getElementById('ftSvg');
     const svgRect=svg.getBoundingClientRect();
-    const x=Math.max(10,(clientX-svgRect.left)-70);
-    const y=Math.max(10,(clientY-svgRect.top)-35);
+    const canvasScrollTop=canvas.scrollTop;
+    const canvasScrollLeft=canvas.scrollLeft;
+    const x=Math.max(10,(clientX-svgRect.left+canvasScrollLeft)-70);
+    const y=Math.max(10,(clientY-svgRect.top+canvasScrollTop)-35);
     if(!app.treeNodePositions)app.treeNodePositions={};
     app.treeNodePositions[ftDockDragging.id]={x,y};
     saveApp(app);
