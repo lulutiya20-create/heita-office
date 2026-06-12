@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>黑塔办事处</title> <!-- v261214-fix-pc-v2 -->
+<title>黑塔办事处</title> <!-- v261213-safe-fetch -->
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -695,6 +695,62 @@ let syncPending = false;
 let lastCloudFingerprint = '';
 let pollTimer = null;
 const POLL_INTERVAL = 5000;
+// 最大重试次数（用于 Render 冷启动等临时故障）
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 2000;
+
+// 🛡️ 安全 JSON fetch：自动处理非 JSON 响应（如 Render 冷启动返回 HTML）
+// 返回 { ok, data, status, text } 或在完全失败时 throw
+async function safeFetchJson(url, opts = {}) {
+  const retries = opts.retries !== undefined ? opts.retries : MAX_RETRIES;
+  const timeout = opts.timeout || 10000;
+
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeout);
+
+      const resp = await fetch(url, { ...(opts.fetchOpts || {}), signal: controller.signal });
+      clearTimeout(timer);
+
+      // 检查 content-type，非 JSON 时给出明确错误
+      const ct = (resp.headers.get('content-type') || '').toLowerCase();
+      if (!ct.includes('application/json')) {
+        // 服务器返回了 HTML（可能是 503 冷启动页、错误页等）
+        const text = await resp.text().catch(() => '');
+        console.warn(`[safeFetch] ⚠️ 服务器返回非 JSON (attempt ${attempt}/${retries}, HTTP ${resp.status}, type: ${ct})`);
+        if (text.length < 200) {
+          console.warn('[safeFetch] 响应内容:', text);
+        } else {
+          console.warn('[safeFetch] 响应内容(前200字符):', text.substring(0, 200));
+        }
+        if (attempt < retries) {
+          console.warn(`[safeFetch] ⏳ 等待 ${RETRY_DELAY_MS}ms 后重试...`);
+          await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
+          continue;
+        }
+        return { ok: false, data: null, status: resp.status, text: '服务器返回了非 JSON 响应（可能正在启动中）', isHtml: true };
+      }
+
+      const result = await resp.json();
+      if (resp.ok) {
+        return { ok: true, data: result, status: resp.status };
+      } else {
+        return { ok: false, data: result, status: resp.status, text: result.message || 'HTTP ' + resp.status };
+      }
+    } catch(e) {
+      const msg = e.name === 'AbortError' ? '请求超时' : e.message;
+      console.warn(`[safeFetch] ⚠️ 请求失败 (attempt ${attempt}/${retries}): ${msg}`);
+      if (attempt < retries) {
+        console.warn(`[safeFetch] ⏳ 等待 ${RETRY_DELAY_MS}ms 后重试...`);
+        await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
+        continue;
+      }
+      throw e;
+    }
+  }
+  return { ok: false, data: null, status: 0, text: '所有重试均失败' };
+}
 
 // 初始化 API 端点（自动检测可用性 — 直接用 /api/data 检测）
 async function initApiEndpoint() {
@@ -713,16 +769,15 @@ async function initApiEndpoint() {
     // 如果已有 /api/data 后缀直接用，否则追加
     const dataUrl = url.endsWith('/api/data') ? url : url.replace(/\/$/, '') + '/api/data';
     try {
-      const resp = await fetch(dataUrl, { signal: AbortSignal.timeout(5000) });
-      if (resp.ok) {
-        const result = await resp.json();
-        if (result.success) {
-          API_DATA = dataUrl;
-          cloudEnabled = true;
-          lastCloudFingerprint = result.fingerprint || '';
-          console.log('[同步] ✅ 云服务器已连接:', API_DATA, '指纹:', lastCloudFingerprint.substring(0,8));
-          return true;
-        }
+      const result = await safeFetchJson(dataUrl, { timeout: 8000, retries: 2 });
+      if (result.ok && result.data && result.data.success) {
+        API_DATA = dataUrl;
+        cloudEnabled = true;
+        lastCloudFingerprint = result.data.fingerprint || '';
+        console.log('[同步] ✅ 云服务器已连接:', API_DATA, '指纹:', lastCloudFingerprint.substring(0,8));
+        return true;
+      } else {
+        console.log('[同步] 端点不可用:', dataUrl.substring(0, 40), result.text || `HTTP ${result.status}`);
       }
     } catch(e) {
       console.log('[同步] 尝试连接失败:', dataUrl.substring(0, 40), e.message);
@@ -800,14 +855,13 @@ function cleanCloudMeta(d) {
 
 // 异步加载：优先从云端获取，回退本地，最后用默认值
 async function loadAppAsync() {
-  // 1. 尝试从云端加载
+  // 1. 尝试从云端加载（使用安全 fetch，自动处理冷启动 HTML 响应）
   try {
-    const resp = await fetch(API_DATA);
-    if (resp.ok) {
-      const result = await resp.json();
-      if (result.success && result.data && result.data.members) {
-        lastCloudFingerprint = result.fingerprint || '';
-        const cloudData = cleanCloudMeta(result.data);
+    const result = await safeFetchJson(API_DATA, { timeout: 15000, retries: 3 });
+    if (result.ok && result.data && result.data.success) {
+      const respData = result.data;
+      lastCloudFingerprint = respData.fingerprint || '';
+      const cloudData = cleanCloudMeta(respData.data);
             // 🛡️ 增强保护机制：多重检测云端数据是否被重置
         const localRaw = localStorage.getItem(DB_KEY);
         if (localRaw) {
@@ -984,8 +1038,19 @@ function pushToCloud(data, force = false) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ data: cleanData, fingerprint: fp, force: force ? true : undefined })
   })
-  .then(r => r.json())
+  .then(async r => {
+    // 🛡️ 安全解析：检查 content-type
+    const ct = (r.headers.get('content-type') || '').toLowerCase();
+    if (!ct.includes('application/json')) {
+      console.warn('[同步] ⚠ 推送响应非 JSON (HTTP ' + r.status + ', type: ' + ct + ')');
+      updateSyncStatus('error');
+      syncPending = false;
+      return;
+    }
+    return r.json();
+  })
   .then(result => {
+    if (!result) return; // 被上面的安全检查拦截了
     if (result.success) {
       lastCloudFingerprint = result.fingerprint || '';
       updateSyncStatus('synced');
@@ -1010,12 +1075,11 @@ function pushToCloud(data, force = false) {
 // 智能冲突解决：拉取最新数据 → 合并本地修改 → 重新推送
 async function resolveConflict(localData) {
   try {
-    const resp = await fetch(API_DATA);
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const result = await resp.json();
-    if (!result.success || !result.data) throw new Error('无效响应');
+    const result = await safeFetchJson(API_DATA, { timeout: 12000, retries: 2 });
+    if (!result.ok || !result.data || !result.data.success || !result.data.data) throw new Error(result.text || '无效响应');
 
-    const serverData = cleanCloudMeta(result.data);
+    const respData = result.data;
+    const serverData = cleanCloudMeta(respData.data);
     const merged = mergeData(serverData, localData);
     const mergedClean = cleanCloudMeta(merged);
 
@@ -1023,7 +1087,7 @@ async function resolveConflict(localData) {
     const pushResp = await fetch(API_DATA, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data: mergedClean, fingerprint: result.fingerprint || '', force: true })
+      body: JSON.stringify({ data: mergedClean, fingerprint: respData.fingerprint || '', force: true })
     });
     const pushResult = await pushResp.json();
 
@@ -1133,12 +1197,13 @@ function mergeData(server, local) {
 
 function forceCloudRefresh() {
   updateSyncStatus('syncing');
-  fetch(API_DATA)
-    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  safeFetchJson(API_DATA, { timeout: 15000, retries: 2 })
     .then(result => {
-      if (result.success && result.data && result.data.members) {
-        lastCloudFingerprint = result.fingerprint || '';
-        const cloudData = cleanCloudMeta(result.data);
+      if (!result.ok) throw new Error(result.text || '服务器响应异常');
+      const respData = result.data;
+      if (respData.success && respData.data && respData.data.members) {
+        lastCloudFingerprint = respData.fingerprint || '';
+        const cloudData = cleanCloudMeta(respData.data);
         app = { ...DEFAULTS, ...cloudData,
           members: (cloudData.members||[]).map(m=>({avatar:'',...m})),
           events: cloudData.events||DEFAULTS.events,
@@ -1169,16 +1234,16 @@ function startPolling() {
   pollTimer = setInterval(async () => {
     if (syncPending) return;
     try {
-      const resp = await fetch(API_DATA);
-      if (!resp.ok) return;
-      const result = await resp.json();
-      if (!result.success || !result.data) return;
+      const result = await safeFetchJson(API_DATA, { timeout: 8000, retries: 1 });
+      if (!result.ok || !result.data || !result.data.success || !result.data.data) return;
+
+      const respData = result.data;
       // 比较指纹，只在真的有变化时才更新
-      if (result.fingerprint && result.fingerprint !== lastCloudFingerprint) {
-        if (!result.data.members || result.data.members.length === 0) return; // 无效数据
+      if (respData.fingerprint && respData.fingerprint !== lastCloudFingerprint) {
+        if (!respData.data.members || respData.data.members.length === 0) return; // 无效数据
         console.log('[轮询] 检测到云端数据变更 (指纹不同), 自动拉取...');
-        lastCloudFingerprint = result.fingerprint;
-        const cloudData = cleanCloudMeta(result.data);
+        lastCloudFingerprint = respData.fingerprint;
+        const cloudData = cleanCloudMeta(respData.data);
         const newApp = { ...DEFAULTS, ...cloudData,
           members: (cloudData.members||[]).map(m=>({avatar:'',...m})),
           events: cloudData.events||DEFAULTS.events,
@@ -1193,7 +1258,7 @@ function startPolling() {
           if (currentPage === '/') navigate('/');
           else navigate(currentPage);
           updateSyncStatus('synced');
-          console.log('[轮询] ✅ 数据已自动更新, 新指纹:', result.fingerprint.substring(0,8));
+          console.log('[轮询] ✅ 数据已自动更新, 新指纹:', respData.fingerprint.substring(0,8));
         }
       }
     } catch(e) { /* 静默失败 */ }
