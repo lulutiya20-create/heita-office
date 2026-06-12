@@ -942,11 +942,11 @@ async function resolveConflict(localData) {
     const merged = mergeData(serverData, localData);
     const mergedClean = cleanCloudMeta(merged);
 
-    // 用新的指纹重新推送
+    // 用新的指纹强制推送（避免服务端重置后无限冲突循环）
     const pushResp = await fetch(API_DATA, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data: mergedClean, fingerprint: result.fingerprint || '' })
+      body: JSON.stringify({ data: mergedClean, fingerprint: result.fingerprint || '', force: true })
     });
     const pushResult = await pushResp.json();
 
