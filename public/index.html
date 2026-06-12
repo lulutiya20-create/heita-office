@@ -1557,6 +1557,9 @@ function closeAllOverlays(){
 function afterLoginSuccess(){
   // 先强制关闭所有遮罩
   closeAllOverlays();
+  // 双重保险：100ms 后再次检查
+  setTimeout(closeAllOverlays, 100);
+  setTimeout(closeAllOverlays, 500);
   document.getElementById('notLoggedInArea').classList.add('hidden');
   document.getElementById('loggedInArea').classList.remove('hidden');
 
@@ -2538,6 +2541,10 @@ function toggleFtAdmin(){
       }
     }
   }, 3000);
+  // 全局 Escape 键关闭所有遮罩
+  document.addEventListener('keydown', function(evt) {
+    if(evt.key === 'Escape') closeAllOverlays();
+  });
 })();
 
 // 纯本地加载（fallback）
@@ -2555,4 +2562,5 @@ function loadAppFallback() {
 }
 </script>
 </body>
+<!-- deploy-trigger: 2026-06-13 02:37:37 -->
 </html>
