@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>黑塔办事处</title> <!-- v261213-fix-cloud-connect -->
+<title>黑塔办事处</title> <!-- v261213-personal-center -->
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -48,7 +48,8 @@ body{
 #syncBadge{font-size:16px;transition:var(--tr);line-height:1}
 #syncBadge:hover{transform:scale(1.2)}
 .admin-badge{background:var(--red);color:#fff;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
-.user-badge{background:var(--gold2);color:#1a1528;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.user-badge{background:var(--gold2);color:#1a1528;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;transition:var(--tr)}
+.user-badge:hover{transform:scale(1.08);background:var(--gold);color:var(--bg)}
 
 .mc-like-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 20px;border:1.5px solid var(--gold);border-radius:20px;background:transparent;color:var(--gold2);font-size:13px;cursor:pointer;transition:all .25s ease}
 .mc-like-btn:hover{background:rgba(212,167,116,.12);transform:scale(1.05)}
@@ -639,6 +640,35 @@ body{
       <p style="color:var(--gold2);margin-bottom:14px;font-size:13px">👑 角色权限设置 — 仅超级管理员可操作</p>
       <p style="color:var(--muted);margin-bottom:14px;font-size:12px">管理员权限：除设置管理员外的全部管理功能</p>
       <div id="adm-roles-list"></div>
+    </div>
+  </div>
+  <!-- 个人中心面板（普通成员） -->
+  <div class="admin-box hidden" id="personalCenterBox" style="max-width:420px">
+    <h2 style="margin-bottom:16px">👤 个人中心</h2>
+    <div id="pcAvatarArea" style="text-align:center;margin-bottom:16px">
+      <div id="pcAvatarDisplay" style="width:80px;height:80px;border-radius:50%;background:var(--bdr);display:inline-flex;align-items:center;justify-content:center;font-size:28px;color:var(--muted);overflow:hidden;margin:0 auto"></div>
+      <p id="pcNameDisplay" style="margin-top:8px;font-size:16px;font-weight:600;color:var(--text)"></p>
+    </div>
+    <!-- 修改头像 -->
+    <div class="admin-fg"><label>📷 更换头像</label>
+      <input type="file" id="pc-avatar-input" accept="image/*" onchange="pcPreviewAvatar(this)">
+      <div id="pc-avatar-preview" style="margin-top:6px;display:none;align-items:center;gap:8px">
+        <img id="pc-avatar-img" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid var(--gold)">
+        <span id="pc-avatar-hint" style="font-size:11px;color:var(--muted)"></span>
+      </div>
+    </div>
+    <!-- 修改简介 -->
+    <div class="admin-fg"><label>✏️ 个人简介</label>
+      <textarea id="pc-info-input" rows="3" placeholder="介绍一下自己..." style="resize:vertical"></textarea>
+    </div>
+    <!-- 修改密码 -->
+    <div class="admin-fg"><label>🔑 修改密码</label>
+      <input type="password" id="pc-old-pwd" placeholder="当前密码" style="margin-bottom:8px">
+      <input type="password" id="pc-new-pwd" placeholder="新密码（至少4位，留空则不改）">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-ok" onclick="savePersonalCenter()" style="flex:1">💾 保存修改</button>
+      <button class="btn btn-outline" onclick="closePersonalCenter()" style="flex:1">取消</button>
     </div>
   </div>
 </div>
@@ -1606,6 +1636,7 @@ function closeAllOverlays(){
     document.getElementById('adminOverlay').classList.add('hidden');
     document.getElementById('adminLoginBox').classList.add('hidden');
     document.getElementById('adminPanelBox').classList.add('hidden');
+    document.getElementById('personalCenterBox').classList.add('hidden');
     // 如果关系面板没开，也关闭 panelOverlay
     if(!document.getElementById('relationPanel').classList.contains('open')){
       document.getElementById('panelOverlay').classList.remove('show');
@@ -1640,6 +1671,14 @@ function afterLoginSuccess(){
     badge.textContent = (m&&m.isAdmin) ? '⚡ 管理员' : '';
     badge.className = (m&&m.isAdmin) ? 'admin-badge' : 'hidden';
     userBadge.textContent = m?m.name:'成员'; userBadge.className='user-badge'; userBadge.classList.remove('hidden');
+    // 普通成员点击姓名 → 打开个人中心
+    if(m && !m.isAdmin){
+      userBadge.onclick = openPersonalCenter;
+      userBadge.title = '点击打开个人中心';
+    } else {
+      userBadge.onclick = null;
+      userBadge.title = '';
+    }
   }
 
   // Buttons
@@ -1748,6 +1787,104 @@ function changeMemberPwd(){
   if(!m)return;
   if(op!==(m.password||'abc123')){toast('当前密码错误');return;}
   m.password=np;saveApp(app);toast('✅ 密码已修改');
+}
+
+// ==================== 个人中心 ====================
+function openPersonalCenter(){
+  if(!currentUser||!currentUser.memberId){toast('请先登录');return;}
+  const m = app.members.find(x=>x.id===currentUser.memberId);
+  if(!m){toast('成员数据异常');return;}
+
+  // 隐藏其他面板
+  document.getElementById('adminLoginBox').classList.add('hidden');
+  document.getElementById('adminPanelBox').classList.add('hidden');
+  // 显示个人中心面板
+  document.getElementById('personalCenterBox').classList.remove('hidden');
+  document.getElementById('adminOverlay').classList.remove('hidden');
+
+  // 填充当前数据
+  const avDisplay = document.getElementById('pcAvatarDisplay');
+  if(m.avatar){
+    avDisplay.innerHTML = '<img src="'+esc(m.avatar)+'" style="width:100%;height:100%;object-fit:cover">';
+  } else {
+    avDisplay.textContent = m.name.charAt(0);
+    avDisplay.style.background = 'var(--bdr)';
+  }
+  document.getElementById('pcNameDisplay').textContent = m.name;
+  document.getElementById('pc-info-input').value = m.info || '';
+  document.getElementById('pc-old-pwd').value = '';
+  document.getElementById('pc-new-pwd').value = '';
+  // 重置头像预览
+  document.getElementById('pc-avatar-input').value = '';
+  document.getElementById('pc-avatar-preview').style.display='none';
+  _pendingAvatarDataUrl = null;
+}
+function closePersonalCenter(){
+  document.getElementById('personalCenterBox').classList.add('hidden');
+  closeAdmin();
+}
+// 个人中心头像预览
+let _pendingAvatarDataUrl = null;
+function pcPreviewAvatar(input){
+  if(!input.files||!input.files[0]){return;}
+  const file=input.files[0];
+  if(file.size>20*1024*1024){toast('图片不能超过20MB');return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    compressAvatar(e.target.result, function(compressed){
+      _pendingAvatarDataUrl = compressed;
+      const prev=document.getElementById('pc-avatar-preview');
+      const img=document.getElementById('pc-avatar-img');
+      const hint=document.getElementById('pc-avatar-hint');
+      img.src=compressed;
+      hint.textContent='新头像预览';
+      prev.style.display='flex';
+    });
+  };
+  reader.readAsDataURL(file);
+}
+// 保存个人中心修改
+function savePersonalCenter(){
+  if(!currentUser||!currentUser.memberId){toast('未登录');return;}
+  const m=app.members.find(x=>x.id===currentUser.memberId);
+  if(!m){toast('成员数据异常');return;}
+
+  let changed=false;
+
+  // 检查密码修改
+  const oldPwd=document.getElementById('pc-old-pwd').value.trim();
+  const newPwd=document.getElementById('pc-new-pwd').value.trim();
+  if(oldPwd){
+    if(oldPwd!==(m.password||'abc123')){toast('⚠ 当前密码错误');return;}
+    if(newPwd&&newPwd.length>=4){
+      m.password=newPwd;changed=true;console.log('[个人中心] 密码已更新');
+    }else if(newPwd&&newPwd.length>0&&newPwd.length<4){
+      toast('⚠ 新密码至少需要4位');return;
+    }
+  } else if(newPwd) {
+    toast('⚠ 请先输入当前密码');return;
+  }
+
+  // 更新简介
+  const newInfo=document.getElementById('pc-info-input').value.trim();
+  if(newInfo!==m.info){
+    m.info=newInfo;changed=true;console.log('[个人中心] 简介已更新');
+  }
+
+  // 更新头像
+  if(_pendingAvatarDataUrl){
+    m.avatar=_pendingAvatarDataUrl;changed=true;console.log('[个人中心] 头像已更新');
+    _pendingAvatarDataUrl=null;
+  }
+
+  if(changed){
+    saveApp(app);
+    toast('✅ 个人信息已保存');
+    // 刷新顶部显示的头像/姓名区域
+    openPersonalCenter(); // 重新加载显示最新数据
+  } else {
+    toast('没有需要保存的修改');
+  }
 }
 function sAT(tab){document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.admin-tab-content').forEach(c=>c.classList.remove('active'));const tabMap={'carousel':'轮播','members':'成员','events':'事件','mentors':'导师','msgs':'留言','roles':'角色权限'};const btn=Array.from(document.querySelectorAll('.admin-tab')).find(b=>b.textContent.includes(tabMap[tab]));if(btn)btn.classList.add('active');document.getElementById('adm-'+tab).classList.add('active');if(tab==='mentors')updateMentorSelect();if(tab==='roles')refreshRolesList();}
 
