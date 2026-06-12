@@ -1456,19 +1456,31 @@ function renderMembers() {
 }
 
 function showMemberDetail(id) {
-  const m=app.members.find(x=>x.id===id);if(!m)return;
-  const im=app.mentors.find(mt=>mt.memberId===m.id);
-  const avatarDisp=m.avatar?`<div class="ma-lg" style="overflow:hidden;padding:0"><img src="${esc(m.avatar)}" style="width:100%;height:100%;object-fit:cover" alt=""></div>`:`<div class="ma-lg">${m.name.charAt(0)}</div>`;
-  document.getElementById('memberModalBody').innerHTML=`
-    <div style="text-align:center">
-      ${avatarDisp}
-      <h3 style="color:var(--gold2);margin-bottom:4px">${esc(m.name)}</h3>
-      <div style="color:var(--red2);margin-bottom:12px">${esc(m.role||'成员')} ${m.isAdmin?'<span style="background:var(--gold);color:#1a1528;padding:2px 8px;border-radius:10px;font-size:10px;margin-left:4px">管理员</span>':''}</div>
-      <div style="background:var(--bg);padding:14px;border-radius:var(--rs);color:var(--text);font-size:13px;line-height:1.8;margin-bottom:14px">${esc(m.info||'暂无简介')}</div>
-      ${im?`<div style="margin-top:14px"><h4 style="color:var(--gold2);margin-bottom:8px">导师信息</h4><div style="background:var(--bg);padding:14px;border-radius:var(--rs);font-size:13px;line-height:1.8;color:var(--text)">专长：${esc(im.specialty||'无')}<br><br>${esc(im.extraInfo||'暂无')}</div></div>`:''}
-      ${currentUser&&currentUser.memberId===m.id?`<button class="btn btn-outline btn-sm" onclick="changeMemberPwd()" style="margin-top:12px">🔑 修改密码</button>`:''}
-    </div>`;
-  document.getElementById('memberModal').classList.remove('hidden');
+  console.log('[DEBUG] showMemberDetail called, id='+id);
+  try {
+    const m=app.members.find(x=>x.id===id);
+    if(!m){console.error('[DEBUG] Member not found, id='+id);return;}
+    const im=app.mentors.find(mt=>mt.memberId===m.id);
+    const avatarDisp=m.avatar?`<div class="ma-lg" style="overflow:hidden;padding:0"><img src="${esc(m.avatar)}" style="width:100%;height:100%;object-fit:cover" alt=""></div>`:`<div class="ma-lg">${m.name.charAt(0)}</div>`;
+    const body=document.getElementById('memberModalBody');
+    if(!body){console.error('[DEBUG] memberModalBody not found!');return;}
+    body.innerHTML=`
+      <div style="text-align:center">
+        ${avatarDisp}
+        <h3 style="color:var(--gold2);margin-bottom:4px">${esc(m.name)}</h3>
+        <div style="color:var(--red2);margin-bottom:12px">${esc(m.role||'成员')} ${m.isAdmin?'<span style="background:var(--gold);color:#1a1528;padding:2px 8px;border-radius:10px;font-size:10px;margin-left:4px">管理员</span>':''}</div>
+        <div style="background:var(--bg);padding:14px;border-radius:var(--rs);color:var(--text);font-size:13px;line-height:1.8;margin-bottom:14px">${esc(m.info||'暂无简介')}</div>
+        ${im?`<div style="margin-top:14px"><h4 style="color:var(--gold2);margin-bottom:8px">导师信息</h4><div style="background:var(--bg);padding:14px;border-radius:var(--rs);font-size:13px;line-height:1.8;color:var(--text)">专长：${esc(im.specialty||'无')}<br><br>${esc(im.extraInfo||'暂无')}</div></div>`:''}
+        ${currentUser&&currentUser.memberId===m.id?`<button class="btn btn-outline btn-sm" onclick="changeMemberPwd()" style="margin-top:12px">🔑 修改密码</button>`:''}
+      </div>`;
+    const modal=document.getElementById('memberModal');
+    if(!modal){console.error('[DEBUG] memberModal not found!');return;}
+    console.log('[DEBUG] Showing memberModal, modal classList='+modal.classList);
+    modal.classList.remove('hidden');
+  } catch(e) {
+    console.error('[DEBUG] Error in showMemberDetail:', e);
+    alert('Error in showMemberDetail: '+e.message);
+  }
 }
 
 // Tree (with auto-layout: mentors at top, juniors at bottom)
@@ -1867,6 +1879,7 @@ function changeMemberPwd(){
 // ==================== 个人中心 ====================
 // 个人中心入口（HTML onclick 备用，防止 JS onclick 未绑定）
 function tryOpenPersonalCenter(){
+  alert('DEBUG-1: tryOpenPersonalCenter called, currentUser='+(currentUser?currentUser.type:'null'));
   if(!currentUser||!currentUser.memberId){toast('请先登录');return;}
   const m=app.members.find(x=>x.id===currentUser.memberId);
   if(!m){toast('成员数据异常');return;}
@@ -1874,14 +1887,16 @@ function tryOpenPersonalCenter(){
   openPersonalCenter();
 }
 function openPersonalCenter(){
+  alert('DEBUG-2: openPersonalCenter called');
   if(!currentUser||!currentUser.memberId){toast('请先登录');return;}
   const m = app.members.find(x=>x.id===currentUser.memberId);
   if(!m){toast('成员数据异常');return;}
 
   // 显示个人中心遮罩 + 面板（容错：检查元素是否存在）
   const ov=document.getElementById('pcOverlay');
-  if(!ov){toast('界面错误：找不到个人中心遮罩');console.error('pcOverlay missing');return;}
+  if(!ov){toast('界面错误：找不到个人中心遮罩');alert('DEBUG-3: pcOverlay MISSING');console.error('pcOverlay missing');return;}
   ov.classList.remove('hidden');
+  alert('DEBUG-4: pcOverlay shown, ov.classList='+ov.classList);
 
   // 填充当前数据
   const avDisplay = document.getElementById('pcAvatarDisplay');
@@ -2721,14 +2736,18 @@ function onFtDockDragEnd(evt){
 }
 
 function ftNodeClick(evt, id){
+  console.log('[DEBUG] ftNodeClick called, id='+id+', isAdmin='+isAdmin+', ftAdminMode='+ftAdminMode);
+  alert('DEBUG-ftNodeClick: id='+id+', isAdmin='+isAdmin+', ftAdminMode='+ftAdminMode);
   // Don't open modal if was dragging
-  if(ftDragging)return;
+  if(ftDragging){console.log('[DEBUG] ftNodeClick: was dragging, return');return;}
   // 管理员编辑模式需要双击才进入编辑，单击不做操作
   // 非管理员单击查看成员详情
   if(isAdmin && ftAdminMode){
     // 单击忽略（拖动时也不会触发），双击由 ondblclick 处理
+    console.log('[DEBUG] ftNodeClick: admin mode, return without action');
     return;
   } else {
+    console.log('[DEBUG] ftNodeClick: calling showMemberDetail('+id+')');
     showMemberDetail(id);
   }
 }
