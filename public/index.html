@@ -388,7 +388,7 @@ body{
     <!-- 已登录状态 -->
     <div id="loggedInArea" class="hidden" style="display:flex;align-items:center;gap:6px">
       <span id="adminBadge" class="hidden"></span>
-      <span id="userBadge" class="hidden"></span>
+      <span id="userBadge" class="hidden" onclick="tryOpenPersonalCenter()"></span>
       <button class="btn btn-gold btn-sm hidden" id="btnAdminPanel" onclick="openAdminPanel()">⚙️ 管理</button>
       <button class="btn btn-del btn-sm hidden" id="btnAdminToggle">退出</button>
     </div>
@@ -1733,21 +1733,25 @@ function afterLoginSuccess(){
   // Badge
   const badge = document.getElementById('adminBadge');
   const userBadge = document.getElementById('userBadge');
+  if(!userBadge){console.error('userBadge missing!');}
   if(isSuper){
     badge.textContent='👑 超管';badge.className='admin-badge';badge.classList.remove('hidden');
-    userBadge.className='hidden';
+    if(userBadge){userBadge.className='hidden';}
   } else if(currentUser.memberId){
     const m = app.members.find(x=>x.id===currentUser.memberId);
     badge.textContent = (m&&m.isAdmin) ? '⚡ 管理员' : '';
     badge.className = (m&&m.isAdmin) ? 'admin-badge' : 'hidden';
-    userBadge.textContent = m?m.name:'成员'; userBadge.className='user-badge'; userBadge.classList.remove('hidden');
-    // 普通成员点击姓名 → 打开个人中心
-    if(m && !m.isAdmin){
-      userBadge.onclick = openPersonalCenter;
-      userBadge.title = '点击打开个人中心';
-    } else {
-      userBadge.onclick = null;
-      userBadge.title = '';
+    if(userBadge){
+      userBadge.textContent = m?m.name:'成员'; userBadge.className='user-badge'; userBadge.classList.remove('hidden');
+      // 普通成员点击姓名 → 打开个人中心
+      if(m && !m.isAdmin){
+        userBadge.onclick = function(){ openPersonalCenter(); };
+        userBadge.title = '点击打开个人中心';
+        userBadge.style.cursor = 'pointer';
+      } else {
+        userBadge.onclick = null;
+        userBadge.title = '';
+      }
     }
   }
 
@@ -1861,13 +1865,23 @@ function changeMemberPwd(){
 }
 
 // ==================== 个人中心 ====================
+// 个人中心入口（HTML onclick 备用，防止 JS onclick 未绑定）
+function tryOpenPersonalCenter(){
+  if(!currentUser||!currentUser.memberId){toast('请先登录');return;}
+  const m=app.members.find(x=>x.id===currentUser.memberId);
+  if(!m){toast('成员数据异常');return;}
+  if(m.isAdmin)return; // 管理员走管理面板，不打开个人中心
+  openPersonalCenter();
+}
 function openPersonalCenter(){
   if(!currentUser||!currentUser.memberId){toast('请先登录');return;}
   const m = app.members.find(x=>x.id===currentUser.memberId);
   if(!m){toast('成员数据异常');return;}
 
-  // 显示个人中心遮罩 + 面板
-  document.getElementById('pcOverlay').classList.remove('hidden');
+  // 显示个人中心遮罩 + 面板（容错：检查元素是否存在）
+  const ov=document.getElementById('pcOverlay');
+  if(!ov){toast('界面错误：找不到个人中心遮罩');console.error('pcOverlay missing');return;}
+  ov.classList.remove('hidden');
 
   // 填充当前数据
   const avDisplay = document.getElementById('pcAvatarDisplay');
