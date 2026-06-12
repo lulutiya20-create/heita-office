@@ -11,8 +11,8 @@ const DATA_FILE = path.join(__dirname, 'data.json');
 let writeLock = false;
 const writeQueue = [];
 
-// 解析 JSON body（限制 5MB，支持头像 base64）
-app.use(express.json({ limit: '10mb' }));
+// 解析 JSON body（限制 50MB，支持头像 base64 和压缩图片）
+app.use(express.json({ limit: '50mb' }));
 
 // ===================== 静态文件服务 =====================
 app.use(express.static(path.join(__dirname, 'public')));
@@ -87,7 +87,7 @@ app.get('/api/data', (req, res) => {
   }
 });
 
-// PUT /api/data — 更新云端数据（带指纹冲突检测）
+// PUT /api/data — 更新云端数据（带指纹冲突检测 + 冲突时返回最新数据）
 app.put('/api/data', (req, res) => {
   const { data: newData, fingerprint } = req.body;
 
@@ -99,7 +99,15 @@ app.put('/api/data', (req, res) => {
 
   // 冲突检测：如果提供了指纹且与当前数据不匹配，说明有其他设备先更新了
   if (existing && fingerprint && existing._fingerprint && fingerprint !== existing._fingerprint) {
-    console.log('[冲突] 检测到并发修改，采用最后写入胜出策略');
+    console.log('[冲突] 检测到并发修改，返回冲突标记让客户端合并');
+    // 返回当前最新数据，让客户端自行合并
+    return res.status(409).json({
+      success: false,
+      conflict: true,
+      message: '数据已被其他设备修改，请合并后再提交',
+      data: existing,
+      fingerprint: existing._fingerprint
+    });
   }
 
   // 添加服务端元数据

@@ -41,6 +41,8 @@ body{
 .btn-sm{padding:5px 12px;font-size:11px}
 .btn-del{background:var(--red);color:#fff}.btn-del:hover{background:#a93226}
 .btn-ok{background:#27ae60;color:#fff}.btn-ok:hover{background:#219a52}
+.btn-gold{background:linear-gradient(135deg,#b8860b,var(--gold));color:#0a0a15;box-shadow:0 2px 10px rgba(212,167,116,.3)}
+.btn-gold:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(212,167,116,.5)}
 .btn-sync{background:var(--card2);border:1px solid var(--gold);color:var(--gold)}
 .btn-sync:hover{background:rgba(212,167,116,.15)}
 #syncBadge{font-size:16px;transition:var(--tr);line-height:1}
@@ -49,10 +51,10 @@ body{
 
 .container{max-width:1100px;margin:0 auto;padding:0 20px}
 
-.carousel{position:relative;height:440px;overflow:hidden;background:#000}
+.carousel{position:relative;height:580px;overflow:hidden;background:#000}
 .carousel-track{display:flex;height:100%;transition:transform .6s cubic-bezier(.4,0,.2,1)}
 .carousel-slide{min-width:100%;height:100%;position:relative}
-.carousel-slide img{width:100%;height:100%;object-fit:cover}
+.carousel-slide img{width:100%;height:100%;object-fit:contain;background:#000}
 .carousel-slide .ol{position:absolute;inset:0;background:linear-gradient(to top,rgba(10,10,20,.9),transparent 60%)}
 .carousel-slide .cap{position:absolute;bottom:50px;left:50%;transform:translateX(-50%);text-align:center;z-index:2}
 .carousel-slide .cap h3{font-size:26px;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.5)}
@@ -120,7 +122,7 @@ body{
 .event-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:22px;padding-bottom:40px}
 .event-card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden;transition:var(--tr)}
 .event-card:hover{border-color:var(--red);transform:translateY(-3px);box-shadow:0 8px 25px rgba(0,0,0,.3)}
-.event-card img{width:100%;height:200px;object-fit:cover;background:var(--card2)}
+.event-card img{width:100%;height:200px;object-fit:contain;background:var(--card2)}
 .event-body{padding:20px}
 .event-body h4{font-size:17px;color:var(--gold2);margin-bottom:6px}
 .event-body .dt{font-size:12px;color:var(--red2);margin-bottom:10px}
@@ -133,6 +135,40 @@ body{
 .mentor-card h4{font-size:18px;color:var(--gold2);margin-bottom:4px}
 .mentor-card .sp{font-size:12px;color:var(--red2);margin-bottom:10px}
 .mentor-card .xt{font-size:13px;color:var(--muted);line-height:1.8;padding:12px;background:rgba(255,255,255,.03);border-radius:var(--rs);margin-top:10px}
+
+/* Mentor Carousel */
+.mentor-carousel-container{max-width:1000px;margin:0 auto;padding:20px;text-align:center}
+.mentor-carousel{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:20px;user-select:none}
+.mc-arrow{background:rgba(212,167,116,.15);border:1px solid var(--gold);color:var(--gold);font-size:22px;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--tr);flex-shrink:0;z-index:10}
+.mc-arrow:hover{background:var(--gold);color:#0f0f1a}
+.mc-viewport{flex:1;overflow:hidden;position:relative;height:640px;perspective:1200px}
+.mc-track{display:flex;align-items:center;justify-content:center;height:100%;position:absolute;left:0;right:0;transition:transform .5s cubic-bezier(.23,1,.32,1)}
+.mc-card{position:absolute;width:200px;border-radius:20px;overflow:hidden;transition:all .5s cubic-bezier(.23,1,.32,1);cursor:pointer;background:var(--card);border:1px solid var(--bdr2)}
+.mc-card.mc-center{width:320px;box-shadow:0 8px 40px rgba(212,167,116,.25);border-color:var(--gold);z-index:5;transform:translateX(-50%) scale(1)}
+.mc-card.mc-left{transform:translateX(calc(-50% - 260px)) rotateY(28deg) scale(.72);z-index:3;opacity:.65;filter:brightness(.55)}
+.mc-card.mc-right{transform:translateX(calc(-50% + 260px)) rotateY(-28deg) scale(.72);z-index:3;opacity:.65;filter:brightness(.55)}
+.mc-card img{width:100%;aspect-ratio:9/16;object-fit:cover;display:block;border-radius:20px}
+.mc-card.mc-center img{border-radius:20px 20px 0 0}
+.mc-card .mc-simple-overlay{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(10,10,20,.95),transparent);padding:20px 12px 14px;text-align:center;border-radius:0 0 20px 20px}
+.mc-card .mc-simple-overlay h4{font-size:15px;color:#fff;font-weight:600;text-shadow:0 2px 6px rgba(0,0,0,.8)}
+.mc-card-body{padding:18px;text-align:left}
+.mc-card-body h4{font-size:20px;color:var(--gold2);margin-bottom:4px}
+.mc-card-body .mc-sp{font-size:13px;color:var(--red2);margin-bottom:10px}
+.mc-card-body .mc-xt{font-size:13px;color:var(--muted);line-height:1.7;max-height:100px;overflow-y:auto}
+.mc-card-body .mc-xt::-webkit-scrollbar{width:4px}
+.mc-card-body .mc-xt::-webkit-scrollbar-thumb{background:var(--gold);border-radius:2px}
+.mc-dots{display:flex;gap:8px;justify-content:center;margin-top:16px}
+.mc-dot{width:8px;height:8px;border-radius:50%;background:var(--bdr2);cursor:pointer;transition:var(--tr)}
+.mc-dot.active{background:var(--gold);box-shadow:0 0 8px var(--gold)}
+@media(max-width:768px){
+  .mentor-carousel{gap:4px}
+  .mc-arrow{width:36px;height:36px;font-size:16px}
+  .mc-viewport{height:520px}
+  .mc-card{width:160px}
+  .mc-card.mc-center{width:220px}
+  .mc-card.mc-left{transform:translateX(calc(-50% - 170px)) rotateY(22deg) scale(.68)}
+  .mc-card.mc-right{transform:translateX(calc(-50% + 170px)) rotateY(-22deg) scale(.68)}
+}
 
 .msg-board{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:28px;max-width:700px;margin:0 auto 40px}
 .msg-form{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
@@ -182,13 +218,120 @@ body{
 .empty .ic{font-size:40px;margin-bottom:10px}
 .hidden{display:none!important}
 
+/* Hamburger menu */
+.hamburger{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:6px;z-index:1001}
+.hamburger span{display:block;width:24px;height:2px;background:var(--gold);border-radius:2px;transition:var(--tr)}
+.hamburger.open span:nth-child(1){transform:rotate(45deg) translate(5px,5px)}
+.hamburger.open span:nth-child(2){opacity:0}
+.hamburger.open span:nth-child(3){transform:rotate(-45deg) translate(5px,-5px)}
+
+/* Mobile nav */
+.mobile-nav{display:none;position:fixed;top:68px;left:0;right:0;bottom:0;background:rgba(15,15,26,.97);z-index:999;flex-direction:column;padding:20px;gap:6px;backdrop-filter:blur(10px)}
+.mobile-nav.open{display:flex}
+.mobile-nav .nav-btn{font-size:16px;padding:14px 20px;text-align:left;width:100%;border-radius:var(--rs)}
+
+/* File upload widgets */
+.upload-area{position:relative;display:flex;gap:8px;align-items:center}
+.upload-area .upload-label{position:relative;background:var(--card2);border:1px dashed var(--bdr2);border-radius:var(--rs);padding:6px 14px;cursor:pointer;font-size:12px;color:var(--muted);transition:var(--tr);display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.upload-area .upload-label input[type=file]{position:absolute;opacity:0;width:0;height:0;overflow:hidden}
+.upload-area .upload-label:hover{border-color:var(--gold);color:var(--gold)}
+.upload-preview-thumb{width:40px;height:40px;border-radius:6px;object-fit:cover;border:1px solid var(--bdr2);display:none}
+
+/* Family tree page */
+.familytree-container{max-width:1200px;margin:0 auto;padding:20px}
+.familytree-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:16px}
+.familytree-canvas{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);overflow:auto;position:relative;min-height:500px;touch-action:none;cursor:grab}
+.familytree-canvas::-webkit-scrollbar{width:10px;height:10px}
+.familytree-canvas::-webkit-scrollbar-track{background:rgba(0,0,0,.2);border-radius:5px}
+.familytree-canvas::-webkit-scrollbar-thumb{background:var(--gold);border-radius:5px}
+.familytree-canvas::-webkit-scrollbar-corner{background:rgba(0,0,0,.2)}
+.familytree-canvas:active{cursor:grabbing}
+.familytree-canvas.dragging-node{cursor:grabbing}
+.familytree-canvas svg{display:block;min-width:100%}
+.ft-node{cursor:pointer;transition:filter .2s}
+.ft-node:hover{filter:brightness(1.2)}
+.ft-node.dragging{filter:brightness(1.3);z-index:100}
+.ft-node-handle{opacity:0;transition:opacity .2s}
+.ft-node:hover .ft-node-handle,.admin-mode .ft-node-handle{opacity:1}
+.familytree-tooltip{position:fixed;background:var(--card);border:1px solid var(--gold);border-radius:var(--rs);padding:12px 16px;z-index:5000;pointer-events:none;font-size:12px;box-shadow:0 8px 30px rgba(0,0,0,.5);max-width:200px;display:none}
+.familytree-tooltip strong{color:var(--gold2);display:block;margin-bottom:4px}
+.familytree-tooltip .tt-role{color:var(--red2);font-size:11px}
+
+/* Smooth resize for tree */
+.tree-resize-handle{cursor:ns-resize;height:6px;background:var(--bdr2);border-radius:3px;margin:8px auto;width:60px;transition:background .2s}
+.tree-resize-handle:hover{background:var(--gold)}
+
+/* Unrelated members dock */
+.ft-dock{position:absolute;right:0;top:0;bottom:0;width:160px;background:rgba(15,15,26,.85);border-left:1px solid var(--gold);display:flex;flex-direction:column;overflow-y:auto;z-index:20;padding:10px 6px;backdrop-filter:blur(6px)}
+.ft-dock-title{text-align:center;font-size:11px;color:var(--gold);margin-bottom:8px;font-weight:600;letter-spacing:1px}
+.ft-dock-empty{text-align:center;color:var(--muted);font-size:10px;margin-top:20px;line-height:1.5}
+.ft-dock-card{background:var(--card);border:1px solid var(--bdr2);border-radius:12px;padding:8px;text-align:center;margin-bottom:6px;cursor:grab;transition:all .2s ease;user-select:none;-webkit-user-select:none}
+.ft-dock-card:hover{border-color:var(--gold);transform:translateX(-4px);box-shadow:-2px 0 12px rgba(212,167,116,.15)}
+.ft-dock-card:active{cursor:grabbing}
+.ft-dock-card .dc-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--bdr2),var(--card2));display:flex;align-items:center;justify-content:center;font-size:16px;margin:0 auto 4px;border:1.5px solid var(--bdr2);overflow:hidden}
+.ft-dock-card .dc-av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.ft-dock-card .dc-name{font-size:11px;color:var(--gold2);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ft-dock-card .dc-role{font-size:9px;color:var(--muted)}
+.familytree-canvas.has-dock{padding-right:170px}
+
 @media(max-width:768px){
-  .header{padding:0 14px}.header-logo h1{font-size:17px}
+  .header{padding:0 14px;height:56px}
+  .header-logo h1{font-size:16px}
+  .header-logo .icon{width:32px;height:32px;font-size:16px;border-radius:8px}
+  .header-nav{display:none}
+  .hamburger{display:flex}
   .nav-btn{padding:6px 12px;font-size:11px}
-  .carousel{height:250px}
-  .home-cards{grid-template-columns:repeat(2,1fr)}
+  .carousel{height:280px}
+  .carousel-btn{width:32px;height:32px;font-size:14px}
+  .carousel-slide .cap h3{font-size:18px}
+  .home-cards{grid-template-columns:1fr 1fr;gap:14px}
+  .home-card{padding:24px 16px}
+  .home-card .hc-icon{font-size:36px}
+  .home-card h3{font-size:16px}
   .event-grid,.mentor-grid{grid-template-columns:1fr}
+  .event-card img{height:160px}
   .tree-relation-panel{width:100%}
+  .member-grid{grid-template-columns:1fr 1fr;gap:12px}
+  .member-card{padding:16px}
+  .member-card .av{width:44px;height:44px;font-size:18px}
+  .member-card h4{font-size:14px}
+  .container{padding:0 12px}
+  .page-header h2{font-size:22px}
+  .page-header{padding:30px 0 20px}
+  .admin-box{padding:20px;width:95%}
+  .admin-box.wide{max-width:95%}
+  .admin-tabs{flex-wrap:nowrap;overflow-x:auto;gap:4px}
+  .admin-tab{padding:5px 10px;font-size:11px;white-space:nowrap}
+  .admin-item{flex-direction:column;align-items:flex-start}
+  .admin-item .ia{align-self:flex-end}
+  .btn{font-size:12px;padding:7px 14px}
+  .btn-sm{font-size:11px;padding:4px 10px}
+  .header-actions{gap:4px}
+  .header-actions .btn{padding:5px 10px;font-size:11px}
+  .msg-form{flex-direction:column}
+  .msg-form input,.msg-form textarea{min-width:100%}
+  .modal-box{padding:20px;width:95%}
+  .sync-bar{padding:6px 10px;font-size:10px;gap:4px}
+  .sync-bar .btn{font-size:10px;padding:3px 8px}
+  .familytree-container{padding:10px}
+  .familytree-canvas{min-height:350px}
+  .ft-dock{width:120px;padding:8px 4px}
+  .ft-dock-card .dc-av{width:28px;height:28px;font-size:13px}
+  .ft-dock-card .dc-name{font-size:9px}
+  .ft-dock-card .dc-role{font-size:8px}
+  .familytree-canvas.has-dock{padding-right:130px}
+  .familytree-actions{gap:6px}
+  .upload-area{flex-direction:column;align-items:stretch}
+  .ft-node text{font-size:11px}
+}
+@media(max-width:480px){
+  .home-cards{grid-template-columns:1fr}
+  .member-grid{grid-template-columns:1fr}
+  .carousel{height:220px}
+  .header-logo h1{font-size:14px}
+  .header-actions .btn{font-size:10px;padding:4px 8px}
+  .admin-tabs{gap:2px}
+  .admin-tab{padding:4px 8px;font-size:10px}
 }
 </style>
 <script src="https://beacon.cdn.qq.com/sdk/4.5.9/beacon_web.min.js"></script>
@@ -221,13 +364,26 @@ body{
     <h1>黑塔办事处</h1>
   </div>
   <nav class="header-nav" id="headerNav"></nav>
+  <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileNav()">
+    <span></span><span></span><span></span>
+  </button>
   <div class="header-actions">
     <span style="font-size:14px;cursor:pointer" id="syncBadge" title="云端同步状态" onclick="showSyncMenu()">☁</span>
     <button class="btn btn-sync btn-sm" onclick="showSyncMenu()" title="数据同步">📤 同步</button>
     <span id="adminBadge" class="hidden"></span>
+    <button class="btn btn-gold btn-sm hidden" id="btnAdminPanel" onclick="openAdminPanel()">⚙️ 管理</button>
     <button class="btn btn-outline btn-sm" id="btnAdminToggle" onclick="toggleAdmin()">管理员入口</button>
   </div>
 </header>
+<!-- Mobile Nav -->
+<div class="mobile-nav" id="mobileNav">
+  <button class="nav-btn" data-path="/" onclick="navigate('/');closeMobileNav()">🏠 首页</button>
+  <button class="nav-btn" data-path="/members" onclick="navigate('/members');closeMobileNav()">👥 成员</button>
+  <button class="nav-btn" data-path="/familytree" onclick="navigate('/familytree');closeMobileNav()">🌳 黑塔族谱</button>
+  <button class="nav-btn" data-path="/events" onclick="navigate('/events');closeMobileNav()">📅 事件</button>
+    <button class="nav-btn" data-path="/mentors" onclick="navigate('/mentors');closeMobileNav()"><img src="data:image/png;base64,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" alt="" style="width:16px;height:16px;vertical-align:middle;margin-right:2px"> 导师</button>
+  <button class="nav-btn" data-path="/messages" onclick="navigate('/messages');closeMobileNav()">💬 留言</button>
+</div>
 
 <!-- Sync bar -->
 <div class="sync-bar" id="syncBar" style="display:none">
@@ -251,10 +407,11 @@ body{
     <div class="container">
       <div class="page-header"><h2>功能导航</h2><p>点击进入各功能模块</p></div>
       <div class="home-cards">
-        <div class="home-card" onclick="navigate('/members')"><div class="hc-icon">👥</div><h3>成员名录</h3></div>
-        <div class="home-card" onclick="navigate('/events')"><div class="hc-icon">📅</div><h3>部队事件</h3></div>
-        <div class="home-card" onclick="navigate('/mentors')"><div class="hc-icon">🎓</div><h3>导师信息</h3></div>
-        <div class="home-card" onclick="navigate('/messages')"><div class="hc-icon">💬</div><h3>留言板</h3></div>
+        <div class="home-card" onclick="navigate('/members')"><div class="hc-icon">👥</div><h3>成员名录</h3><p>查看全体成员信息</p></div>
+        <div class="home-card" onclick="navigate('/familytree')"><div class="hc-icon">🌳</div><h3>黑塔族谱</h3><p>全员关系图谱</p></div>
+        <div class="home-card" onclick="navigate('/events')"><div class="hc-icon">📅</div><h3>部队事件</h3><p>团建活动与重要事件</p></div>
+        <div class="home-card" onclick="navigate('/mentors')"><div class="hc-icon"><img src="data:image/png;base64,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" alt="" style="width:48px;height:auto"></div><h3>导师信息</h3><p>导师团队与专长</p></div>
+        <div class="home-card" onclick="navigate('/messages')"><div class="hc-icon">💬</div><h3>留言板</h3><p>欢迎留下宝贵意见</p></div>
       </div>
     </div>
   </section>
@@ -263,15 +420,26 @@ body{
 <!-- MEMBERS PAGE -->
 <div class="page" id="page-members">
   <div class="container">
-    <div class="page-header"><h2>成员名录</h2><p>黑塔办事处全体成员 · 点击卡片查看详情 · 关系图谱支持所有人编辑</p></div>
+    <div class="page-header"><h2>成员名录</h2><p>黑塔办事处全体成员 · 点击卡片查看详情</p></div>
     <div class="member-grid" id="memberGrid"></div>
-    <div class="tree-section">
-      <div class="page-header"><h2>成员关系树状图</h2></div>
-      <div class="tree-canvas-wrap" id="treeCanvasWrap">
-        <svg id="treeSvg"></svg>
-        <div class="tree-empty" id="treeEmpty"><div class="ic">🌳</div><p>暂无成员数据</p></div>
-      </div>
+  </div>
+</div>
+
+<!-- FAMILY TREE PAGE (黑塔族谱) -->
+<div class="page" id="page-familytree">
+  <div class="familytree-container">
+    <div class="page-header"><h2>🌳 黑塔族谱</h2><p>全员关系图谱 · 点击节点编辑关系</p></div>
+    <div class="familytree-actions" id="ftActions">
+      <button class="btn btn-sync btn-sm hidden" id="ftResetBtn" onclick="resetTreePositions()">🔄 重置布局</button>
+      <button class="btn btn-outline btn-sm hidden" id="ftAdminBtn" onclick="toggleFtAdmin()">🔐 管理员编辑</button>
+      <span id="ftAdminHint" class="hidden" style="font-size:12px;color:var(--muted)">请先登录管理员</span>
     </div>
+    <div class="familytree-canvas" id="ftCanvas">
+      <svg id="ftSvg"></svg>
+      <div class="tree-empty" id="ftEmpty"><div class="ic">🌳</div><p>暂无成员数据</p></div>
+      <div class="ft-dock" id="ftDock" style="display:none"><div class="ft-dock-title">未关联成员</div><div class="ft-dock-empty" id="ftDockEmpty">拖入画布定位</div><div id="ftDockList"></div></div>
+    </div>
+    <div class="familytree-tooltip" id="ftTooltip"></div>
   </div>
 </div>
 
@@ -281,7 +449,10 @@ body{
   <div class="panel-header"><h3 id="panelTitle">编辑关系</h3><button class="panel-close" onclick="closeRelationPanel()">&times;</button></div>
   <div class="panel-body">
     <label>目标成员</label><select id="relTarget"></select>
-    <label>关系类型</label><input type="text" id="relLabel">
+    <label>关系类型</label><input type="text" id="relLabel" placeholder="导师→豆芽">
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
+      <button class="btn btn-outline btn-sm" onclick="document.getElementById('relLabel').value='导师→豆芽'">导师→豆芽</button>
+    </div>
     <button class="btn btn-ok" onclick="addRelation()" style="width:100%;margin-top:10px">添加关系</button>
     <label style="margin-top:16px">当前关系</label>
     <div id="currentRelations"></div>
@@ -298,9 +469,16 @@ body{
 
 <!-- MENTORS PAGE -->
 <div class="page" id="page-mentors">
-  <div class="container">
-    <div class="page-header"><h2>导师信息</h2><p>黑塔办事处的导师团队</p></div>
-    <div class="mentor-grid" id="mentorGrid"></div>
+  <div class="mentor-carousel-container">
+    <div class="page-header"><h2><img src="data:image/png;base64,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" alt="" style="width:28px;height:28px;vertical-align:middle;margin-right:6px"> 导师信息</h2><p>黑塔办事处的导师团队</p></div>
+    <div class="mentor-carousel" id="mentorCarousel">
+      <button class="mc-arrow mc-prev" onclick="mentorCarouselPrev()" aria-label="上一个">◀</button>
+      <div class="mc-viewport" id="mcViewport">
+        <div class="mc-track" id="mcTrack"></div>
+      </div>
+      <button class="mc-arrow mc-next" onclick="mentorCarouselNext()" aria-label="下一个">▶</button>
+    </div>
+    <div class="mc-dots" id="mcDots"></div>
   </div>
 </div>
 
@@ -348,12 +526,23 @@ body{
       <button class="admin-tab active" onclick="sAT('carousel')">轮播图</button>
       <button class="admin-tab" onclick="sAT('members')">成员</button>
       <button class="admin-tab" onclick="sAT('events')">事件</button>
-      <button class="admin-tab" onclick="sAT('mentors')">导师</button>
+      <button class="admin-tab" onclick="sAT('mentors')"><img src="data:image/png;base64,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" alt="" style="width:14px;height:14px;vertical-align:middle;margin-right:2px"> 导师</button>
       <button class="admin-tab" onclick="sAT('msgs')">留言</button>
     </div>
     <div class="admin-tab-content active" id="adm-carousel">
       <div class="admin-fg"><label>标题</label><input id="adm-carousel-title"></div>
-      <div class="admin-fg"><label>图片URL</label><input id="adm-carousel-url" placeholder="https://..."></div>
+      <div class="admin-fg"><label>图片</label>
+        <div class="upload-area">
+          <label class="upload-label">
+            🖼️ 选择本地图片 (≤20MB)
+            <input type="file" id="adm-carousel-file" accept="image/*" onchange="handleCarouselFile(event)">
+          </label>
+          <img class="upload-preview-thumb" id="carouselPreviewThumb">
+          <span id="carouselFileHint" style="font-size:11px;color:var(--muted)"></span>
+        </div>
+        <div style="margin-top:6px;font-size:11px;color:var(--muted)">或输入图片URL：</div>
+        <input id="adm-carousel-url" placeholder="https://..." style="margin-top:4px">
+      </div>
       <button class="btn btn-red btn-sm" onclick="admAddCarousel()">添加</button>
       <div style="margin-top:14px" id="adm-carousel-list"></div>
     </div>
@@ -362,14 +551,36 @@ body{
       <div class="admin-fg"><label>职务</label><input id="adm-m-role"></div>
       <div class="admin-fg"><label>简介</label><textarea id="adm-m-info"></textarea></div>
       <div class="admin-fg"><label>头像（可选，最大20MB）</label><input type="file" id="adm-m-avatar" accept="image/*" onchange="previewAvatar(this)"><div id="avatarPreview" style="margin-top:6px;display:none"><img id="avatarPreviewImg" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid var(--gold)"><span id="avatarSizeHint" style="font-size:11px;color:var(--muted);margin-left:8px"></span></div></div>
-      <button class="btn btn-red btn-sm" onclick="admAddMember()">添加</button>
+      <div class="admin-fg" style="display:flex;align-items:center;gap:8px;margin-bottom:0">
+        <input type="checkbox" id="adm-m-isMentor" onchange="toggleMentorFields()" style="width:auto">
+        <label for="adm-m-isMentor" style="margin:0;cursor:pointer">同时设为导师 🎓</label>
+      </div>
+      <div id="mentorFields" style="display:none">
+        <div class="admin-fg"><label>专长领域</label><input id="adm-m-specialty" placeholder="如：行政管理、战术指挥..."></div>
+        <div class="admin-fg"><label>详细介绍</label><textarea id="adm-m-extra" placeholder="导师的详细背景、经验介绍等"></textarea></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn btn-red btn-sm" id="adm-m-btn" onclick="admUpsertMember()">添加成员</button>
+        <button class="btn btn-outline btn-sm hidden" id="adm-m-cancel" onclick="cancelEditMember()">取消编辑</button>
+      </div>
       <div style="margin-top:14px" id="adm-m-list"></div>
     </div>
     <div class="admin-tab-content" id="adm-events">
       <div class="admin-fg"><label>标题</label><input id="adm-e-title"></div>
       <div class="admin-fg"><label>日期</label><input type="date" id="adm-e-date"></div>
       <div class="admin-fg"><label>描述</label><textarea id="adm-e-desc"></textarea></div>
-      <div class="admin-fg"><label>图片URL（可选）</label><input id="adm-e-image"></div>
+      <div class="admin-fg"><label>图片</label>
+        <div class="upload-area">
+          <label class="upload-label">
+            🖼️ 选择本地图片 (≤20MB)
+            <input type="file" id="adm-e-file" accept="image/*" onchange="handleEventFile(event)">
+          </label>
+          <img class="upload-preview-thumb" id="eventPreviewThumb">
+          <span id="eventFileHint" style="font-size:11px;color:var(--muted)"></span>
+        </div>
+        <div style="margin-top:6px;font-size:11px;color:var(--muted)">或输入图片URL：</div>
+        <input id="adm-e-image" placeholder="https://..." style="margin-top:4px">
+      </div>
       <button class="btn btn-red btn-sm" onclick="admAddEvent()">添加</button>
       <div style="margin-top:14px" id="adm-e-list"></div>
     </div>
@@ -377,6 +588,10 @@ body{
       <div class="admin-fg"><label>选择成员</label><select id="adm-mt-member"></select></div>
       <div class="admin-fg"><label>专长</label><input id="adm-mt-specialty"></div>
       <div class="admin-fg"><label>详细介绍</label><textarea id="adm-mt-extra"></textarea></div>
+      <div class="admin-fg"><label>导师图片 (9:16, ≤20MB, 1080p)</label>
+        <input type="file" id="adm-mt-image" accept="image/*" onchange="handleMentorFile(event)">
+        <div id="mentorFileHint" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
+      </div>
       <button class="btn btn-red btn-sm" onclick="admAddMentor()">设为导师</button>
       <div style="margin-top:14px" id="adm-mt-list"></div>
     </div>
@@ -398,10 +613,9 @@ body{
 //   3. 纯离线模式 → localStorage only
 const DB_KEY = 'heita_office_v2';
 // 可配置的 API 服务器地址（留空则使用同源 /api/data）
-const API_SERVER_URL = '';
+const API_SERVER_URL = 'https://heita-office.onrender.com';
 // 自动检测可用的 API 端点
 let API_DATA = '';
-let API_STATUS = '';
 let cloudEnabled = false;
 let cloudChecked = false;
 let syncPending = false;
@@ -409,7 +623,7 @@ let lastCloudFingerprint = '';
 let pollTimer = null;
 const POLL_INTERVAL = 5000;
 
-// 初始化 API 端点（自动检测可用性）
+// 初始化 API 端点（自动检测可用性 — 直接用 /api/data 检测）
 async function initApiEndpoint() {
   // 候选端点列表
   const candidates = [];
@@ -423,24 +637,27 @@ async function initApiEndpoint() {
   }
 
   for (const url of candidates) {
-    const statusUrl = url.replace('/api/data', '/api/status');
+    // 如果已有 /api/data 后缀直接用，否则追加
+    const dataUrl = url.endsWith('/api/data') ? url : url.replace(/\/$/, '') + '/api/data';
     try {
-      const resp = await fetch(statusUrl, { signal: AbortSignal.timeout(3000) });
+      const resp = await fetch(dataUrl, { signal: AbortSignal.timeout(5000) });
       if (resp.ok) {
-        API_DATA = url;
-        API_STATUS = statusUrl;
-        cloudEnabled = true;
-        console.log('[同步] ✅ 云服务器已连接:', API_DATA);
-        return true;
+        const result = await resp.json();
+        if (result.success) {
+          API_DATA = dataUrl;
+          cloudEnabled = true;
+          lastCloudFingerprint = result.fingerprint || '';
+          console.log('[同步] ✅ 云服务器已连接:', API_DATA, '指纹:', lastCloudFingerprint.substring(0,8));
+          return true;
+        }
       }
     } catch(e) {
-      console.log('[同步] 尝试连接失败:', url.substring(0, 30), e.message);
+      console.log('[同步] 尝试连接失败:', dataUrl.substring(0, 40), e.message);
     }
   }
 
   // 所有端点都不可用
   API_DATA = '/api/data';
-  API_STATUS = '/api/status';
   cloudEnabled = false;
   console.log('[同步] ⚠ 未检测到云服务器，使用离线模式');
   return false;
@@ -476,11 +693,17 @@ const DEFAULTS = {
 };
 
 let app = loadApp();
+// 清理旧数据：移除轮播图中默认的"图片"标题
+let cleaned=false;
+if(app.carouselImages){app.carouselImages.forEach(i=>{if(i.title==='图片'){i.title='';cleaned=true;}});}
+if(app.events){app.events.forEach(e=>{if(e.title==='图片'){e.title='';cleaned=true;}});}
+if(cleaned)saveLocal(app);
 let isAdmin = false;
 let currentSlide = 0;
 let carouselTimer = null;
 let currentPage = '/';
-let editingMemberId = null;
+let editingMemberId = null;  // 关系编辑面板的目标成员 ID
+let editingAdminMemberId = null;  // 管理面板中正在编辑的成员 ID
 let treeNodePositions = {};
 
 // 清理云端服务端元数据字段（_updatedAt, _fingerprint, _deviceCount）
@@ -581,7 +804,17 @@ function loadApp() {
 function saveApp(data) {
   app = data;
   saveLocal(app);
-  pushToCloud(app);
+  debouncedPushToCloud(app);
+}
+
+// 去抖动推送：频繁操作（如拖动节点）时延迟推送，避免服务器过载
+let pushDebounceTimer = null;
+function debouncedPushToCloud(data) {
+  if (pushDebounceTimer) clearTimeout(pushDebounceTimer);
+  // 普通操作延迟 1 秒，确保连续操作只推送最后一次
+  pushDebounceTimer = setTimeout(() => {
+    pushToCloud(data);
+  }, 1000);
 }
 
 function saveLocal(data) {
@@ -606,17 +839,146 @@ function pushToCloud(data) {
     if (result.success) {
       lastCloudFingerprint = result.fingerprint || '';
       updateSyncStatus('synced');
+      syncPending = false;
+    } else if (result.conflict) {
+      // 🔥 冲突检测：另一个设备已经修改了数据，需要智能合并
+      console.warn('[同步] ⚠ 检测到数据冲突（另一设备已修改），正在合并...');
+      resolveConflict(data);
     } else {
       console.error('[同步] 推送失败:', result.message);
       updateSyncStatus('error');
+      syncPending = false;
     }
-    syncPending = false;
   })
   .catch(e => {
     console.error('[同步] 推送网络错误:', e.message);
     updateSyncStatus('error');
     syncPending = false;
   });
+}
+
+// 智能冲突解决：拉取最新数据 → 合并本地修改 → 重新推送
+async function resolveConflict(localData) {
+  try {
+    const resp = await fetch(API_DATA);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const result = await resp.json();
+    if (!result.success || !result.data) throw new Error('无效响应');
+
+    const serverData = cleanCloudMeta(result.data);
+    const merged = mergeData(serverData, localData);
+    const mergedClean = cleanCloudMeta(merged);
+
+    // 用新的指纹重新推送
+    const pushResp = await fetch(API_DATA, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: mergedClean, fingerprint: result.fingerprint || '' })
+    });
+    const pushResult = await pushResp.json();
+
+    if (pushResult.success) {
+      lastCloudFingerprint = pushResult.fingerprint || '';
+      app = merged;
+      saveLocal(app);
+      updateSyncStatus('synced');
+      console.log('[同步] ✅ 冲突已解决并推送成功');
+    } else {
+      // 递归重试
+      console.warn('[同步] 合并后推送仍失败，重试...');
+      syncPending = false;
+      resolveConflict(merged);
+    }
+  } catch (e) {
+    console.error('[同步] 冲突解决失败:', e.message);
+    updateSyncStatus('error');
+  } finally {
+    syncPending = false;
+  }
+}
+
+// 智能合并策略：以本地数据为主，服务器数据为基础补充
+// 保证多设备同时修改不丢失数据
+function mergeData(server, local) {
+  // 1. 成员：以本地为主，补充服务器存在但本地缺失的成员（其他设备新增的）
+  const localMemberMap = {};
+  (local.members||[]).forEach(m => { localMemberMap[m.id] = m; });
+  const serverMemberMap = {};
+  (server.members||[]).forEach(m => { serverMemberMap[m.id] = m; });
+
+  const mergedMembers = [];
+  const processedIds = new Set();
+
+  // 首先保留本地的所有成员
+  (local.members||[]).forEach(m => {
+    mergedMembers.push(m);
+    processedIds.add(m.id);
+  });
+  // 补充服务器中有但本地没有的成员（其他设备新增的）
+  (server.members||[]).forEach(m => {
+    if (!processedIds.has(m.id)) {
+      mergedMembers.push({avatar:'',...m});
+    }
+  });
+
+  // 2. 轮播图：合并（按ID去重，本地优先）
+  const mergedCarousel = [];
+  const carouselIds = new Set();
+  (local.carouselImages||[]).forEach(c => {
+    mergedCarousel.push(c);
+    carouselIds.add(c.id);
+  });
+  (server.carouselImages||[]).forEach(c => {
+    if (!carouselIds.has(c.id)) mergedCarousel.push(c);
+  });
+
+  // 3. 事件：合并（按ID去重，本地优先）
+  const mergedEvents = [];
+  const eventIds = new Set();
+  (local.events||[]).forEach(e => {
+    mergedEvents.push(e);
+    eventIds.add(e.id);
+  });
+  (server.events||[]).forEach(e => {
+    if (!eventIds.has(e.id)) mergedEvents.push(e);
+  });
+
+  // 4. 导师：合并
+  const mergedMentors = [];
+  const mentorIds = new Set();
+  (local.mentors||[]).forEach(mt => {
+    mergedMentors.push(mt);
+    mentorIds.add(mt.id);
+  });
+  (server.mentors||[]).forEach(mt => {
+    if (!mentorIds.has(mt.id)) mergedMentors.push(mt);
+  });
+
+  // 5. 留言：合并
+  const mergedMsgs = [];
+  const msgIds = new Set();
+  (local.messages||[]).forEach(msg => {
+    mergedMsgs.push(msg);
+    msgIds.add(msg.id);
+  });
+  (server.messages||[]).forEach(msg => {
+    if (!msgIds.has(msg.id)) mergedMsgs.push(msg);
+  });
+
+  // 6. 节点位置：本地优先
+  const mergedPositions = {...(server.treeNodePositions||{}),...(local.treeNodePositions||{})};
+
+  // 7. 密码：使用本地的
+  return {
+    ...server, ...local,
+    members: mergedMembers,
+    carouselImages: mergedCarousel,
+    events: mergedEvents,
+    mentors: mergedMentors,
+    messages: mergedMsgs,
+    treeNodePositions: mergedPositions,
+    adminPassword: local.adminPassword || server.adminPassword
+  };
 }
 
 function forceCloudRefresh() {
@@ -657,34 +1019,31 @@ function startPolling() {
   pollTimer = setInterval(async () => {
     if (syncPending) return;
     try {
-      const resp = await fetch(API_STATUS);
+      const resp = await fetch(API_DATA);
       if (!resp.ok) return;
-      const status = await resp.json();
-      if (status.fingerprint && status.fingerprint !== lastCloudFingerprint) {
-        console.log('[轮询] 检测到云端数据变更，自动拉取...');
-        const dataResp = await fetch(API_DATA);
-        if (dataResp.ok) {
-          const result = await dataResp.json();
-          if (result.success && result.data && result.data.members) {
-            lastCloudFingerprint = result.fingerprint || '';
-            const cloudData = cleanCloudMeta(result.data);
-            const newApp = { ...DEFAULTS, ...cloudData,
-              members: (cloudData.members||[]).map(m=>({avatar:'',...m})),
-              events: cloudData.events||DEFAULTS.events,
-              mentors: cloudData.mentors||DEFAULTS.mentors,
-              messages: cloudData.messages||DEFAULTS.messages,
-              carouselImages: cloudData.carouselImages||DEFAULTS.carouselImages
-            };
-            if (JSON.stringify(newApp) !== JSON.stringify(app)) {
-              app = newApp;
-              saveLocal(app);
-              refreshAll();
-              if (currentPage === '/') navigate('/');
-              else navigate(currentPage);
-              updateSyncStatus('synced');
-              console.log('[轮询] ✅ 数据已自动更新');
-            }
-          }
+      const result = await resp.json();
+      if (!result.success || !result.data) return;
+      // 比较指纹，只在真的有变化时才更新
+      if (result.fingerprint && result.fingerprint !== lastCloudFingerprint) {
+        if (!result.data.members || result.data.members.length === 0) return; // 无效数据
+        console.log('[轮询] 检测到云端数据变更 (指纹不同), 自动拉取...');
+        lastCloudFingerprint = result.fingerprint;
+        const cloudData = cleanCloudMeta(result.data);
+        const newApp = { ...DEFAULTS, ...cloudData,
+          members: (cloudData.members||[]).map(m=>({avatar:'',...m})),
+          events: cloudData.events||DEFAULTS.events,
+          mentors: cloudData.mentors||DEFAULTS.mentors,
+          messages: cloudData.messages||DEFAULTS.messages,
+          carouselImages: cloudData.carouselImages||DEFAULTS.carouselImages
+        };
+        if (JSON.stringify(newApp) !== JSON.stringify(app)) {
+          app = newApp;
+          saveLocal(app);
+          refreshAll();
+          if (currentPage === '/') navigate('/');
+          else navigate(currentPage);
+          updateSyncStatus('synced');
+          console.log('[轮询] ✅ 数据已自动更新, 新指纹:', result.fingerprint.substring(0,8));
         }
       }
     } catch(e) { /* 静默失败 */ }
@@ -792,11 +1151,33 @@ function importData(event) {
 function navigate(path) {
   currentPage = path;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  const map = {'/':'page-home','/members':'page-members','/events':'page-events','/mentors':'page-mentors','/messages':'page-messages'};
+  const map = {'/':'page-home','/members':'page-members','/familytree':'page-familytree','/events':'page-events','/mentors':'page-mentors','/messages':'page-messages'};
   const pid = map[path]; if(pid) document.getElementById(pid).classList.add('active');
   updateNavHighlight();
+  closeMobileNav();
   if(path==='/') renderCarousel();
-  else if(path==='/members') { renderMembers(); renderTree(); }
+  else if(path==='/members') { renderMembers(); }
+  else if(path==='/familytree') {
+    // 管理员已登录时显示编辑按钮
+    const btn=document.getElementById('ftAdminBtn');
+    const hint=document.getElementById('ftAdminHint');
+    const resetBtn=document.getElementById('ftResetBtn');
+    if(isAdmin){
+      if(btn)btn.classList.remove('hidden');
+      if(hint)hint.classList.remove('hidden');
+      if(resetBtn)resetBtn.classList.remove('hidden');
+      if(ftAdminMode){
+        if(btn)btn.textContent='🔓 退出编辑';
+        if(hint){hint.textContent='管理员编辑模式：可拖动节点、编辑关系';hint.style.color='var(--gold)';}
+      }
+    } else {
+      if(btn)btn.classList.add('hidden');
+      if(hint)hint.classList.add('hidden');
+      if(resetBtn)resetBtn.classList.add('hidden');
+      ftAdminMode=false;
+    }
+    renderFamilyTree();
+  }
   else if(path==='/events') renderEvents();
   else if(path==='/mentors') renderMentors();
   else if(path==='/messages') renderMessages();
@@ -809,11 +1190,13 @@ function updateNavHighlight() {
   if(a) a.classList.add('active');
 }
 function renderNav() {
+  const c='<img src="data:image/png;base64,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" alt="" style="width:16px;height:16px;vertical-align:middle;margin-right:2px">';
   document.getElementById('headerNav').innerHTML = `
     <button class="nav-btn${currentPage==='/'?' active':''}" data-path="/" onclick="navigate('/')">首页</button>
     <button class="nav-btn${currentPage==='/members'?' active':''}" data-path="/members" onclick="navigate('/members')">成员</button>
+    <button class="nav-btn${currentPage==='/familytree'?' active':''}" data-path="/familytree" onclick="navigate('/familytree')">族谱</button>
     <button class="nav-btn${currentPage==='/events'?' active':''}" data-path="/events" onclick="navigate('/events')">事件</button>
-    <button class="nav-btn${currentPage==='/mentors'?' active':''}" data-path="/mentors" onclick="navigate('/mentors')">导师</button>
+    <button class="nav-btn${currentPage==='/mentors'?' active':''}" data-path="/mentors" onclick="navigate('/mentors')">${c}导师</button>
     <button class="nav-btn${currentPage==='/messages'?' active':''}" data-path="/messages" onclick="navigate('/messages')">留言</button>`;
 }
 
@@ -822,7 +1205,7 @@ function renderCarousel() {
   const track = document.getElementById('carouselTrack'), dots = document.getElementById('carouselDots');
   const imgs = app.carouselImages;
   if(!imgs.length){track.innerHTML='<div class="carousel-empty"><span style="font-size:44px">🖼️</span><span>暂无轮播图片</span><span style="font-size:12px">管理员可添加图片</span></div>';dots.innerHTML='';stopCarousel();return;}
-  track.innerHTML=imgs.map((img,i)=>`<div class="carousel-slide"><img src="${esc(img.url)}" alt="${esc(img.title)}" onerror="this.onerror=null;this.nextElementSibling.style.display='flex'"><div style="display:none;position:absolute;inset:0;background:linear-gradient(135deg,#1a1a2e,#2a1a3e);align-items:center;justify-content:center;font-size:40px;z-index:1">🖼️</div><div class="ol"></div><div class="cap"><h3>${esc(img.title)}</h3></div></div>`).join('');
+  track.innerHTML=imgs.map((img,i)=>`<div class="carousel-slide"><img src="${esc(img.url)}" alt="${esc(img.title||'')}" onerror="this.onerror=null;this.nextElementSibling.style.display='flex'"><div style="display:none;position:absolute;inset:0;background:linear-gradient(135deg,#1a1a2e,#2a1a3e);align-items:center;justify-content:center;font-size:40px;z-index:1">🖼️</div>${img.title?`<div class="ol"></div><div class="cap"><h3>${esc(img.title)}</h3></div>`:''}</div>`).join('');
   dots.innerHTML=imgs.map((_,i)=>`<span class="carousel-dot${i===currentSlide?' active':''}" onclick="goToSlide(${i})"></span>`).join('');
   if(currentSlide>=imgs.length)currentSlide=0;
   updateCarouselPos();startCarousel();
@@ -868,53 +1251,11 @@ function showMemberDetail(id) {
   document.getElementById('memberModal').classList.remove('hidden');
 }
 
-// Tree
-function renderTree() {
-  const svg=document.getElementById('treeSvg'),empty=document.getElementById('treeEmpty');
-  const members=app.members;
-  if(!members.length){svg.style.display='none';empty.style.display='flex';return;}
-  empty.style.display='none';svg.style.display='block';
-  const w=document.getElementById('treeCanvasWrap').clientWidth||800;
-  const h=Math.max(500,members.length*110+160);
-
-  // Build adjacency from relations
-  const adj={};
-  members.forEach(m=>{adj[m.id]={member:m,children:[],parent:null};});
-  members.forEach(m=>{(m.relations||[]).forEach(r=>{if(r.label==='上级'&&adj[r.targetId]){adj[m.id].parent=r.targetId;adj[r.targetId].children.push(m.id);}});});
-
-  // Find roots - members with no '上级' incoming, or incoming from non-existent members
-  const roots=members.filter(m=>!adj[m.id].parent);
-  if(!roots.length) roots.push(members[0]); // fallback
-
-  // BFS layout
-  const levels=[],visited=new Set();
-  const queue=roots.map((r,i)=>({id:r.id,level:0,order:i}));
-  queue.forEach(q=>visited.add(q.id));
-  while(queue.length){const curr=queue.shift();if(!levels[curr.level])levels[curr.level]=[];levels[curr.level].push(curr);adj[curr.id].children.forEach((cid,i)=>{if(!visited.has(cid)){visited.add(cid);queue.push({id:cid,level:curr.level+1,order:i});}});}
-  // Add orphans
-  members.forEach(m=>{if(!visited.has(m.id)){if(!levels[levels.length-1])levels.push([]);levels[levels.length-1].push({id:m.id,level:levels.length-1,order:levels[levels.length-1].length});visited.add(m.id);}});
-
-  const nodeW=130,nodeH=66,gapX=80,gapY=100;
-  const positions={};
-  levels.forEach((lv,li)=>{const tw=lv.length*(nodeW+gapX)-gapX;const sx=Math.max(40,(w-tw)/2);lv.forEach((n,i)=>{positions[n.id]={x:sx+i*(nodeW+gapX),y:50+li*(nodeH+gapY)};});});
-  treeNodePositions=positions;
-
-  let lines='';
-  members.forEach(m=>{(m.relations||[]).forEach(r=>{if(positions[m.id]&&positions[r.targetId]){const a=positions[m.id],b=positions[r.targetId];const mx1=a.x+nodeW/2,my1=r.label==='上级'?a.y:a.y+nodeH/2;const mx2=b.x+nodeW/2,my2=r.label==='下属'?b.y+nodeH:b.y+nodeH/2;const dash=r.label==='战友'||r.label==='搭档'||r.label==='同事'?'stroke-dasharray="6,4"':'';const color=r.label==='上级'||r.label==='下属'?'#e74c3c':'#d4a574';const opacity=r.label==='上级'||r.label==='下属'?'0.6':'0.4';lines+=`<path d="M${mx1},${my1} C${mx1},${(my1+my2)/2} ${mx2},${(my1+my2)/2} ${mx2},${my2}" stroke="${color}" stroke-width="1.5" fill="none" ${dash} opacity="${opacity}"/>`;}});});
-
-  let nodes='';
-  members.forEach(m=>{const p=positions[m.id];if(!p)return;const im=app.mentors.find(mt=>mt.memberId===m.id),x=p.x,y=p.y;
-    const clipId='clip-'+m.id;
-    nodes+=`<defs><clipPath id="${clipId}"><rect x="${x+5}" y="${y+5}" width="30" height="30" rx="15"/></clipPath></defs>`;
-    nodes+=`<g class="tree-node-group" data-id="${m.id}" style="cursor:pointer" onclick="openRelationPanel(${m.id})"><rect x="${x}" y="${y}" width="${nodeW}" height="${nodeH}" rx="10" fill="#1a1a2e" stroke="${im?'#d4a574':'#3a3a55'}" stroke-width="${im?2:1}"/>`;
-    if(m.avatar){
-      nodes+=`<image href="${esc(m.avatar)}" x="${x+5}" y="${y+5}" width="30" height="30" clip-path="url(#${clipId})" preserveAspectRatio="xMidYMid slice"/>`;
-    }else{
-      nodes+=`<circle cx="${x+20}" cy="${y+20}" r="15" fill="var(--bdr2)"/><text x="${x+20}" y="${y+25}" text-anchor="middle" fill="var(--text)" font-size="13">${m.name.charAt(0)}</text>`;
-    }
-    nodes+=`${im?`<text x="${x+nodeW-16}" y="${y+16}" font-size="12">🎓</text>`:''}<text x="${x+nodeW/2}" y="${y+24}" text-anchor="middle" fill="#f0d6b8" font-size="14" font-weight="600">${m.name}</text><text x="${x+nodeW/2}" y="${y+44}" text-anchor="middle" fill="#e74c3c" font-size="11">${esc(m.role||'成员')}</text><text x="${x+nodeW/2}" y="${y+58}" text-anchor="middle" fill="#8888aa" font-size="10">${(m.relations||[]).length}个关系</text></g>`;});
-  svg.setAttribute('viewBox',`0 0 ${w} ${h}`);svg.setAttribute('height',h);svg.innerHTML=lines+nodes;
-}
+// Tree (with auto-layout: mentors at top, juniors at bottom)
+// Tree — supports saved positions and admin drag
+// ===================== Member Tree (removed from members page, now only in FamilyTree) =====================
+// The member tree has been removed. All tree functionality is now in renderFamilyTree().
+// The old autoTreeLayout, startTreeDrag, etc. functions are no longer used.
 
 // Relation panel (public)
 function openRelationPanel(mid) {
@@ -934,11 +1275,11 @@ function addRelation() {
   if(!targetId){toast('请选择目标成员');return;}if(!label){toast('请输入关系类型');return;}
   const m=app.members.find(x=>x.id===editingMemberId);if(!m)return;if(!m.relations)m.relations=[];
   if(m.relations.find(r=>r.targetId===targetId)){toast('该关系已存在');return;}
-  m.relations.push({targetId,label});saveApp(app);renderMembers();renderTree();openRelationPanel(editingMemberId);toast('关系已添加');
+  m.relations.push({targetId,label});saveApp(app);renderMembers();renderFamilyTree();openRelationPanel(editingMemberId);toast('关系已添加');
 }
 function removeRelation(targetId) {
   if(!editingMemberId)return;const m=app.members.find(x=>x.id===editingMemberId);if(!m)return;
-  m.relations=(m.relations||[]).filter(r=>r.targetId!==targetId);saveApp(app);renderMembers();renderTree();openRelationPanel(editingMemberId);toast('关系已删除');
+  m.relations=(m.relations||[]).filter(r=>r.targetId!==targetId);saveApp(app);renderMembers();renderFamilyTree();openRelationPanel(editingMemberId);toast('关系已删除');
 }
 
 // Events
@@ -950,10 +1291,55 @@ function renderEvents() {
 
 // Mentors
 function renderMentors() {
-  const g=document.getElementById('mentorGrid');
-  if(!app.mentors.length){g.innerHTML='<div class="empty"><div class="ic">🎓</div><p>暂无导师</p></div>';return;}
-  g.innerHTML=app.mentors.map(mt=>{const m=app.members.find(x=>x.id===mt.memberId);const av=m&&m.avatar?`<div class="av" style="overflow:hidden;padding:0"><img src="${esc(m.avatar)}" style="width:100%;height:100%;object-fit:cover" alt=""></div>`:`<div class="av">${m?m.name.charAt(0):'?'}</div>`;return `<div class="mentor-card">${av}<h4>${m?esc(m.name):'未知'}</h4><div class="sp">${esc(mt.specialty||'导师')}</div><div class="xt">${esc(mt.extraInfo||'暂无介绍')}</div></div>`;}).join('');
+  const track=document.getElementById('mcTrack'), dots=document.getElementById('mcDots');
+  const crownImg='<img src="data:image/png;base64,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" alt="👑" style="width:20px;height:20px;vertical-align:middle;display:inline-block">';
+  if(!app.mentors.length){track.innerHTML='<div class="empty" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"><div class="ic">'+crownImg+'</div><p>暂无导师</p></div>';dots.innerHTML='';return;}
+  mCarouselIdx=Math.min(mCarouselIdx,app.mentors.length-1);
+  const total=app.mentors.length;
+  track.innerHTML=app.mentors.map((mt,i)=>{
+    const m=app.members.find(x=>x.id===mt.memberId);
+    const imgSrc=mt.image||(m&&m.avatar?m.avatar:'');
+    const imgHtml=imgSrc?`<img src="${esc(imgSrc)}" alt="${m?esc(m.name):''}">`:`<div style="aspect-ratio:9/16;background:linear-gradient(135deg,#1a1528,#0f0f1a);display:flex;align-items:center;justify-content:center;font-size:48px;color:var(--gold)">${m?m.name.charAt(0):'?'}</div>`;
+    const centerBody=`<div class="mc-card-body">
+        <h4>${m?esc(m.name):'未知'}</h4>
+        <div class="mc-sp">${esc(mt.specialty||'导师')}</div>
+        <div class="mc-xt">${esc(mt.extraInfo||'暂无介绍')}</div>
+      </div>`;
+    const simpleOverlay=`<div class="mc-simple-overlay"><h4>${m?esc(m.name):'未知'}</h4></div>`;
+    const isCenter=i===mCarouselIdx;
+    const leftIdx=(mCarouselIdx-1+total)%total;
+    const rightIdx=(mCarouselIdx+1)%total;
+    const isSide=i===leftIdx||i===rightIdx;
+    return `<div class="mc-card" id="mc-${i}" onclick="mentorCarouselGo(${i})">
+      ${imgHtml}
+      ${isCenter?centerBody:(isSide?simpleOverlay:'')}
+    </div>`;
+  }).join('');
+  // Dots
+  dots.innerHTML=app.mentors.map((_,i)=>`<div class="mc-dot${i===mCarouselIdx?' active':''}" onclick="mentorCarouselGo(${i})"></div>`).join('');
+  // Render carousel
+  mentorCarouselRender();
 }
+let mCarouselIdx=0;
+function mentorCarouselRender(){
+  const total=app.mentors.length;if(!total)return;
+  const track=document.getElementById('mcTrack');
+  // Clear all positions
+  for(let i=0;i<total;i++){const c=document.getElementById('mc-'+i);if(c)c.className='mc-card';}
+  const center=document.getElementById('mc-'+mCarouselIdx);
+  if(center)center.className='mc-card mc-center';
+  const leftIdx=(mCarouselIdx-1+total)%total;
+  const left=document.getElementById('mc-'+leftIdx);
+  if(left)left.className='mc-card mc-left';
+  const rightIdx=(mCarouselIdx+1)%total;
+  const right=document.getElementById('mc-'+rightIdx);
+  if(right)right.className='mc-card mc-right';
+  // Dots
+  document.querySelectorAll('.mc-dot').forEach((d,i)=>{d.classList.toggle('active',i===mCarouselIdx);});
+}
+function mentorCarouselGo(idx){mCarouselIdx=idx;mentorCarouselRender();}
+function mentorCarouselPrev(){if(!app.mentors.length)return;mCarouselIdx=(mCarouselIdx-1+app.mentors.length)%app.mentors.length;mentorCarouselRender();}
+function mentorCarouselNext(){if(!app.mentors.length)return;mCarouselIdx=(mCarouselIdx+1)%app.mentors.length;mentorCarouselRender();}
 
 // Messages
 function renderMessages() {
@@ -969,47 +1355,220 @@ function submitMsg() {
 }
 
 // Admin
-function toggleAdmin(){if(isAdmin){adminLogout();return;}document.getElementById('adminOverlay').classList.remove('hidden');document.getElementById('adminLoginBox').classList.remove('hidden');document.getElementById('adminPanelBox').classList.add('hidden');document.getElementById('adminPassInput').value='';setTimeout(()=>document.getElementById('adminPassInput').focus(),100);}
+function toggleAdmin(){
+  if(isAdmin){
+    if(confirm('确定退出管理员账户？')) adminLogout();
+    return;
+  }
+  showAdminLogin();
+}
+function showAdminLogin(){
+  document.getElementById('adminOverlay').classList.remove('hidden');
+  document.getElementById('adminLoginBox').classList.remove('hidden');
+  document.getElementById('adminPanelBox').classList.add('hidden');
+  document.getElementById('adminPassInput').value='';
+  setTimeout(()=>document.getElementById('adminPassInput').focus(),100);
+}
+function openAdminPanel(){
+  document.getElementById('adminOverlay').classList.remove('hidden');
+  document.getElementById('adminLoginBox').classList.add('hidden');
+  document.getElementById('adminPanelBox').classList.remove('hidden');
+  sAT('carousel');
+  refreshAdminPanel();
+}
 function closeAdmin(){document.getElementById('adminOverlay').classList.add('hidden');}
-function adminLogin(){const pwd=document.getElementById('adminPassInput').value;if(pwd===app.adminPassword){isAdmin=true;document.getElementById('adminLoginBox').classList.add('hidden');document.getElementById('adminPanelBox').classList.remove('hidden');document.getElementById('adminBadge').textContent='管理员';document.getElementById('adminBadge').className='admin-badge';document.getElementById('btnAdminToggle').textContent='退出管理';document.getElementById('btnAdminToggle').className='btn btn-del btn-sm';refreshAdminPanel();toast('登录成功');}else{toast('密码错误');}}
-function adminLogout(){isAdmin=false;closeAdmin();document.getElementById('adminBadge').className='hidden';document.getElementById('btnAdminToggle').textContent='管理员入口';document.getElementById('btnAdminToggle').className='btn btn-outline btn-sm';refreshAll();toast('已退出');}
+function adminLogin(){
+  const pwd=document.getElementById('adminPassInput').value;
+  if(pwd===app.adminPassword){
+    isAdmin=true;
+    document.getElementById('adminLoginBox').classList.add('hidden');
+    document.getElementById('adminPanelBox').classList.remove('hidden');
+    document.getElementById('adminBadge').textContent='管理员';
+    document.getElementById('adminBadge').className='admin-badge';
+    document.getElementById('btnAdminToggle').textContent='退出';
+    document.getElementById('btnAdminToggle').className='btn btn-del btn-sm';
+    document.getElementById('btnAdminPanel').classList.remove('hidden');
+    // 如果当前在族谱页面且之前尝试进入编辑模式，自动开启
+    if(currentPage==='/familytree'){
+      const btn=document.getElementById('ftAdminBtn');
+      const hint=document.getElementById('ftAdminHint');
+      const resetBtn=document.getElementById('ftResetBtn');
+      if(btn)btn.classList.remove('hidden');
+      if(hint)hint.classList.remove('hidden');
+      if(resetBtn)resetBtn.classList.remove('hidden');
+      if(!ftAdminMode){
+        ftAdminMode=true;
+        if(btn)btn.textContent='🔓 退出编辑';
+        if(hint){hint.textContent='管理员编辑模式：可拖动节点、编辑关系';hint.style.color='var(--gold)';}
+        renderFamilyTree();
+      }
+    }
+    refreshAdminPanel();toast('登录成功');
+  }else{toast('密码错误');}
+}
+function adminLogout(){
+  isAdmin=false;closeAdmin();ftAdminMode=false;
+  // 如果当前在族谱页面，重置族谱编辑UI
+  if(currentPage==='/familytree'){
+    const btn=document.getElementById('ftAdminBtn');
+    const hint=document.getElementById('ftAdminHint');
+    const resetBtn=document.getElementById('ftResetBtn');
+    if(btn){btn.textContent='🔐 管理员编辑';btn.classList.add('hidden');}
+    if(hint){hint.textContent='';hint.classList.add('hidden');}
+    if(resetBtn)resetBtn.classList.add('hidden');
+    renderFamilyTree();
+  }
+  document.getElementById('adminBadge').className='hidden';
+  document.getElementById('btnAdminToggle').textContent='管理员入口';
+  document.getElementById('btnAdminToggle').className='btn btn-outline btn-sm';
+  document.getElementById('btnAdminPanel').classList.add('hidden');
+  refreshAll();toast('已退出');
+}
 function changePwd(){const op=prompt('请输入原密码：');if(!op)return;const np=prompt('请输入新密码（至少4位）：');if(!np||np.length<4){toast('新密码至少4位');return;}if(op!==app.adminPassword){toast('原密码错误');return;}app.adminPassword=np;saveApp(app);toast('密码已修改');}
 function sAT(tab){document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.admin-tab-content').forEach(c=>c.classList.remove('active'));const btn=Array.from(document.querySelectorAll('.admin-tab')).find(b=>b.textContent.includes(tab==='carousel'?'轮播':tab==='members'?'成员':tab==='events'?'事件':tab==='mentors'?'导师':'留言'));if(btn)btn.classList.add('active');document.getElementById('adm-'+tab).classList.add('active');if(tab==='mentors')updateMentorSelect();}
 
-function admAddCarousel(){const t=document.getElementById('adm-carousel-title').value.trim(),u=document.getElementById('adm-carousel-url').value.trim();if(!u){toast('请输入URL');return;}app.carouselImages.push({id:genNextId(),title:t||'图片',url:u});saveApp(app);document.getElementById('adm-carousel-title').value='';document.getElementById('adm-carousel-url').value='';renderCarousel();refreshAdminPanel();toast('已添加');}
+// admAddCarousel replaced below with file upload support
 function admDelCarousel(id){app.carouselImages=app.carouselImages.filter(i=>i.id!==id);if(currentSlide>=app.carouselImages.length)currentSlide=0;saveApp(app);renderCarousel();refreshAdminPanel();toast('已删除');}
-function admAddMember(){
+// 统一处理添加/编辑成员
+function admUpsertMember(){
   const n=document.getElementById('adm-m-name').value.trim();
   if(!n){toast('请输入姓名');return;}
+
   const avatarInput=document.getElementById('adm-m-avatar');
-  const memberData={id:genNextId(),name:n,role:document.getElementById('adm-m-role').value.trim(),info:document.getElementById('adm-m-info').value.trim(),avatar:'',relations:[]};
-  if(avatarInput.files&&avatarInput.files[0]){
-    const file=avatarInput.files[0];
-    if(file.size>20*1024*1024){toast('头像文件不能超过20MB');return;}
-    const reader=new FileReader();
-    reader.onload=function(e){
-      compressAvatar(e.target.result,function(compressed){
-        memberData.avatar=compressed;
-        app.members.push(memberData);
+
+  const buildMemberData = (avatarDataUrl) => {
+    const memberData = {
+      name:n,
+      role:document.getElementById('adm-m-role').value.trim(),
+      info:document.getElementById('adm-m-info').value.trim(),
+      avatar: avatarDataUrl || ''
+    };
+
+    if (editingAdminMemberId) {
+      // 编辑模式：更新已有成员
+      const m = app.members.find(x => x.id === editingAdminMemberId);
+      if (!m) return;
+      m.name = memberData.name;
+      m.role = memberData.role;
+      m.info = memberData.info;
+      if (avatarDataUrl) m.avatar = avatarDataUrl;
+      // 成员编辑界面不保存导师的专长和详细信息，这些只能在导师设置面板编辑
+      const isMentor = document.getElementById('adm-m-isMentor').checked;
+      const wasMentor = app.mentors.find(mt => mt.memberId === editingAdminMemberId);
+      if (isMentor && !wasMentor) {
+        // 新设为导师：使用成员表单中的值（仅首次）
+        app.mentors.push({
+          id: genNextId(),
+          memberId: editingAdminMemberId,
+          specialty: document.getElementById('adm-m-specialty').value.trim(),
+          extraInfo: document.getElementById('adm-m-extra').value.trim()
+        });
+      } else if (!isMentor && wasMentor) {
+        // 取消导师身份
+        app.mentors = app.mentors.filter(mt => mt.memberId !== editingAdminMemberId);
+      }
+      // 若已是导师，不更新 specialty/extraInfo（必须在导师设置面板编辑）
+      saveApp(app);
+      cancelEditMember();
+      renderMembers(); renderFamilyTree(); renderMentors(); refreshAdminPanel();
+      toast('✅ 成员信息已更新');
+    } else {
+      // 添加模式：创建新成员
+      const newMember = { id: genNextId(), ...memberData, relations: [] };
+      app.members.push(newMember);
+      saveApp(app);
+
+      // 同时设为导师
+      const isMentor = document.getElementById('adm-m-isMentor').checked;
+      if (isMentor) {
+        app.mentors.push({
+          id: genNextId(),
+          memberId: newMember.id,
+          specialty: document.getElementById('adm-m-specialty').value.trim(),
+          extraInfo: document.getElementById('adm-m-extra').value.trim()
+        });
         saveApp(app);
-        clearMemberForm();
-        renderMembers();renderTree();refreshAdminPanel();toast('已添加（含头像）');
+      }
+      clearMemberForm();
+      renderMembers(); renderFamilyTree(); renderMentors(); refreshAdminPanel();
+      toast('✅ 成员已添加' + (isMentor ? '并设为导师' : ''));
+    }
+  };
+
+  if (avatarInput.files && avatarInput.files[0]) {
+    const file = avatarInput.files[0];
+    if (file.size > 20 * 1024 * 1024) { toast('头像文件不能超过20MB'); return; }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      compressAvatar(e.target.result, function(compressed) {
+        buildMemberData(compressed);
       });
     };
     reader.readAsDataURL(file);
-  }else{
-    app.members.push(memberData);
-    saveApp(app);
-    clearMemberForm();
-    renderMembers();renderTree();refreshAdminPanel();toast('已添加');
+  } else {
+    buildMemberData('');
   }
 }
+
 function clearMemberForm(){
   document.getElementById('adm-m-name').value='';
   document.getElementById('adm-m-role').value='';
   document.getElementById('adm-m-info').value='';
   document.getElementById('adm-m-avatar').value='';
   document.getElementById('avatarPreview').style.display='none';
+  document.getElementById('adm-m-isMentor').checked=false;
+  document.getElementById('mentorFields').style.display='none';
+  document.getElementById('adm-m-specialty').value='';
+  document.getElementById('adm-m-extra').value='';
+  document.getElementById('adm-m-btn').textContent='添加成员';
+  document.getElementById('adm-m-btn').className='btn btn-red btn-sm';
+  document.getElementById('adm-m-cancel').classList.add('hidden');
+  editingAdminMemberId = null;
+}
+
+// 编辑已有成员
+function editAdminMember(id) {
+  const m = app.members.find(x => x.id === id);
+  if (!m) return;
+  editingAdminMemberId = id;
+  document.getElementById('adm-m-name').value = m.name;
+  document.getElementById('adm-m-role').value = m.role || '';
+  document.getElementById('adm-m-info').value = m.info || '';
+  document.getElementById('adm-m-btn').textContent = '💾 保存修改';
+  document.getElementById('adm-m-btn').className = 'btn btn-ok btn-sm';
+  document.getElementById('adm-m-cancel').classList.remove('hidden');
+  // 检查是否已为导师
+  const im = app.mentors.find(mt => mt.memberId === id);
+  if (im) {
+    document.getElementById('adm-m-isMentor').checked = true;
+    document.getElementById('mentorFields').style.display = 'block';
+    document.getElementById('adm-m-specialty').value = im.specialty || '';
+    document.getElementById('adm-m-extra').value = im.extraInfo || '';
+  } else {
+    document.getElementById('adm-m-isMentor').checked = false;
+    document.getElementById('mentorFields').style.display = 'none';
+    document.getElementById('adm-m-specialty').value = '';
+    document.getElementById('adm-m-extra').value = '';
+  }
+  document.getElementById('avatarPreview').style.display = 'none';
+  document.getElementById('adm-m-avatar').value = '';
+  // 显示当前头像预览
+  if (m.avatar) {
+    document.getElementById('avatarPreview').style.display = 'flex';
+    document.getElementById('avatarPreviewImg').src = m.avatar;
+    document.getElementById('avatarSizeHint').textContent = '当前头像';
+  }
+  // 滚动到表单
+  document.getElementById('adm-m-name').scrollIntoView({ behavior: 'smooth' });
+}
+
+function cancelEditMember() {
+  clearMemberForm();
+}
+
+function toggleMentorFields() {
+  const checked = document.getElementById('adm-m-isMentor').checked;
+  document.getElementById('mentorFields').style.display = checked ? 'block' : 'none';
 }
 function previewAvatar(input){
   const preview=document.getElementById('avatarPreview');
@@ -1024,27 +1583,53 @@ function previewAvatar(input){
     preview.style.display='flex';
   }else{preview.style.display='none';}
 }
-function compressAvatar(dataUrl,callback){
+function compressImage(dataUrl,maxW,maxH,quality,callback){
   const img=new Image();img.onload=function(){
-    const maxW=300,maxH=300;let w=img.width,h=img.height;
+    let w=img.width,h=img.height;
     if(w>maxW||h>maxH){const ratio=Math.min(maxW/w,maxH/h);w=Math.round(w*ratio);h=Math.round(h*ratio);}
     const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
     const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,w,h);
-    callback(canvas.toDataURL('image/jpeg',0.75));
+    callback(canvas.toDataURL('image/jpeg',quality));
   };
   img.src=dataUrl;
 }
-function admDelMember(id){if(!confirm('确定删除该成员？'))return;app.mentors=app.mentors.filter(mt=>mt.memberId!==id);app.members.forEach(m=>{m.relations=(m.relations||[]).filter(r=>r.targetId!==id);});app.members=app.members.filter(m=>m.id!==id);saveApp(app);renderMembers();renderTree();renderMentors();refreshAdminPanel();toast('已删除');}
-function admAddEvent(){const t=document.getElementById('adm-e-title').value.trim();if(!t){toast('请输入标题');return;}app.events.push({id:genNextId(),title:t,date:document.getElementById('adm-e-date').value,description:document.getElementById('adm-e-desc').value.trim(),image:document.getElementById('adm-e-image').value.trim()});saveApp(app);document.getElementById('adm-e-title').value='';document.getElementById('adm-e-date').value='';document.getElementById('adm-e-desc').value='';document.getElementById('adm-e-image').value='';renderEvents();refreshAdminPanel();toast('已添加');}
+function compressAvatar(dataUrl,callback){compressImage(dataUrl,300,300,0.75,callback);}
+function compressCarouselImg(dataUrl,callback){compressImage(dataUrl,1920,1080,0.9,callback);}
+function compressEventImg(dataUrl,callback){compressImage(dataUrl,1920,1080,0.9,callback);}
+function compressMentorImg(dataUrl,callback){compressImage(dataUrl,1080,1920,0.9,callback);}
+function admDelMember(id){if(!confirm('确定删除该成员？'))return;app.mentors=app.mentors.filter(mt=>mt.memberId!==id);app.members.forEach(m=>{m.relations=(m.relations||[]).filter(r=>r.targetId!==id);});app.members=app.members.filter(m=>m.id!==id);saveApp(app);renderMembers();renderFamilyTree();renderMentors();refreshAdminPanel();toast('已删除');}
+// admAddEvent replaced below with file upload support
 function admDelEvent(id){if(!confirm('确定删除？'))return;app.events=app.events.filter(e=>e.id!==id);saveApp(app);renderEvents();refreshAdminPanel();toast('已删除');}
 function updateMentorSelect(){const sel=document.getElementById('adm-mt-member'),free=app.members.filter(m=>!app.mentors.find(mt=>mt.memberId===m.id));sel.innerHTML='<option value="">-- 选择 --</option>'+free.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');}
-function admAddMentor(){const mid=parseInt(document.getElementById('adm-mt-member').value);if(!mid){toast('请选择成员');return;}if(app.mentors.find(mt=>mt.memberId===mid)){toast('该成员已是导师');return;}app.mentors.push({id:genNextId(),memberId:mid,specialty:document.getElementById('adm-mt-specialty').value.trim(),extraInfo:document.getElementById('adm-mt-extra').value.trim()});saveApp(app);document.getElementById('adm-mt-specialty').value='';document.getElementById('adm-mt-extra').value='';renderMentors();renderMembers();renderTree();refreshAdminPanel();toast('已设置');}
-function admDelMentor(id){if(!confirm('确定取消？'))return;app.mentors=app.mentors.filter(m=>m.id!==id);saveApp(app);renderMentors();renderMembers();renderTree();refreshAdminPanel();toast('已取消');}
+function admAddMentor(){
+  const mid=parseInt(document.getElementById('adm-mt-member').value);
+  if(!mid){toast('请选择成员');return;}
+  if(app.mentors.find(mt=>mt.memberId===mid)){toast('该成员已是导师');return;}
+  const addMentor=(imgData)=>{
+    app.mentors.push({
+      id:genNextId(),memberId:mid,
+      specialty:document.getElementById('adm-mt-specialty').value.trim(),
+      extraInfo:document.getElementById('adm-mt-extra').value.trim(),
+      image:imgData||''
+    });
+    saveApp(app);
+    document.getElementById('adm-mt-specialty').value='';
+    document.getElementById('adm-mt-extra').value='';
+    document.getElementById('adm-mt-image').value='';
+    document.getElementById('mentorFileHint').textContent='';
+    pendingMentorImg='';
+    renderMentors();renderMembers();renderFamilyTree();refreshAdminPanel();
+    toast('已设置');
+  };
+  if(pendingMentorImg){addMentor(pendingMentorImg);}
+  else{addMentor('');}
+}
+function admDelMentor(id){if(!confirm('确定取消？'))return;app.mentors=app.mentors.filter(m=>m.id!==id);saveApp(app);renderMentors();renderMembers();renderFamilyTree();refreshAdminPanel();toast('已取消');}
 function admDelMsg(id){app.messages=app.messages.filter(m=>m.id!==id);saveApp(app);renderMessages();refreshAdminPanel();toast('已删除');}
 
 function refreshAdminPanel() {
   document.getElementById('adm-carousel-list').innerHTML=app.carouselImages.length?app.carouselImages.map(i=>`<div class="admin-item"><div class="it"><strong>${esc(i.title)}</strong><span>${esc(i.url.substring(0,40))}...</span></div><div class="ia"><button class="btn btn-del btn-sm" onclick="admDelCarousel(${i.id})">删除</button></div></div>`).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
-  document.getElementById('adm-m-list').innerHTML=app.members.length?app.members.map(m=>`<div class="admin-item"><div class="it"><strong>${esc(m.name)}</strong><span>${esc(m.role||'')}</span></div><div class="ia"><button class="btn btn-del btn-sm" onclick="admDelMember(${m.id})">删除</button></div></div>`).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
+  document.getElementById('adm-m-list').innerHTML=app.members.length?app.members.map(m=>`<div class="admin-item"><div class="it"><strong>${esc(m.name)}</strong><span>${esc(m.role||'')}${app.mentors.find(mt=>mt.memberId===m.id)?' · 🎓导师':''}</span></div><div class="ia"><button class="btn btn-ok btn-sm" onclick="editAdminMember(${m.id})" title="编辑成员">✏️</button><button class="btn btn-del btn-sm" onclick="admDelMember(${m.id})">删除</button></div></div>`).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
   document.getElementById('adm-e-list').innerHTML=app.events.length?app.events.map(e=>`<div class="admin-item"><div class="it"><strong>${esc(e.title)}</strong><span>${esc(e.date)}</span></div><div class="ia"><button class="btn btn-del btn-sm" onclick="admDelEvent(${e.id})">删除</button></div></div>`).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
   document.getElementById('adm-mt-list').innerHTML=app.mentors.length?app.mentors.map(mt=>{const m=app.members.find(x=>x.id===mt.memberId);return `<div class="admin-item"><div class="it"><strong>${m?esc(m.name):'未知'}</strong><span>${esc(mt.specialty||'')}</span></div><div class="ia"><button class="btn btn-del btn-sm" onclick="admDelMentor(${mt.id})">取消</button></div></div>`}).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
   updateMentorSelect();
@@ -1052,7 +1637,523 @@ function refreshAdminPanel() {
 }
 
 function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
-function refreshAll(){renderCarousel();renderMembers();renderTree();renderEvents();renderMentors();renderMessages();}
+function refreshAll(){renderCarousel();renderMembers();renderFamilyTree();renderEvents();renderMentors();renderMessages();}
+
+// ===================== Mobile Nav =====================
+function toggleMobileNav(){
+  const nav=document.getElementById('mobileNav'),btn=document.getElementById('hamburgerBtn');
+  nav.classList.toggle('open');btn.classList.toggle('open');
+}
+function closeMobileNav(){document.getElementById('mobileNav').classList.remove('open');document.getElementById('hamburgerBtn').classList.remove('open');}
+// Close mobile nav on resize to desktop
+window.addEventListener('resize',()=>{if(window.innerWidth>768)closeMobileNav()});
+
+// ===================== Local Image Upload (Carousel & Events) =====================
+let pendingCarouselImg = '';
+let pendingEventImg = '';
+let pendingMentorImg = '';
+
+function handleCarouselFile(event){
+  const file=event.target.files[0];if(!file)return;
+  if(file.size>20*1024*1024){toast('图片不能超过20MB');return;}
+  const hint=document.getElementById('carouselFileHint'),thumb=document.getElementById('carouselPreviewThumb');
+  hint.textContent=(file.size/1024/1024).toFixed(1)+'MB';
+  const reader=new FileReader();
+  reader.onload=function(e){
+    // Compress
+    compressCarouselImg(e.target.result, function(compressed){
+      pendingCarouselImg=compressed;
+      thumb.src=compressed;thumb.style.display='block';
+      hint.textContent='已选择（已压缩）';
+    });
+  };
+  reader.readAsDataURL(file);
+}
+function handleEventFile(event){
+  const file=event.target.files[0];if(!file)return;
+  if(file.size>20*1024*1024){toast('图片不能超过20MB');return;}
+  const hint=document.getElementById('eventFileHint'),thumb=document.getElementById('eventPreviewThumb');
+  hint.textContent=(file.size/1024/1024).toFixed(1)+'MB';
+  const reader=new FileReader();
+  reader.onload=function(e){
+    compressEventImg(e.target.result, function(compressed){
+      pendingEventImg=compressed;
+      thumb.src=compressed;thumb.style.display='block';
+      hint.textContent='已选择（已压缩）';
+    });
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleMentorFile(event){
+  const file=event.target.files[0];if(!file)return;
+  if(file.size>20*1024*1024){toast('图片不能超过20MB');return;}
+  const hint=document.getElementById('mentorFileHint');
+  hint.textContent=(file.size/1024/1024).toFixed(1)+'MB';
+  const reader=new FileReader();
+  reader.onload=function(e){
+    compressMentorImg(e.target.result, function(compressed){
+      pendingMentorImg=compressed;
+      hint.textContent='已选择（已压缩至1080p 9:16）';
+    });
+  };
+  reader.readAsDataURL(file);
+}
+
+// Overwrite admAddCarousel to support file upload
+const _origAdmAddCarousel = admAddCarousel;
+function admAddCarousel(){
+  const t=document.getElementById('adm-carousel-title').value.trim();
+  // Prefer pending file, then URL
+  let u = pendingCarouselImg || document.getElementById('adm-carousel-url').value.trim();
+  if(!u){toast('请选择图片或输入URL');return;}
+  app.carouselImages.push({id:genNextId(),title:t,url:u});
+  saveApp(app);
+  document.getElementById('adm-carousel-title').value='';
+  document.getElementById('adm-carousel-url').value='';
+  pendingCarouselImg='';
+  document.getElementById('carouselPreviewThumb').style.display='none';
+  document.getElementById('carouselFileHint').textContent='';
+  document.getElementById('adm-carousel-file').value='';
+  renderCarousel();refreshAdminPanel();toast('已添加');
+}
+
+// Overwrite admAddEvent to support file upload
+function admAddEvent(){
+  const t=document.getElementById('adm-e-title').value.trim();if(!t){toast('请输入标题');return;}
+  let img = pendingEventImg || document.getElementById('adm-e-image').value.trim();
+  app.events.push({id:genNextId(),title:t,date:document.getElementById('adm-e-date').value,description:document.getElementById('adm-e-desc').value.trim(),image:img});
+  saveApp(app);
+  document.getElementById('adm-e-title').value='';
+  document.getElementById('adm-e-date').value='';
+  document.getElementById('adm-e-desc').value='';
+  document.getElementById('adm-e-image').value='';
+  pendingEventImg='';
+  document.getElementById('eventPreviewThumb').style.display='none';
+  document.getElementById('eventFileHint').textContent='';
+  document.getElementById('adm-e-file').value='';
+  renderEvents();refreshAdminPanel();toast('已添加');
+}
+
+// ===================== Family Tree (黑塔族谱) =====================
+let ftDragging = null; // {id, startX, startY, origX, origY}
+let ftNodePositions = {}; // Loaded from app.treeNodePositions
+let ftAdminMode = false;
+
+// Load positions from app data
+function loadFtPositions(){
+  ftNodePositions = (app.treeNodePositions || {});
+}
+
+function renderFamilyTree(){
+  loadFtPositions();
+  const svg=document.getElementById('ftSvg'),empty=document.getElementById('ftEmpty');
+  const members=app.members;
+  if(!members.length){svg.style.display='none';empty.style.display='flex';return;}
+  empty.style.display='none';svg.style.display='block';
+
+  // Canvas size
+  const canvas=document.getElementById('ftCanvas');
+  const w=Math.max(canvas.clientWidth||900, 900);
+  const h=Math.max(600, members.length*100+200);
+
+  // Compute layout (use saved positions if available)
+  const positions = computeFtLayout(members, w, h);
+
+  // Draw
+  let lines='', nodes='';
+  const nodeW=140, nodeH=70;
+
+  // Lines first (with arrow markers)
+  let defs='<defs><marker id="arrow-red" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#e74c3c"/></marker><marker id="arrow-gold" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#d4a574"/></marker></defs>';
+  members.forEach(m=>{
+    (m.relations||[]).forEach(r=>{
+      if(positions[m.id]&&positions[r.targetId]){
+        const a=positions[m.id], b=positions[r.targetId];
+        const x1=a.x+nodeW/2, y1=a.y+nodeH/2;
+        const x2=b.x+nodeW/2, y2=b.y+nodeH/2;
+        const isMentorRel = r.label==='导师→豆芽';
+        const color=isMentorRel?'#e74c3c':'#d4a574';
+        const opacity=isMentorRel?0.8:0.5;
+        const marker=isMentorRel?'marker-end="url(#arrow-red)"':'';
+        const lid='ft-line-'+m.id+'-'+r.targetId;
+        lines+=`<line id="${lid}" data-from="${m.id}" data-to="${r.targetId}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="2" opacity="${opacity}" ${marker}/>`;
+      }
+    });
+  });
+
+  // Nodes
+  const mentorIds=new Set(app.mentors.map(mt=>mt.memberId));
+  members.forEach(m=>{
+    const p=positions[m.id];if(!p)return;
+    const im=mentorIds.has(m.id);
+
+    const clipId='ft-clip-'+m.id;
+    nodes+=`<g class="ft-node" data-id="${m.id}" id="ft-node-${m.id}"
+      transform="translate(${p.x},${p.y})"
+      onmousedown="startFtDrag(event,${m.id})"
+      ontouchstart="startFtDrag(event,${m.id})"
+      onmouseenter="showFtTooltip(event,${m.id})"
+      onmousemove="moveFtTooltip(event)"
+      onmouseleave="hideFtTooltip()"
+      onclick="ftNodeClick(event,${m.id})"
+      ondblclick="ftNodeDblClick(event,${m.id})">
+      <rect width="${nodeW}" height="${nodeH}" rx="12" fill="#1a1a2e" stroke="${im?'#d4a574':'#3a3a55'}" stroke-width="${im?2:1.5}"/>
+      <clipPath id="${clipId}"><circle cx="22" cy="25" r="16"/></clipPath>`;
+    if(m.avatar){
+      nodes+=`<image href="${esc(m.avatar)}" x="6" y="9" width="32" height="32" clip-path="url(#${clipId})" preserveAspectRatio="xMidYMid slice"/>`;
+    }else{
+      nodes+=`<circle cx="22" cy="25" r="16" fill="var(--bdr2)"/>`;
+    }
+    // Drag handle icon (visible on hover)
+    nodes+=`<text x="${nodeW-18}" y="18" font-size="11" fill="var(--gold)" class="ft-node-handle" opacity="0">⠿</text>`;
+    nodes+=`<text x="${nodeW/2}" y="30" text-anchor="middle" fill="#f0d6b8" font-size="13" font-weight="600">${m.name}</text>`;
+    nodes+=`<text x="${nodeW/2}" y="${nodeH-14}" text-anchor="middle" fill="#aaa" font-size="11">${esc(m.role||'成员')}</text>`;
+    nodes+=`<text x="${nodeW/2}" y="${nodeH-2}" text-anchor="middle" fill="#666" font-size="9">${(m.relations||[]).length}个关系</text>`;
+    nodes+=`</g>`;
+  });
+
+  svg.innerHTML=defs+lines+nodes;
+  svg.setAttribute('viewBox',`0 0 ${w} ${h}`);
+  svg.setAttribute('width',w);
+  svg.setAttribute('height',h);
+  svg.style.minWidth=w+'px';
+  svg.style.minHeight=h+'px';
+
+  // 管理员模式视觉提示（复用前面 line 1737 声明的 canvas 变量）
+  if(ftAdminMode){
+    canvas.classList.add('admin-mode');
+  }else{
+    canvas.classList.remove('admin-mode');
+  }
+
+  // Init drag events on canvas
+  initFtDragEvents();
+
+  // Populate unrelated members dock
+  const dock=document.getElementById('ftDock');
+  const dockList=document.getElementById('ftDockList');
+  const dockEmpty=document.getElementById('ftDockEmpty');
+  const unrelated=app.members.filter(m=>!m.relations||!m.relations.length);
+  if(unrelated.length){
+    dock.style.display='flex';
+    canvas.classList.add('has-dock');
+    if(dockEmpty)dockEmpty.style.display=unrelated.length?'none':'block';
+    dockList.innerHTML=unrelated.map(m=>{
+      const avHtml=m.avatar?`<img src="${esc(m.avatar)}" alt="">`:`<span>${m.name.charAt(0)}</span>`;
+      return `<div class="ft-dock-card" data-id="${m.id}" onmousedown="startFtDockDrag(event,${m.id})" ontouchstart="startFtDockDrag(event,${m.id})">
+        <div class="dc-av">${avHtml}</div>
+        <div class="dc-name">${esc(m.name)}</div>
+        <div class="dc-role">${esc(m.role||'成员')}</div>
+      </div>`;
+    }).join('');
+  }else{
+    dock.style.display='none';
+    canvas.classList.remove('has-dock');
+  }
+}
+
+function computeFtLayout(members, w, h){
+  const positions = {};
+  // If we have saved positions, use them
+  const hasSaved = Object.keys(ftNodePositions).length > 0;
+  if(hasSaved){
+    members.forEach(m=>{
+      if(ftNodePositions[m.id]){
+        positions[m.id] = {x:ftNodePositions[m.id].x, y:ftNodePositions[m.id].y};
+      }
+    });
+    // Auto-layout unsaved ones
+    const unsaved = members.filter(m=>!ftNodePositions[m.id]);
+    if(unsaved.length){
+      autoLayoutNodes(unsaved, positions, w, h, members);
+    }
+    return positions;
+  }
+  // Full auto-layout
+  autoLayoutNodes(members, positions, w, h, members);
+  return positions;
+}
+
+function autoLayoutNodes(memberList, positions, w, h, allMembers){
+  const mentorIds=new Set(app.mentors.map(mt=>mt.memberId));
+  // Separate: mentors first, then others
+  const mentors=memberList.filter(m=>mentorIds.has(m.id));
+  const others=memberList.filter(m=>!mentorIds.has(m.id));
+  const nodeW=140, nodeH=70, gapX=80, gapY=100;
+
+  // Build levels (BFS from mentors)
+  const adj={};
+  allMembers.forEach(m=>{adj[m.id]={children:[],parent:null};});
+  allMembers.forEach(m=>{(m.relations||[]).forEach(r=>{if(r.label==='上级'&&adj[r.targetId]){adj[m.id].parent=r.targetId;adj[r.targetId].children.push(m.id);}});});
+
+  const levels=[];
+  const visited=new Set();
+  // Start from mentors or roots
+  const roots=[...mentors.filter(m=>!adj[m.id].parent), ...allMembers.filter(m=>!adj[m.id].parent&&!mentorIds.has(m.id))];
+  if(!roots.length&&allMembers.length)roots.push(allMembers[0]);
+
+  const queue=roots.map((r,i)=>({id:r.id,level:mentorIds.has(r.id)?0:1,order:i}));
+  queue.forEach(q=>visited.add(q.id));
+
+  while(queue.length){
+    const curr=queue.shift();
+    if(!levels[curr.level])levels[curr.level]=[];
+    levels[curr.level].push(curr);
+    (adj[curr.id]?.children||[]).forEach(cid=>{
+      if(!visited.has(cid)){
+        visited.add(cid);
+        queue.push({id:cid,level:curr.level+1,order:0});
+      }
+    });
+  }
+  // Add遗漏
+  memberList.forEach(m=>{
+    if(!visited.has(m.id)){
+      if(!levels[1])levels[1]=[];
+      levels[1].push({id:m.id,level:1,order:levels[1].length});
+      visited.add(m.id);
+    }
+  });
+
+  // Position
+  const compactLevels=levels.filter(l=>l&&l.length>0);
+  const totalH=compactLevels.length*(nodeH+gapY)-gapY;
+  const startY=Math.max(40,(h-totalH)/2);
+  compactLevels.forEach((lv,li)=>{
+    const tw=lv.length*(nodeW+gapX)-gapX;
+    const sx=Math.max(40,(w-tw)/2);
+    lv.forEach((n,i)=>{
+      if(!positions[n.id]){
+        positions[n.id]={x:sx+i*(nodeW+gapX), y:startY+li*(nodeH+gapY)};
+      }
+    });
+  });
+}
+
+// ===================== Family Tree Drag =====================
+function initFtDragEvents(){
+  const canvas=document.getElementById('ftCanvas');
+  // Prevent default touch to avoid scroll while dragging
+  canvas.addEventListener('touchmove',function(e){
+    if(ftDragging)e.preventDefault();
+  },{passive:false});
+}
+
+function startFtDrag(evt, id){
+  if(!isAdmin||!ftAdminMode)return;
+  evt.preventDefault();evt.stopPropagation();
+  const clientX=evt.touches?evt.touches[0].clientX:evt.clientX;
+  const clientY=evt.touches?evt.touches[0].clientY:evt.clientY;
+  const node=document.getElementById('ft-node-'+id);
+  if(!node)return;
+  const transform=node.getAttribute('transform');
+  const match=transform.match(/translate\(([-\d.]+),([-\d.]+)\)/);
+  const origX=match?parseFloat(match[1]):0;
+  const origY=match?parseFloat(match[2]):0;
+  ftDragging={id,startX:clientX,startY:clientY,origX,origY};
+  node.classList.add('dragging');
+  document.getElementById('ftCanvas').classList.add('dragging-node');
+  // Move events
+  if(evt.touches){
+    document.addEventListener('touchmove',onFtDragMove,{passive:false});
+    document.addEventListener('touchend',onFtDragEnd);
+  }else{
+    document.addEventListener('mousemove',onFtDragMove);
+    document.addEventListener('mouseup',onFtDragEnd);
+  }
+}
+
+function onFtDragMove(evt){
+  if(!ftDragging)return;
+  evt.preventDefault();
+  const clientX=evt.touches?evt.touches[0].clientX:evt.clientX;
+  const clientY=evt.touches?evt.touches[0].clientY:evt.clientY;
+  const dx=clientX-ftDragging.startX, dy=clientY-ftDragging.startY;
+  const nx=ftDragging.origX+dx, ny=ftDragging.origY+dy;
+  const node=document.getElementById('ft-node-'+ftDragging.id);
+  if(node)node.setAttribute('transform',`translate(${nx},${ny})`);
+  // Update all lines connected to this node
+  const svg=document.getElementById('ftSvg');
+  const nodeW=140, nodeH=70;
+  const cx=nx+nodeW/2, cy=ny+nodeH/2;
+  const lines=svg.querySelectorAll(`line[data-from="${ftDragging.id}"],line[data-to="${ftDragging.id}"]`);
+  lines.forEach(line=>{
+    if(line.getAttribute('data-from')===String(ftDragging.id)){
+      line.setAttribute('x1', String(cx));
+      line.setAttribute('y1', String(cy));
+    }else{
+      line.setAttribute('x2', String(cx));
+      line.setAttribute('y2', String(cy));
+    }
+  });
+  // Update tooltip position
+  const tooltip=document.getElementById('ftTooltip');
+  if(tooltip.style.display==='block'){
+    tooltip.style.left=(clientX+14)+'px';
+    tooltip.style.top=(clientY-10)+'px';
+  }
+}
+
+function onFtDragEnd(evt){
+  if(!ftDragging)return;
+  const node=document.getElementById('ft-node-'+ftDragging.id);
+  if(node){
+    const transform=node.getAttribute('transform');
+    const match=transform.match(/translate\(([-\d.]+),([-\d.]+)\)/);
+    if(match){
+      const x=parseFloat(match[1]), y=parseFloat(match[2]);
+      // Save position
+      if(!app.treeNodePositions)app.treeNodePositions={};
+      app.treeNodePositions[ftDragging.id]={x,y};
+      saveApp(app);
+    }
+    node.classList.remove('dragging');
+  }
+  document.getElementById('ftCanvas').classList.remove('dragging-node');
+  ftDragging=null;
+  document.removeEventListener('mousemove',onFtDragMove);
+  document.removeEventListener('mouseup',onFtDragEnd);
+  document.removeEventListener('touchmove',onFtDragMove);
+  document.removeEventListener('touchend',onFtDragEnd);
+}
+
+function showFtTooltip(evt, id){
+  const m=app.members.find(x=>x.id===id);if(!m)return;
+  const tooltip=document.getElementById('ftTooltip');
+  const cx=evt.touches?evt.touches[0].clientX:evt.clientX;
+  const cy=evt.touches?evt.touches[0].clientY:evt.clientY;
+  tooltip.innerHTML=`<strong>${esc(m.name)}</strong><span class="tt-role">${esc(m.role||'成员')}</span><span style="color:var(--muted);font-size:11px">${(m.info||'').substring(0,40)}...</span>`;
+  tooltip.style.left=(cx+14)+'px';tooltip.style.top=(cy-10)+'px';
+  tooltip.style.display='block';
+}
+function moveFtTooltip(evt){
+  const tooltip=document.getElementById('ftTooltip');
+  if(tooltip.style.display!=='block')return;
+  const cx=evt.touches?evt.touches[0].clientX:evt.clientX;
+  const cy=evt.touches?evt.touches[0].clientY:evt.clientY;
+  tooltip.style.left=(cx+14)+'px';tooltip.style.top=(cy-10)+'px';
+}
+function hideFtTooltip(){document.getElementById('ftTooltip').style='display:none';}
+
+// ===================== Dock Drag (未关联成员拖入画布) =====================
+let ftDockDragging = null; // {id, el, startX, startY}
+
+function startFtDockDrag(evt, id){
+  if(!isAdmin||!ftAdminMode)return;
+  evt.preventDefault();evt.stopPropagation();
+  const el=evt.currentTarget;
+  const clientX=evt.touches?evt.touches[0].clientX:evt.clientX;
+  const clientY=evt.touches?evt.touches[0].clientY:evt.clientY;
+  const rect=el.getBoundingClientRect();
+  ftDockDragging={id, el, startX:clientX, startY:clientY};
+  el.style.opacity='.5';
+  // Create a floating clone for visual feedback
+  const ghost=document.createElement('div');
+  ghost.id='ftDockGhost';
+  ghost.innerHTML=el.innerHTML;
+  ghost.style.cssText=`position:fixed;z-index:9999;left:${rect.x}px;top:${rect.y}px;width:${rect.width}px;padding:8px;background:var(--card);border:2px solid var(--gold);border-radius:12px;text-align:center;pointer-events:none;box-shadow:0 12px 40px rgba(212,167,.3);transform:scale(1.05)`;
+  document.body.appendChild(ghost);
+  if(evt.touches){
+    document.addEventListener('touchmove',onFtDockDragMove,{passive:false});
+    document.addEventListener('touchend',onFtDockDragEnd);
+  }else{
+    document.addEventListener('mousemove',onFtDockDragMove);
+    document.addEventListener('mouseup',onFtDockDragEnd);
+  }
+}
+
+function onFtDockDragMove(evt){
+  if(!ftDockDragging)return;
+  evt.preventDefault();
+  const clientX=evt.touches?evt.touches[0].clientX:evt.clientX;
+  const clientY=evt.touches?evt.touches[0].clientY:evt.clientY;
+  const ghost=document.getElementById('ftDockGhost');
+  if(ghost){ghost.style.left=(clientX-40)+'px';ghost.style.top=(clientY-30)+'px';}
+}
+
+function onFtDockDragEnd(evt){
+  if(!ftDockDragging)return;
+  const clientX=evt.changedTouches?evt.changedTouches[0].clientX:evt.clientX;
+  const clientY=evt.changedTouches?evt.changedTouches[0].clientY:evt.clientY;
+  // Check if dropped inside the canvas area
+  const canvas=document.getElementById('ftCanvas');
+  const cRect=canvas.getBoundingClientRect();
+  const inCanvas=clientX>=cRect.left+160 && clientX<=cRect.right && clientY>=cRect.top && clientY<=cRect.bottom;
+  if(inCanvas&&ftAdminMode){
+    // Place the node at this position relative to SVG
+    const svg=document.getElementById('ftSvg');
+    const svgRect=svg.getBoundingClientRect();
+    const x=Math.max(10,(clientX-svgRect.left)-70);
+    const y=Math.max(10,(clientY-svgRect.top)-35);
+    if(!app.treeNodePositions)app.treeNodePositions={};
+    app.treeNodePositions[ftDockDragging.id]={x,y};
+    saveApp(app);
+    renderFamilyTree();
+    toast(`${app.members.find(m=>m.id===ftDockDragging.id)?.name||'成员'} 已放置到画布`);
+  }
+  // Cleanup
+  if(ftDockDragging.el)ftDockDragging.el.style.opacity='';
+  const ghost=document.getElementById('ftDockGhost');
+  if(ghost)ghost.remove();
+  ftDockDragging=null;
+  document.removeEventListener('mousemove',onFtDockDragMove);
+  document.removeEventListener('mouseup',onFtDockDragEnd);
+  document.removeEventListener('touchmove',onFtDockDragMove);
+  document.removeEventListener('touchend',onFtDockDragEnd);
+}
+
+function ftNodeClick(evt, id){
+  // Don't open modal if was dragging
+  if(ftDragging)return;
+  // 管理员编辑模式需要双击才进入编辑，单击不做操作
+  // 非管理员单击查看成员详情
+  if(isAdmin && ftAdminMode){
+    // 单击忽略（拖动时也不会触发），双击由 ondblclick 处理
+    return;
+  } else {
+    showMemberDetail(id);
+  }
+}
+
+function ftNodeDblClick(evt, id){
+  if(ftDragging)return;
+  evt.preventDefault();evt.stopPropagation();
+  if(isAdmin && ftAdminMode){
+    openRelationPanel(id);
+  }
+}
+
+function resetTreePositions(){
+  if(!confirm('确定重置所有节点位置？（将恢复自动排布）'))return;
+  app.treeNodePositions={};ftNodePositions={};
+  saveApp(app);renderFamilyTree();toast('已重置布局');
+}
+
+function toggleFtAdmin(){
+  if(!ftAdminMode){
+    // 进入管理模式：必须先登录管理员
+    if(!isAdmin){showAdminLogin();return;}
+    ftAdminMode=true;
+    const btn=document.getElementById('ftAdminBtn');
+    const hint=document.getElementById('ftAdminHint');
+    btn.textContent='🔓 退出编辑';
+    hint.textContent='管理员编辑模式：可拖动节点、编辑关系';
+    hint.style.color='var(--gold)';
+    renderFamilyTree();
+    toast('已进入族谱编辑模式');
+  }else{
+    ftAdminMode=false;
+    const btn=document.getElementById('ftAdminBtn');
+    const hint=document.getElementById('ftAdminHint');
+    btn.textContent='🔐 管理员编辑';
+    hint.textContent='';
+    renderFamilyTree();
+    toast('已退出族谱编辑模式');
+  }
+}
+
+// ===================== Members tree removed, all tree functionality in FamilyTree above =====================
 
 // Init
 (async function init() {
