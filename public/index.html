@@ -1339,15 +1339,15 @@ function renderMentors() {
     const totalLikes=(app.likes||{})[mt.id]||0;
     const hasLikedToday=currentUser&&currentUser.memberId?(app.likeLog||[]).filter(l=>l.mentorId===mt.id&&l.memberId===currentUser.memberId&&l.date===todayStr()).length>0:false;
     const centerBody=`<div class="mc-card-body">
-        <h4>${m?esc(m.name):'未知'}</h4>
-        <div class="mc-sp">${esc(mt.specialty||'导师')}</div>
-        <div class="mc-xt">${esc(mt.extraInfo||'暂无介绍')}</div>
-        <div style="margin-top:16px;text-align:center;padding-top:12px;border-top:1px solid var(--bdr2)">
-          <button class="mc-like-btn ${hasLikedToday?'liked':''}" onclick="event.stopPropagation();mentorLike(${mt.id})" title="${hasLikedToday?'已点赞':'为导师点赞'}">
-            <span style="font-size:20px">❤</span>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px">
+          <h4 style="margin:0">${m?esc(m.name):'未知'}</h4>
+          <button class="mc-like-btn ${hasLikedToday?'liked':''}" onclick="event.stopPropagation();mentorLike(${mt.id})" title="${hasLikedToday?'已点赞':'为导师点赞'}" style="padding:5px 12px;font-size:11px;flex-shrink:0">
+            <span style="font-size:15px">❤</span>
             <span class="mc-like-count">${totalLikes}</span>
           </button>
         </div>
+        <div class="mc-sp">${esc(mt.specialty||'导师')}</div>
+        <div class="mc-xt">${esc(mt.extraInfo||'暂无介绍')}</div>
       </div>`;
     return `<div class="mc-card${i===mCarouselIdx?' mc-center':' mc-hidden'}${mt.image?'':' no-img'}" id="mc-${i}" onclick="mentorCarouselGo(${i})">
       ${imgHtml}
