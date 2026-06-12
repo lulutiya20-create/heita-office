@@ -1802,8 +1802,6 @@ function changeMemberPwd(){
 
 // ==================== 个人中心 ====================
 function openPersonalCenter(){
-  // 最优先：立即显示 toast 确认函数被调用
-  if(typeof toast==='function') toast('✅ openPersonalCenter() 已触发');
   try {
   if(!currentUser||!currentUser.memberId){toast('请先登录');return;}
   const m = app.members.find(x=>x.id===currentUser.memberId);
@@ -1824,14 +1822,13 @@ function openPersonalCenter(){
   }
   document.getElementById('pcNameDisplay').textContent = m.name;
   document.getElementById('pc-info-input').value = m.info || '';
-  // DEBUG toast
-  toast('✅ 个人中心已打开');
   document.getElementById('pc-old-pwd').value = '';
   document.getElementById('pc-new-pwd').value = '';
   // 重置头像预览
   document.getElementById('pc-avatar-input').value = '';
   document.getElementById('pc-avatar-preview').style.display='none';
   _pendingAvatarDataUrl = null;
+} catch(e) {}
 }
 function closePersonalCenter(){
   document.getElementById('pcOverlay').classList.add('hidden');
@@ -2783,15 +2780,9 @@ function toggleFtAdmin(){
       }
     }
   }, 3000);
-  // 全局 Escape 键关闭所有遮罩 + Ctrl+P 打开个人中心
+  // 全局 Escape 键关闭所有遮罩
   document.addEventListener('keydown', function(evt) {
     if(evt.key === 'Escape') closeAllOverlays();
-    // Ctrl+P 打开个人中心（调试用）
-    if(evt.ctrlKey && evt.key === 'p') {
-      evt.preventDefault();
-      toast('🐛 Ctrl+P 触发 openPersonalCenter()');
-      openPersonalCenter();
-    }
   });
 })();
 
