@@ -1533,23 +1533,25 @@ function compressMentorImg(dataUrl,callback){compressImage(dataUrl,1080,1920,0.9
 function admDelMember(id){if(!confirm('确定删除该成员？'))return;app.mentors=app.mentors.filter(mt=>mt.memberId!==id);app.members.forEach(m=>{m.relations=(m.relations||[]).filter(r=>r.targetId!==id);});app.members=app.members.filter(m=>m.id!==id);if(app.treeNodePositions)delete app.treeNodePositions[id];saveApp(app);renderMembers();renderFamilyTree();renderMentors();refreshAdminPanel();toast('已删除');}
 // admAddEvent replaced below with file upload support
 function admDelEvent(id){if(!confirm('确定删除？'))return;app.events=app.events.filter(e=>e.id!==id);saveApp(app);renderEvents();refreshAdminPanel();toast('已删除');}
+let editingAdminMentorId = null; // 正在编辑的导师 ID
+
 function updateMentorSelect(){
   const sel=document.getElementById('adm-mt-member');
+  if(!sel)return;
   // 编辑模式下排除其他导师，但保留当前编辑的导师成员
   let exclude;
   if(editingAdminMentorId){
-    exclude = app.mentors.filter(mt => mt.id !== editingAdminMentorId);
+    exclude = app.mentors.filter(mt2 => mt2.id !== editingAdminMentorId);
   } else {
     exclude = app.mentors;
   }
-  const free=app.members.filter(m=>!exclude.find(mt=>mt.memberId===m.id));
+  const free=app.members.filter(m=>!exclude.find(mt2=>mt2.memberId===m.id));
   sel.innerHTML='<option value="">-- 选择 --</option>'+free.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');
   if(editingAdminMentorId){
-    const mt=app.mentors.find(mt=>mt.id===editingAdminMentorId);
-    if(mt)sel.value=mt.memberId;
+    const mt=app.mentors.find(mt2=>mt2.id===editingAdminMentorId);
+    if(mt)sel.value=String(mt.memberId);
   }
 }
-let editingAdminMentorId = null; // 正在编辑的导师 ID
 
 function admAddMentor(){
   const mid=parseInt(document.getElementById('adm-mt-member').value);
@@ -1852,7 +1854,6 @@ function renderFamilyTree(){
   const dockList=document.getElementById('ftDockList');
   const dockEmpty=document.getElementById('ftDockEmpty');
   const allTgts=new Set();app.members.forEach(m=>{(m.relations||[]).forEach(r=>allTgts.add(r.targetId));});
-  const hasPositions = app.treeNodePositions && Object.keys(app.treeNodePositions).length>0;
   const unrelated=app.members.filter(m=>(!m.relations||!m.relations.length)&&!allTgts.has(m.id)&&(!hasPositions||!app.treeNodePositions[m.id]));
   if(unrelated.length){
     dock.style.display='flex';
