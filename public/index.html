@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>黑塔办事处</title> <!-- v261214-fix-pc-v2 -->
+<title>黑塔办事处</title> <!-- v261214-fix-pc-v4 -->
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -1676,8 +1676,8 @@ function afterLoginSuccess(){
     badge.textContent = (m&&m.isAdmin) ? '⚡ 管理员' : '';
     badge.className = (m&&m.isAdmin) ? 'admin-badge' : 'hidden';
     userBadge.textContent = m?m.name:'成员'; userBadge.className='user-badge'; userBadge.classList.remove('hidden');
-    // 普通成员点击姓名 → 打开个人中心
-    if(m && !m.isAdmin){
+    // 所有已登录成员点击姓名 → 打开个人中心（含管理员）
+    if(m){
       userBadge.style.cursor = 'pointer';
       userBadge.title = '点击打开个人中心';
       userBadge.addEventListener('click', function(e){ e.stopPropagation(); openPersonalCenter(); });
