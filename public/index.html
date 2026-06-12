@@ -904,6 +904,10 @@ function debouncedPushToCloud(data) {
 }
 
 function saveLocal(data) {
+  // 记录本地修改时间戳，用于云端重置检测
+  if(data && !data._lastLocalModified){
+    data._lastLocalModified = new Date().toISOString();
+  }
   localStorage.setItem(DB_KEY, JSON.stringify(data));
 }
 
