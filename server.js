@@ -133,7 +133,9 @@ app.get('/api/data', async (req, res) => {
     const fingerprint = crypto.createHash('md5').update(JSON.stringify(data)).digest('hex');
     res.json({ success: true, data, fingerprint, updatedAt: data._updatedAt || null });
   } else {
-    res.json({ success: false, data: null, message: '暂无云端数据' });
+    // MongoDB 连接正常但无数据 → 仍返回 success:true，让前端知道服务器可用
+    // 前端收到 data:null 后会用本地 localStorage 数据
+    res.json({ success: true, data: null, fingerprint: '', storage: useMongo ? 'mongodb' : 'file', message: '云端暂无数据' });
   }
 });
 
