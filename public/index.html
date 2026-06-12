@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>黑塔办事处</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f0f1a;--card:#1a1a2e;--card2:#222240;
+  --red:#c0392b;--red2:#e74c3c;--gold:#d4a574;--gold2:#f0d6b8;
+  --text:#e0e0e0;--muted:#8888aa;--bdr:#2a2a45;--bdr2:#3a3a55;
+  --r:12px;--rs:8px;--tr:all .3s ease;
+}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;
+}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:3px}
+
+.header{
+  background:linear-gradient(135deg,#0a0a15,#1a1025,#0f0f1a);
+  border-bottom:2px solid var(--red);padding:0 40px;
+  display:flex;align-items:center;justify-content:space-between;
+  height:68px;position:sticky;top:0;z-index:1000;backdrop-filter:blur(10px);
+}
+.header-logo{display:flex;align-items:center;gap:12px;cursor:pointer}
+.header-logo .icon{width:42px;height:42px;background:linear-gradient(135deg,var(--red),#8b0000);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 20px rgba(192,57,43,.3)}
+.header-logo h1{font-size:21px;font-weight:700;letter-spacing:2px;background:linear-gradient(135deg,var(--gold2),var(--red2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header-nav{display:flex;gap:4px}
+.nav-btn{padding:8px 18px;border:none;border-radius:20px;cursor:pointer;font-size:13px;font-weight:600;transition:var(--tr);background:transparent;color:var(--muted)}
+.nav-btn:hover,.nav-btn.active{background:rgba(212,167,116,.1);color:var(--gold)}
+.header-actions{display:flex;gap:10px;align-items:center}
+.btn{padding:9px 18px;border:none;border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:600;transition:var(--tr);display:inline-flex;align-items:center;gap:6px}
+.btn-red{background:linear-gradient(135deg,var(--red),#96281b);color:#fff;box-shadow:0 4px 15px rgba(192,57,43,.3)}
+.btn-red:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(192,57,43,.5)}
+.btn-outline{background:transparent;border:2px solid var(--gold);color:var(--gold)}
+.btn-outline:hover{background:var(--gold);color:#0a0a15}
+.btn-sm{padding:5px 12px;font-size:11px}
+.btn-del{background:var(--red);color:#fff}.btn-del:hover{background:#a93226}
+.btn-ok{background:#27ae60;color:#fff}.btn-ok:hover{background:#219a52}
+.btn-sync{background:var(--card2);border:1px solid var(--gold);color:var(--gold)}
+.btn-sync:hover{background:rgba(212,167,116,.15)}
+#syncBadge{font-size:16px;transition:var(--tr);line-height:1}
+#syncBadge:hover{transform:scale(1.2)}
+.admin-badge{background:var(--red);color:#fff;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+
+.container{max-width:1100px;margin:0 auto;padding:0 20px}
+
+.carousel{position:relative;height:440px;overflow:hidden;background:#000}
+.carousel-track{display:flex;height:100%;transition:transform .6s cubic-bezier(.4,0,.2,1)}
+.carousel-slide{min-width:100%;height:100%;position:relative}
+.carousel-slide img{width:100%;height:100%;object-fit:cover}
+.carousel-slide .ol{position:absolute;inset:0;background:linear-gradient(to top,rgba(10,10,20,.9),transparent 60%)}
+.carousel-slide .cap{position:absolute;bottom:50px;left:50%;transform:translateX(-50%);text-align:center;z-index:2}
+.carousel-slide .cap h3{font-size:26px;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.5)}
+.carousel-btn{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.3);color:#fff;width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:18px;transition:var(--tr);z-index:10;backdrop-filter:blur(5px)}
+.carousel-btn:hover{background:rgba(255,255,255,.25)}
+.carousel-btn.prev{left:16px}.carousel-btn.next{right:16px}
+.carousel-dots{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:10}
+.carousel-dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.4);cursor:pointer;transition:var(--tr)}
+.carousel-dot.active{background:var(--red2);transform:scale(1.3)}
+.carousel-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:17px;gap:10px}
+
+.home-section{padding:60px 0}
+.home-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px;margin-top:30px}
+.home-card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:36px 24px;text-align:center;cursor:pointer;transition:var(--tr);position:relative;overflow:hidden}
+.home-card:hover{transform:translateY(-6px);border-color:var(--gold);box-shadow:0 12px 40px rgba(212,167,116,.12)}
+.home-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--red),var(--gold));transform:scaleX(0);transition:transform .4s ease}
+.home-card:hover::before{transform:scaleX(1)}
+.home-card .hc-icon{font-size:48px;margin-bottom:16px}
+.home-card h3{font-size:20px;color:var(--gold2);margin-bottom:8px}
+.home-card p{font-size:13px;color:var(--muted);line-height:1.7}
+
+.page{display:none;min-height:calc(100vh - 68px)}
+.page.active{display:block}
+.page-header{text-align:center;padding:50px 0 30px}
+.page-header h2{font-size:30px;color:var(--gold2);letter-spacing:2px;position:relative;display:inline-block}
+.page-header h2::after{content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:50px;height:3px;background:var(--red);border-radius:2px}
+.page-header p{color:var(--muted);margin-top:14px;font-size:14px}
+
+/* Sync bar */
+.sync-bar{background:var(--card);border-bottom:1px solid var(--bdr);padding:8px 20px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+.sync-bar span{font-size:11px;color:var(--muted)}
+.sync-bar .device-id{color:var(--gold);font-weight:600}
+
+.member-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px;padding-bottom:40px}
+.member-card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:22px;transition:var(--tr);text-align:center;position:relative}
+.member-card:hover{border-color:var(--gold);transform:translateY(-3px);box-shadow:0 8px 25px rgba(212,167,116,.1)}
+.member-card .av{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--bdr2),var(--card2));display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 12px;border:2px solid var(--bdr2)}
+.member-card h4{font-size:16px;color:var(--gold2);margin-bottom:4px}
+.member-card .rl{font-size:12px;color:var(--red2);margin-bottom:10px}
+.member-card .inf{font-size:12px;color:var(--muted);line-height:1.7}
+.member-card .rels{margin-top:10px;padding-top:10px;border-top:1px solid var(--bdr);display:flex;flex-wrap:wrap;gap:5px;justify-content:center}
+.rel-tag{font-size:10px;padding:2px 8px;border-radius:12px;background:rgba(212,167,116,.1);color:var(--gold);border:1px solid rgba(212,167,116,.25)}
+.mentor-badge{position:absolute;top:10px;right:10px;background:linear-gradient(135deg,var(--gold),#b8860b);color:#0a0a15;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700}
+
+.tree-section{padding-bottom:50px}
+.tree-tip{text-align:center;color:var(--muted);font-size:12px;margin-bottom:16px}
+.tree-tip strong{color:var(--gold)}
+.tree-canvas-wrap{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden;position:relative;min-height:300px}
+.tree-canvas-wrap svg{display:block;width:100%}
+.tree-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px;color:var(--muted);gap:12px}
+.tree-relation-panel{position:fixed;right:0;top:68px;bottom:0;width:350px;background:var(--card);border-left:1px solid var(--bdr2);z-index:900;padding:24px;overflow-y:auto;transform:translateX(100%);transition:transform .3s ease;box-shadow:-4px 0 20px rgba(0,0,0,.3)}
+.tree-relation-panel.open{transform:translateX(0)}
+.panel-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:899;display:none}
+.panel-overlay.show{display:block}
+.panel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.panel-header h3{color:var(--gold2);font-size:18px}
+.panel-close{background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer}
+.panel-close:hover{color:var(--red2)}
+.panel-body label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;margin-top:10px}
+.panel-body select,.panel-body input{padding:8px 12px;background:var(--bg);border:1px solid var(--bdr2);border-radius:var(--rs);color:var(--text);font-size:13px;width:100%}
+.panel-body select:focus,.panel-body input:focus{outline:none;border-color:var(--gold)}
+.rel-list-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg);border-radius:var(--rs);margin-bottom:6px;font-size:13px}
+.rel-list-item span{color:var(--gold)}
+
+.event-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:22px;padding-bottom:40px}
+.event-card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden;transition:var(--tr)}
+.event-card:hover{border-color:var(--red);transform:translateY(-3px);box-shadow:0 8px 25px rgba(0,0,0,.3)}
+.event-card img{width:100%;height:200px;object-fit:cover;background:var(--card2)}
+.event-body{padding:20px}
+.event-body h4{font-size:17px;color:var(--gold2);margin-bottom:6px}
+.event-body .dt{font-size:12px;color:var(--red2);margin-bottom:10px}
+.event-body .ds{font-size:13px;color:var(--muted);line-height:1.7}
+
+.mentor-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:22px;padding-bottom:40px}
+.mentor-card{background:linear-gradient(135deg,var(--card),#1a1528);border:1px solid var(--gold);border-radius:var(--r);padding:26px;text-align:center;transition:var(--tr)}
+.mentor-card:hover{box-shadow:0 8px 30px rgba(212,167,116,.15);transform:translateY(-3px)}
+.mentor-card .av{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#b8860b);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 14px;box-shadow:0 0 20px rgba(212,167,116,.25)}
+.mentor-card h4{font-size:18px;color:var(--gold2);margin-bottom:4px}
+.mentor-card .sp{font-size:12px;color:var(--red2);margin-bottom:10px}
+.mentor-card .xt{font-size:13px;color:var(--muted);line-height:1.8;padding:12px;background:rgba(255,255,255,.03);border-radius:var(--rs);margin-top:10px}
+
+.msg-board{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:28px;max-width:700px;margin:0 auto 40px}
+.msg-form{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.msg-form input,.msg-form textarea{flex:1;min-width:180px;padding:10px 14px;background:var(--bg);border:1px solid var(--bdr2);border-radius:var(--rs);color:var(--text);font-size:13px;font-family:inherit}
+.msg-form textarea{width:100%;min-height:70px;resize:vertical}
+.msg-form input:focus,.msg-form textarea:focus{outline:none;border-color:var(--gold)}
+.msg-list{display:flex;flex-direction:column;gap:14px;max-height:450px;overflow-y:auto}
+.msg-item{background:var(--bg);border:1px solid var(--bdr);border-radius:var(--rs);padding:14px}
+.msg-item .mh{display:flex;justify-content:space-between;margin-bottom:6px}
+.msg-item .mn{font-weight:600;color:var(--gold2);font-size:14px}
+.msg-item .mt{font-size:11px;color:var(--muted)}
+.msg-item .mc{font-size:13px;color:var(--text);line-height:1.6}
+
+.admin-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:2000;display:flex;align-items:center;justify-content:center}
+.admin-box{background:var(--card);border:1px solid var(--bdr2);border-radius:var(--r);padding:32px;max-width:500px;width:90%;max-height:85vh;overflow-y:auto}
+.admin-box.wide{max-width:750px}
+.admin-box h2{text-align:center;color:var(--gold2);margin-bottom:20px;font-size:22px}
+.admin-box input[type=password],.admin-box input[type=text],.admin-box input[type=date]{width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--bdr2);border-radius:var(--rs);color:var(--text);font-size:14px;margin-bottom:14px}
+.admin-box input:focus{outline:none;border-color:var(--gold)}
+.admin-tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap}
+.admin-tab{padding:7px 14px;border:1px solid var(--bdr2);border-radius:20px;background:transparent;color:var(--muted);cursor:pointer;font-size:12px;transition:var(--tr)}
+.admin-tab.active{background:var(--red);color:#fff;border-color:var(--red)}
+.admin-tab-content{display:none}
+.admin-tab-content.active{display:block}
+.admin-fg{margin-bottom:14px}
+.admin-fg label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+.admin-fg input,.admin-fg textarea,.admin-fg select{width:100%;padding:8px 12px;background:var(--bg);border:1px solid var(--bdr2);border-radius:var(--rs);color:var(--text);font-size:12px;font-family:inherit}
+.admin-fg input:focus,.admin-fg textarea:focus,.admin-fg select:focus{outline:none;border-color:var(--gold)}
+.admin-fg textarea{min-height:70px;resize:vertical}
+.admin-item{display:flex;align-items:center;justify-content:space-between;padding:10px;background:var(--bg);border:1px solid var(--bdr);border-radius:var(--rs);margin-bottom:7px;gap:10px}
+.admin-item .it{flex:1;min-width:0}
+.admin-item .it strong{color:var(--gold2);display:block;font-size:13px}
+.admin-item .it span{font-size:11px;color:var(--muted)}
+.admin-item .ia{display:flex;gap:5px}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:3000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-box{background:var(--card);border:1px solid var(--bdr2);border-radius:var(--r);padding:32px;max-width:480px;width:90%;max-height:80vh;overflow-y:auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.5);animation:mdIn .3s ease}
+@keyframes mdIn{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-close{position:absolute;top:10px;right:14px;background:none;border:none;color:var(--muted);font-size:26px;cursor:pointer}
+.modal-close:hover{color:var(--red2)}
+.ma-lg{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--bdr2),var(--card2));display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 12px;border:3px solid var(--gold)}
+
+.toast{position:fixed;top:20px;right:20px;background:var(--card);border:1px solid var(--red);color:var(--text);padding:12px 20px;border-radius:var(--rs);z-index:9999;animation:slIn .3s ease;font-size:13px;box-shadow:0 4px 20px rgba(0,0,0,.3);max-width:360px}
+@keyframes slIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+.footer{text-align:center;padding:24px;border-top:1px solid var(--bdr);color:var(--muted);font-size:12px}
+.empty{text-align:center;padding:40px;color:var(--muted);border:2px dashed var(--bdr);border-radius:var(--r);font-size:14px}
+.empty .ic{font-size:40px;margin-bottom:10px}
+.hidden{display:none!important}
+
+@media(max-width:768px){
+  .header{padding:0 14px}.header-logo h1{font-size:17px}
+  .nav-btn{padding:6px 12px;font-size:11px}
+  .carousel{height:250px}
+  .home-cards{grid-template-columns:repeat(2,1fr)}
+  .event-grid,.mentor-grid{grid-template-columns:1fr}
+  .tree-relation-panel{width:100%}
+}
+</style>
+<script src="https://beacon.cdn.qq.com/sdk/4.5.9/beacon_web.min.js"></script>
+<script>
+(function(){
+  try{
+    var beacon=new BeaconAction({
+      appkey:'0WEB06U85YBSLJNL',
+      versionCode:'1.0.0',
+      channelID:'share',
+      delay:1000,
+      sessionDuration:30*60*1000,
+      isOversea:false,
+      needReportRqdEvent:false
+    });
+    beacon.onDirectUserAction('preview_page_view',{
+      'url':location.href,
+      'referrer':document.referrer,
+      'title':document.title,
+      'sandbox_id':'77e9f79eef6748d0b2d9b9856b959368'
+    });
+  }catch(e){}
+})();
+</script></head>
+<body>
+
+<header class="header">
+  <div class="header-logo" onclick="navigate('/')">
+    <div class="icon">🏰</div>
+    <h1>黑塔办事处</h1>
+  </div>
+  <nav class="header-nav" id="headerNav"></nav>
+  <div class="header-actions">
+    <span style="font-size:14px;cursor:pointer" id="syncBadge" title="云端同步状态" onclick="showSyncMenu()">☁</span>
+    <button class="btn btn-sync btn-sm" onclick="showSyncMenu()" title="数据同步">📤 同步</button>
+    <span id="adminBadge" class="hidden"></span>
+    <button class="btn btn-outline btn-sm" id="btnAdminToggle" onclick="toggleAdmin()">管理员入口</button>
+  </div>
+</header>
+
+<!-- Sync bar -->
+<div class="sync-bar" id="syncBar" style="display:none">
+  <span>设备ID: <strong class="device-id" id="deviceIdDisplay"></strong></span>
+  <button class="btn btn-sync btn-sm" onclick="forceCloudRefresh()" title="从云端拉取最新数据">🔄 拉取云端</button>
+  <button class="btn btn-sync btn-sm" onclick="exportData()">📥 导出备份</button>
+  <button class="btn btn-sync btn-sm" onclick="document.getElementById('importFileInput').click()">📤 导入备份</button>
+  <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importData(event)">
+  <span style="font-size:10px;color:var(--muted)">数据自动保存到本地 · 有云服务器时自动实时同步 · 多设备共享</span>
+</div>
+
+<!-- HOME PAGE -->
+<div class="page active" id="page-home">
+  <section class="carousel" id="carouselSection">
+    <div class="carousel-track" id="carouselTrack"></div>
+    <button class="carousel-btn prev" onclick="prevSlide()">&#10094;</button>
+    <button class="carousel-btn next" onclick="nextSlide()">&#10095;</button>
+    <div class="carousel-dots" id="carouselDots"></div>
+  </section>
+  <section class="home-section">
+    <div class="container">
+      <div class="page-header"><h2>功能导航</h2><p>点击进入各功能模块</p></div>
+      <div class="home-cards">
+        <div class="home-card" onclick="navigate('/members')"><div class="hc-icon">👥</div><h3>成员名录</h3></div>
+        <div class="home-card" onclick="navigate('/events')"><div class="hc-icon">📅</div><h3>部队事件</h3></div>
+        <div class="home-card" onclick="navigate('/mentors')"><div class="hc-icon">🎓</div><h3>导师信息</h3></div>
+        <div class="home-card" onclick="navigate('/messages')"><div class="hc-icon">💬</div><h3>留言板</h3></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- MEMBERS PAGE -->
+<div class="page" id="page-members">
+  <div class="container">
+    <div class="page-header"><h2>成员名录</h2><p>黑塔办事处全体成员 · 点击卡片查看详情 · 关系图谱支持所有人编辑</p></div>
+    <div class="member-grid" id="memberGrid"></div>
+    <div class="tree-section">
+      <div class="page-header"><h2>成员关系树状图</h2></div>
+      <div class="tree-canvas-wrap" id="treeCanvasWrap">
+        <svg id="treeSvg"></svg>
+        <div class="tree-empty" id="treeEmpty"><div class="ic">🌳</div><p>暂无成员数据</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Relation Edit Panel -->
+<div class="panel-overlay" id="panelOverlay" onclick="closeRelationPanel()"></div>
+<div class="tree-relation-panel" id="relationPanel">
+  <div class="panel-header"><h3 id="panelTitle">编辑关系</h3><button class="panel-close" onclick="closeRelationPanel()">&times;</button></div>
+  <div class="panel-body">
+    <label>目标成员</label><select id="relTarget"></select>
+    <label>关系类型</label><input type="text" id="relLabel">
+    <button class="btn btn-ok" onclick="addRelation()" style="width:100%;margin-top:10px">添加关系</button>
+    <label style="margin-top:16px">当前关系</label>
+    <div id="currentRelations"></div>
+  </div>
+</div>
+
+<!-- EVENTS PAGE -->
+<div class="page" id="page-events">
+  <div class="container">
+    <div class="page-header"><h2>部队事件</h2><p>团建活动与重要事件记录</p></div>
+    <div class="event-grid" id="eventGrid"></div>
+  </div>
+</div>
+
+<!-- MENTORS PAGE -->
+<div class="page" id="page-mentors">
+  <div class="container">
+    <div class="page-header"><h2>导师信息</h2><p>黑塔办事处的导师团队</p></div>
+    <div class="mentor-grid" id="mentorGrid"></div>
+  </div>
+</div>
+
+<!-- MESSAGES PAGE -->
+<div class="page" id="page-messages">
+  <div class="container">
+    <div class="page-header"><h2>留言板</h2><p>欢迎留下您的宝贵意见</p></div>
+    <div class="msg-board">
+      <div class="msg-form">
+        <input type="text" id="msgName" placeholder="您的称呼" maxlength="20">
+        <textarea id="msgContent" placeholder="请在此输入留言..." maxlength="500"></textarea>
+        <button class="btn btn-red" onclick="submitMsg()">提交</button>
+      </div>
+      <div class="msg-list" id="msgList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Member Detail Modal -->
+<div class="modal-overlay hidden" id="memberModal" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="document.getElementById('memberModal').classList.add('hidden')">&times;</button>
+    <div id="memberModalBody"></div>
+  </div>
+</div>
+
+<!-- Admin Overlay -->
+<div class="admin-overlay hidden" id="adminOverlay">
+  <div class="admin-box" id="adminLoginBox">
+    <h2>🔐 管理员登录</h2>
+    <input type="password" id="adminPassInput" placeholder="请输入管理员密码" onkeydown="if(event.key==='Enter')adminLogin()">
+    <button class="btn btn-red" onclick="adminLogin()" style="width:100%">登录</button>
+    <button class="btn btn-outline" onclick="closeAdmin()" style="width:100%;margin-top:8px">取消</button>
+  </div>
+  <div class="admin-box wide hidden" id="adminPanelBox">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h2 style="margin:0">⚙️ 管理面板</h2>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-outline btn-sm" onclick="changePwd()">改密码</button>
+        <button class="btn btn-del btn-sm" onclick="adminLogout()">退出</button>
+        <button class="btn btn-outline btn-sm" onclick="closeAdmin()">关闭</button>
+      </div>
+    </div>
+    <div class="admin-tabs">
+      <button class="admin-tab active" onclick="sAT('carousel')">轮播图</button>
+      <button class="admin-tab" onclick="sAT('members')">成员</button>
+      <button class="admin-tab" onclick="sAT('events')">事件</button>
+      <button class="admin-tab" onclick="sAT('mentors')">导师</button>
+      <button class="admin-tab" onclick="sAT('msgs')">留言</button>
+    </div>
+    <div class="admin-tab-content active" id="adm-carousel">
+      <div class="admin-fg"><label>标题</label><input id="adm-carousel-title"></div>
+      <div class="admin-fg"><label>图片URL</label><input id="adm-carousel-url" placeholder="https://..."></div>
+      <button class="btn btn-red btn-sm" onclick="admAddCarousel()">添加</button>
+      <div style="margin-top:14px" id="adm-carousel-list"></div>
+    </div>
+    <div class="admin-tab-content" id="adm-members">
+      <div class="admin-fg"><label>姓名</label><input id="adm-m-name"></div>
+      <div class="admin-fg"><label>职务</label><input id="adm-m-role"></div>
+      <div class="admin-fg"><label>简介</label><textarea id="adm-m-info"></textarea></div>
+      <div class="admin-fg"><label>头像（可选，最大20MB）</label><input type="file" id="adm-m-avatar" accept="image/*" onchange="previewAvatar(this)"><div id="avatarPreview" style="margin-top:6px;display:none"><img id="avatarPreviewImg" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid var(--gold)"><span id="avatarSizeHint" style="font-size:11px;color:var(--muted);margin-left:8px"></span></div></div>
+      <button class="btn btn-red btn-sm" onclick="admAddMember()">添加</button>
+      <div style="margin-top:14px" id="adm-m-list"></div>
+    </div>
+    <div class="admin-tab-content" id="adm-events">
+      <div class="admin-fg"><label>标题</label><input id="adm-e-title"></div>
+      <div class="admin-fg"><label>日期</label><input type="date" id="adm-e-date"></div>
+      <div class="admin-fg"><label>描述</label><textarea id="adm-e-desc"></textarea></div>
+      <div class="admin-fg"><label>图片URL（可选）</label><input id="adm-e-image"></div>
+      <button class="btn btn-red btn-sm" onclick="admAddEvent()">添加</button>
+      <div style="margin-top:14px" id="adm-e-list"></div>
+    </div>
+    <div class="admin-tab-content" id="adm-mentors">
+      <div class="admin-fg"><label>选择成员</label><select id="adm-mt-member"></select></div>
+      <div class="admin-fg"><label>专长</label><input id="adm-mt-specialty"></div>
+      <div class="admin-fg"><label>详细介绍</label><textarea id="adm-mt-extra"></textarea></div>
+      <button class="btn btn-red btn-sm" onclick="admAddMentor()">设为导师</button>
+      <div style="margin-top:14px" id="adm-mt-list"></div>
+    </div>
+    <div class="admin-tab-content" id="adm-msgs">
+      <p style="color:var(--muted);margin-bottom:10px;font-size:13px">管理留言</p>
+      <div id="adm-msg-list"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toastContainer"></div>
+<footer class="footer"><p>© 2026 黑塔办事处 · 打牌 · 钓鱼 · 赛鸟</p></footer>
+
+<script>
+// ===================== 智能同步方案 v2.1 =====================
+// 支持多种部署模式：
+//   1. 同源部署（前后端同域名）→ /api/data
+//   2. 独立前端 + 远程后端 → 配置 API_SERVER_URL
+//   3. 纯离线模式 → localStorage only
+const DB_KEY = 'heita_office_v2';
+// 可配置的 API 服务器地址（留空则使用同源 /api/data）
+const API_SERVER_URL = '';
+// 自动检测可用的 API 端点
+let API_DATA = '';
+let API_STATUS = '';
+let cloudEnabled = false;
+let cloudChecked = false;
+let syncPending = false;
+let lastCloudFingerprint = '';
+let pollTimer = null;
+const POLL_INTERVAL = 5000;
+
+// 初始化 API 端点（自动检测可用性）
+async function initApiEndpoint() {
+  // 候选端点列表
+  const candidates = [];
+  if (API_SERVER_URL) {
+    candidates.push(API_SERVER_URL);
+  } else {
+    // 同源（部署服务器）
+    candidates.push('/api/data');
+    // 本地开发服务器
+    candidates.push('http://localhost:3000/api/data');
+  }
+
+  for (const url of candidates) {
+    const statusUrl = url.replace('/api/data', '/api/status');
+    try {
+      const resp = await fetch(statusUrl, { signal: AbortSignal.timeout(3000) });
+      if (resp.ok) {
+        API_DATA = url;
+        API_STATUS = statusUrl;
+        cloudEnabled = true;
+        console.log('[同步] ✅ 云服务器已连接:', API_DATA);
+        return true;
+      }
+    } catch(e) {
+      console.log('[同步] 尝试连接失败:', url.substring(0, 30), e.message);
+    }
+  }
+
+  // 所有端点都不可用
+  API_DATA = '/api/data';
+  API_STATUS = '/api/status';
+  cloudEnabled = false;
+  console.log('[同步] ⚠ 未检测到云服务器，使用离线模式');
+  return false;
+}
+
+const DEFAULTS = {
+  adminPassword:'admin123',
+  carouselImages:[
+    {id:1,title:'黑塔办事处全景',url:'https://picsum.photos/seed/heita1/1200/480'},
+    {id:2,title:'团队合影',url:'https://picsum.photos/seed/heita2/1200/480'},
+    {id:3,title:'训练基地',url:'https://picsum.photos/seed/heita3/1200/480'}
+  ],
+  members:[
+    {id:1,name:'张建国',role:'主任',info:'黑塔办事处主任，负责全面工作，经验丰富，作风严谨。',avatar:'',relations:[{targetId:2,label:'上级'},{targetId:3,label:'战友'}]},
+    {id:2,name:'李志强',role:'副主任',info:'协助主任处理日常事务，主管后勤保障工作。',avatar:'',relations:[{targetId:1,label:'下属'},{targetId:4,label:'搭档'}]},
+    {id:3,name:'王建军',role:'队长',info:'负责外勤任务执行，行动力强，善于应急处理。',avatar:'',relations:[{targetId:1,label:'战友'},{targetId:5,label:'上级'}]},
+    {id:4,name:'刘思远',role:'指导员',info:'负责思想政治工作和团队文化建设。',avatar:'',relations:[{targetId:2,label:'搭档'},{targetId:5,label:'同事'}]},
+    {id:5,name:'陈晓峰',role:'队员',info:'年轻骨干，计算机技术专长，负责信息化建设。',avatar:'',relations:[{targetId:3,label:'下属'},{targetId:4,label:'同事'}]}
+  ],
+  events:[
+    {id:1,title:'2026年春季团建活动',date:'2026-04-15',description:'全体成员前往郊外开展为期两天的团建活动，包括野外拉练、团队协作游戏和篝火晚会。',image:'https://picsum.photos/seed/event1/600/400'},
+    {id:2,title:'新成员入职欢迎会',date:'2026-03-20',description:'欢迎新成员加入黑塔办事处大家庭，举办了简朴而温馨的欢迎仪式。',image:'https://picsum.photos/seed/event2/600/400'},
+    {id:3,title:'年终总结大会',date:'2026-01-10',description:'回顾过去一年的工作成果，表彰先进，展望未来发展方向。',image:'https://picsum.photos/seed/event3/600/400'}
+  ],
+  mentors:[
+    {id:1,memberId:1,specialty:'行政管理',extraInfo:'从事管理工作20余年，拥有丰富的团队领导经验。曾多次荣获优秀管理者称号，擅长战略规划和危机处理。'},
+    {id:2,memberId:3,specialty:'战术指挥',extraInfo:'具备优秀的现场指挥能力，参与过多项重大任务的策划与执行。注重实战训练，培养了一批优秀骨干。'}
+  ],
+  messages:[
+    {id:1,name:'访客小王',content:'黑塔办事处的工作氛围真好，希望有机会能够加入！',time:'2026-06-10 14:30'},
+    {id:2,name:'老战友',content:'看到大家都很精神，感到很欣慰。继续保持！',time:'2026-06-08 09:15'}
+  ]
+};
+
+let app = loadApp();
+let isAdmin = false;
+let currentSlide = 0;
+let carouselTimer = null;
+let currentPage = '/';
+let editingMemberId = null;
+let treeNodePositions = {};
+
+// 清理云端服务端元数据字段（_updatedAt, _fingerprint, _deviceCount）
+function cleanCloudMeta(d) {
+  if (!d) return d;
+  const c = { ...d };
+  delete c._updatedAt;
+  delete c._fingerprint;
+  delete c._deviceCount;
+  return c;
+}
+
+// 异步加载：优先从云端获取，回退本地，最后用默认值
+async function loadAppAsync() {
+  // 1. 尝试从云端加载
+  try {
+    const resp = await fetch(API_DATA);
+    if (resp.ok) {
+      const result = await resp.json();
+      if (result.success && result.data && result.data.members) {
+        lastCloudFingerprint = result.fingerprint || '';
+        const cloudData = cleanCloudMeta(result.data);
+        const d = { ...DEFAULTS, ...cloudData,
+          members: (cloudData.members||[]).map(m=>({avatar:'',...m})),
+          events: cloudData.events||DEFAULTS.events,
+          mentors: cloudData.mentors||DEFAULTS.mentors,
+          messages: cloudData.messages||DEFAULTS.messages,
+          carouselImages: cloudData.carouselImages||DEFAULTS.carouselImages
+        };
+        saveLocal(d);
+        updateSyncStatus('synced');
+        return d;
+      }
+    }
+  } catch(e) {
+    console.log('[同步] 云端加载失败，使用本地数据:', e.message);
+    cloudEnabled = false;
+  }
+
+  // 2. 回退到本地 localStorage
+  try {
+    const raw = localStorage.getItem(DB_KEY);
+    if (raw) {
+      const localData = JSON.parse(raw);
+      const d = { ...DEFAULTS, ...localData };
+      // 本地数据 → 尝试上传到云端
+      pushToCloud(d);
+      updateSyncStatus('synced');
+      return d;
+    }
+  } catch(e) {}
+
+  // 3. 默认数据
+  const d = JSON.parse(JSON.stringify(DEFAULTS));
+  saveLocal(d);
+  pushToCloud(d);
+  updateSyncStatus('synced');
+  return d;
+}
+
+// 同步初始化：先用本地数据立即渲染，再异步拉取云端数据
+function loadApp() {
+  // 先用 localStorage 快速渲染，避免白屏
+  let localData = null;
+  try {
+    const raw = localStorage.getItem(DB_KEY);
+    if (raw) localData = JSON.parse(raw);
+  } catch(e) {}
+
+  if (localData && localData.members) {
+    const d = { ...DEFAULTS, ...localData };
+    // 后台异步加载云端数据
+    loadAppAsync().then(cloudD => {
+      if (cloudD) {
+        app = cloudD;
+        refreshAll();
+        if (currentPage === '/') navigate('/');
+        else navigate(currentPage);
+        console.log('[同步] 已从云端更新数据');
+      }
+    });
+    return d;
+  }
+
+  // 无本地数据，同步等待（页面加载时用默认值渲染）
+  const d = JSON.parse(JSON.stringify(DEFAULTS));
+  loadAppAsync().then(cloudD => {
+    if (cloudD) {
+      app = cloudD;
+      refreshAll();
+      if (currentPage === '/') navigate('/');
+      else navigate(currentPage);
+    }
+  });
+  return d;
+}
+
+function saveApp(data) {
+  app = data;
+  saveLocal(app);
+  pushToCloud(app);
+}
+
+function saveLocal(data) {
+  localStorage.setItem(DB_KEY, JSON.stringify(data));
+}
+
+function pushToCloud(data) {
+  if (!cloudEnabled || syncPending) return;
+  syncPending = true;
+  updateSyncStatus('syncing');
+
+  // 清理本地元数据，发送纯净数据
+  const cleanData = cleanCloudMeta(data);
+
+  fetch(API_DATA, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ data: cleanData, fingerprint: lastCloudFingerprint })
+  })
+  .then(r => r.json())
+  .then(result => {
+    if (result.success) {
+      lastCloudFingerprint = result.fingerprint || '';
+      updateSyncStatus('synced');
+    } else {
+      console.error('[同步] 推送失败:', result.message);
+      updateSyncStatus('error');
+    }
+    syncPending = false;
+  })
+  .catch(e => {
+    console.error('[同步] 推送网络错误:', e.message);
+    updateSyncStatus('error');
+    syncPending = false;
+  });
+}
+
+function forceCloudRefresh() {
+  updateSyncStatus('syncing');
+  fetch(API_DATA)
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(result => {
+      if (result.success && result.data && result.data.members) {
+        lastCloudFingerprint = result.fingerprint || '';
+        const cloudData = cleanCloudMeta(result.data);
+        app = { ...DEFAULTS, ...cloudData,
+          members: (cloudData.members||[]).map(m=>({avatar:'',...m})),
+          events: cloudData.events||DEFAULTS.events,
+          mentors: cloudData.mentors||DEFAULTS.mentors,
+          messages: cloudData.messages||DEFAULTS.messages,
+          carouselImages: cloudData.carouselImages||DEFAULTS.carouselImages
+        };
+        saveLocal(app);
+        updateSyncStatus('synced');
+        refreshAll();
+        if (currentPage === '/') navigate('/'); else navigate(currentPage);
+        toast('✅ 已从云端同步最新数据');
+      } else {
+        updateSyncStatus('error');
+        toast('云端暂无数据');
+      }
+    })
+    .catch(e => {
+      console.error('[同步] 拉取失败:', e.message);
+      updateSyncStatus('error');
+      toast('⚠ 云端连接失败，请检查网络');
+    });
+}
+
+// 后台轮询：检测远程数据是否被其他设备更新
+function startPolling() {
+  stopPolling();
+  pollTimer = setInterval(async () => {
+    if (syncPending) return;
+    try {
+      const resp = await fetch(API_STATUS);
+      if (!resp.ok) return;
+      const status = await resp.json();
+      if (status.fingerprint && status.fingerprint !== lastCloudFingerprint) {
+        console.log('[轮询] 检测到云端数据变更，自动拉取...');
+        const dataResp = await fetch(API_DATA);
+        if (dataResp.ok) {
+          const result = await dataResp.json();
+          if (result.success && result.data && result.data.members) {
+            lastCloudFingerprint = result.fingerprint || '';
+            const cloudData = cleanCloudMeta(result.data);
+            const newApp = { ...DEFAULTS, ...cloudData,
+              members: (cloudData.members||[]).map(m=>({avatar:'',...m})),
+              events: cloudData.events||DEFAULTS.events,
+              mentors: cloudData.mentors||DEFAULTS.mentors,
+              messages: cloudData.messages||DEFAULTS.messages,
+              carouselImages: cloudData.carouselImages||DEFAULTS.carouselImages
+            };
+            if (JSON.stringify(newApp) !== JSON.stringify(app)) {
+              app = newApp;
+              saveLocal(app);
+              refreshAll();
+              if (currentPage === '/') navigate('/');
+              else navigate(currentPage);
+              updateSyncStatus('synced');
+              console.log('[轮询] ✅ 数据已自动更新');
+            }
+          }
+        }
+      }
+    } catch(e) { /* 静默失败 */ }
+  }, POLL_INTERVAL);
+}
+
+function stopPolling() {
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+}
+
+let syncStatusTimer = null;
+function updateSyncStatus(status) {
+  const badge = document.getElementById('syncBadge');
+  if (!badge) return;
+  if (status === 'syncing') {
+    badge.textContent = '⟳ 同步中';
+    badge.style.color = 'var(--gold)';
+  } else if (status === 'synced') {
+    badge.textContent = '☁ 已同步';
+    badge.style.color = '#27ae60';
+    if (syncStatusTimer) clearTimeout(syncStatusTimer);
+    syncStatusTimer = setTimeout(() => { badge.textContent = '☁'; badge.style.color = 'var(--gold)'; }, 3000);
+  } else if (status === 'error') {
+    badge.textContent = '⚠ 连接失败';
+    badge.style.color = 'var(--red2)';
+    if (syncStatusTimer) clearTimeout(syncStatusTimer);
+    syncStatusTimer = setTimeout(() => { badge.textContent = '☁'; badge.style.color = 'var(--gold)'; }, 5000);
+  } else if (status === 'offline') {
+    badge.textContent = '💻 离线模式';
+    badge.style.color = '#8888aa';
+    badge.title = '未连接云服务器，数据仅保存在本设备';
+  }
+}
+
+// Device ID
+function getDeviceId() {
+  let id = localStorage.getItem('heita_device_id');
+  if (!id) { id = 'DEV-' + Math.random().toString(36).substring(2,8).toUpperCase(); localStorage.setItem('heita_device_id', id); }
+  return id;
+}
+
+// Toast
+function toast(msg) {
+  const t = document.createElement('div'); t.className='toast'; t.textContent=msg;
+  document.getElementById('toastContainer').appendChild(t);
+  setTimeout(()=>t.remove(), 2500);
+}
+
+// Sync
+function showSyncMenu() {
+  const bar = document.getElementById('syncBar');
+  bar.style.display = bar.style.display==='none'?'flex':'none';
+  document.getElementById('deviceIdDisplay').textContent = getDeviceId();
+  if (bar.style.display === 'flex') {
+    updateSyncStatus(cloudEnabled ? 'synced' : 'offline');
+    // 更新拉取按钮状态
+    const pullBtn = document.querySelector('.sync-bar button[onclick*="forceCloudRefresh"]');
+    if (pullBtn) {
+      if (cloudEnabled) {
+        pullBtn.style.display = '';
+        pullBtn.textContent = '🔄 拉取云端';
+      } else {
+        pullBtn.style.display = '';
+        pullBtn.textContent = '🔄 拉取云端 (需服务器)';
+        pullBtn.style.opacity = '0.5';
+      }
+    }
+  }
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(app, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='黑塔办事处_数据备份_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click(); URL.revokeObjectURL(url);
+  toast('数据已导出为JSON文件');
+}
+
+function genNextId() { return Date.now() * 1000 + Math.floor(Math.random() * 1000); }
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.members && !data.carouselImages) { toast('无效的数据文件'); return; }
+      if (!confirm('导入数据将覆盖当前所有数据并同步到云端，确定继续？')) return;
+      const merged = { ...DEFAULTS, ...data };
+      app = merged;
+      saveLocal(app);
+      pushToCloud(app);
+      refreshAll();
+      if (currentPage === '/') navigate('/');
+      else navigate(currentPage);
+      toast('数据已导入并同步到云端！');
+    } catch(err) { toast('文件格式错误'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// Navigation
+function navigate(path) {
+  currentPage = path;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const map = {'/':'page-home','/members':'page-members','/events':'page-events','/mentors':'page-mentors','/messages':'page-messages'};
+  const pid = map[path]; if(pid) document.getElementById(pid).classList.add('active');
+  updateNavHighlight();
+  if(path==='/') renderCarousel();
+  else if(path==='/members') { renderMembers(); renderTree(); }
+  else if(path==='/events') renderEvents();
+  else if(path==='/mentors') renderMentors();
+  else if(path==='/messages') renderMessages();
+  closeRelationPanel();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function updateNavHighlight() {
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  const a = document.querySelector(`.nav-btn[data-path="${currentPage}"]`);
+  if(a) a.classList.add('active');
+}
+function renderNav() {
+  document.getElementById('headerNav').innerHTML = `
+    <button class="nav-btn${currentPage==='/'?' active':''}" data-path="/" onclick="navigate('/')">首页</button>
+    <button class="nav-btn${currentPage==='/members'?' active':''}" data-path="/members" onclick="navigate('/members')">成员</button>
+    <button class="nav-btn${currentPage==='/events'?' active':''}" data-path="/events" onclick="navigate('/events')">事件</button>
+    <button class="nav-btn${currentPage==='/mentors'?' active':''}" data-path="/mentors" onclick="navigate('/mentors')">导师</button>
+    <button class="nav-btn${currentPage==='/messages'?' active':''}" data-path="/messages" onclick="navigate('/messages')">留言</button>`;
+}
+
+// Carousel
+function renderCarousel() {
+  const track = document.getElementById('carouselTrack'), dots = document.getElementById('carouselDots');
+  const imgs = app.carouselImages;
+  if(!imgs.length){track.innerHTML='<div class="carousel-empty"><span style="font-size:44px">🖼️</span><span>暂无轮播图片</span><span style="font-size:12px">管理员可添加图片</span></div>';dots.innerHTML='';stopCarousel();return;}
+  track.innerHTML=imgs.map((img,i)=>`<div class="carousel-slide"><img src="${esc(img.url)}" alt="${esc(img.title)}" onerror="this.onerror=null;this.nextElementSibling.style.display='flex'"><div style="display:none;position:absolute;inset:0;background:linear-gradient(135deg,#1a1a2e,#2a1a3e);align-items:center;justify-content:center;font-size:40px;z-index:1">🖼️</div><div class="ol"></div><div class="cap"><h3>${esc(img.title)}</h3></div></div>`).join('');
+  dots.innerHTML=imgs.map((_,i)=>`<span class="carousel-dot${i===currentSlide?' active':''}" onclick="goToSlide(${i})"></span>`).join('');
+  if(currentSlide>=imgs.length)currentSlide=0;
+  updateCarouselPos();startCarousel();
+}
+function updateCarouselPos(){document.getElementById('carouselTrack').style.transform=`translateX(-${currentSlide*100}%)`;document.querySelectorAll('.carousel-dot').forEach((d,i)=>d.classList.toggle('active',i===currentSlide));}
+function nextSlide(){if(app.carouselImages.length){currentSlide=(currentSlide+1)%app.carouselImages.length;updateCarouselPos();resetCarousel();}}
+function prevSlide(){if(app.carouselImages.length){currentSlide=(currentSlide-1+app.carouselImages.length)%app.carouselImages.length;updateCarouselPos();resetCarousel();}}
+function goToSlide(i){currentSlide=i;updateCarouselPos();resetCarousel();}
+function startCarousel(){stopCarousel();if(app.carouselImages.length>1)carouselTimer=setInterval(nextSlide,4000);}
+function stopCarousel(){if(carouselTimer){clearInterval(carouselTimer);carouselTimer=null;}}
+function resetCarousel(){stopCarousel();startCarousel();}
+
+// Members
+function renderMembers() {
+  const g=document.getElementById('memberGrid');
+  if(!app.members.length){g.innerHTML='<div class="empty"><div class="ic">👥</div><p>暂无成员</p></div>';return;}
+  g.innerHTML=app.members.map(m=>{
+    const im=app.mentors.find(mt=>mt.memberId===m.id);
+    const avatarHtml=m.avatar?`<div class="av" style="overflow:hidden;padding:0"><img src="${esc(m.avatar)}" style="width:100%;height:100%;object-fit:cover" alt=""></div>`:`<div class="av">${m.name.charAt(0)}</div>`;
+    return `<div class="member-card" onclick="showMemberDetail(${m.id})" style="cursor:pointer">
+      ${im?'<span class="mentor-badge">导师</span>':''}
+      ${avatarHtml}<h4>${esc(m.name)}</h4>
+      <div class="rl">${esc(m.role||'成员')}</div>
+      <div class="inf">${esc((m.info||'').substring(0,60))}${(m.info||'').length>60?'...':''}</div>
+      ${(m.relations||[]).length?`<div class="rels">${m.relations.map(r=>{const t=app.members.find(x=>x.id===r.targetId);return `<span class="rel-tag">${t?esc(t.name):'?'}·${esc(r.label)}</span>`}).join('')}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function showMemberDetail(id) {
+  const m=app.members.find(x=>x.id===id);if(!m)return;
+  const im=app.mentors.find(mt=>mt.memberId===m.id);
+  const avatarDisp=m.avatar?`<div class="ma-lg" style="overflow:hidden;padding:0"><img src="${esc(m.avatar)}" style="width:100%;height:100%;object-fit:cover" alt=""></div>`:`<div class="ma-lg">${m.name.charAt(0)}</div>`;
+  document.getElementById('memberModalBody').innerHTML=`
+    <div style="text-align:center">
+      ${avatarDisp}
+      <h3 style="color:var(--gold2);margin-bottom:4px">${esc(m.name)}${im?' <span style="font-size:13px;color:var(--gold)">🎓导师</span>':''}</h3>
+      <div style="color:var(--red2);margin-bottom:12px">${esc(m.role||'成员')}</div>
+      <div style="background:var(--bg);padding:14px;border-radius:var(--rs);color:var(--text);font-size:13px;line-height:1.8;margin-bottom:14px">${esc(m.info||'暂无简介')}</div>
+      ${(m.relations||[]).length?`<div><h4 style="color:var(--gold2);margin-bottom:8px">成员关系</h4><div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center">${m.relations.map(r=>{const t=app.members.find(x=>x.id===r.targetId);return `<span style="padding:5px 12px;border-radius:20px;background:rgba(212,167,116,.1);border:1px solid rgba(212,167,116,.3);color:var(--gold);font-size:12px">${t?esc(t.name):'?'} · ${esc(r.label)}</span>`}).join('')}</div></div>`:''}
+      ${im?`<div style="margin-top:14px"><h4 style="color:var(--gold2);margin-bottom:8px">导师信息</h4><div style="background:var(--bg);padding:14px;border-radius:var(--rs);font-size:13px;line-height:1.8;color:var(--text)">专长：${esc(im.specialty||'无')}<br><br>${esc(im.extraInfo||'暂无')}</div></div>`:''}
+    </div>`;
+  document.getElementById('memberModal').classList.remove('hidden');
+}
+
+// Tree
+function renderTree() {
+  const svg=document.getElementById('treeSvg'),empty=document.getElementById('treeEmpty');
+  const members=app.members;
+  if(!members.length){svg.style.display='none';empty.style.display='flex';return;}
+  empty.style.display='none';svg.style.display='block';
+  const w=document.getElementById('treeCanvasWrap').clientWidth||800;
+  const h=Math.max(500,members.length*110+160);
+
+  // Build adjacency from relations
+  const adj={};
+  members.forEach(m=>{adj[m.id]={member:m,children:[],parent:null};});
+  members.forEach(m=>{(m.relations||[]).forEach(r=>{if(r.label==='上级'&&adj[r.targetId]){adj[m.id].parent=r.targetId;adj[r.targetId].children.push(m.id);}});});
+
+  // Find roots - members with no '上级' incoming, or incoming from non-existent members
+  const roots=members.filter(m=>!adj[m.id].parent);
+  if(!roots.length) roots.push(members[0]); // fallback
+
+  // BFS layout
+  const levels=[],visited=new Set();
+  const queue=roots.map((r,i)=>({id:r.id,level:0,order:i}));
+  queue.forEach(q=>visited.add(q.id));
+  while(queue.length){const curr=queue.shift();if(!levels[curr.level])levels[curr.level]=[];levels[curr.level].push(curr);adj[curr.id].children.forEach((cid,i)=>{if(!visited.has(cid)){visited.add(cid);queue.push({id:cid,level:curr.level+1,order:i});}});}
+  // Add orphans
+  members.forEach(m=>{if(!visited.has(m.id)){if(!levels[levels.length-1])levels.push([]);levels[levels.length-1].push({id:m.id,level:levels.length-1,order:levels[levels.length-1].length});visited.add(m.id);}});
+
+  const nodeW=130,nodeH=66,gapX=80,gapY=100;
+  const positions={};
+  levels.forEach((lv,li)=>{const tw=lv.length*(nodeW+gapX)-gapX;const sx=Math.max(40,(w-tw)/2);lv.forEach((n,i)=>{positions[n.id]={x:sx+i*(nodeW+gapX),y:50+li*(nodeH+gapY)};});});
+  treeNodePositions=positions;
+
+  let lines='';
+  members.forEach(m=>{(m.relations||[]).forEach(r=>{if(positions[m.id]&&positions[r.targetId]){const a=positions[m.id],b=positions[r.targetId];const mx1=a.x+nodeW/2,my1=r.label==='上级'?a.y:a.y+nodeH/2;const mx2=b.x+nodeW/2,my2=r.label==='下属'?b.y+nodeH:b.y+nodeH/2;const dash=r.label==='战友'||r.label==='搭档'||r.label==='同事'?'stroke-dasharray="6,4"':'';const color=r.label==='上级'||r.label==='下属'?'#e74c3c':'#d4a574';const opacity=r.label==='上级'||r.label==='下属'?'0.6':'0.4';lines+=`<path d="M${mx1},${my1} C${mx1},${(my1+my2)/2} ${mx2},${(my1+my2)/2} ${mx2},${my2}" stroke="${color}" stroke-width="1.5" fill="none" ${dash} opacity="${opacity}"/>`;}});});
+
+  let nodes='';
+  members.forEach(m=>{const p=positions[m.id];if(!p)return;const im=app.mentors.find(mt=>mt.memberId===m.id),x=p.x,y=p.y;
+    const clipId='clip-'+m.id;
+    nodes+=`<defs><clipPath id="${clipId}"><rect x="${x+5}" y="${y+5}" width="30" height="30" rx="15"/></clipPath></defs>`;
+    nodes+=`<g class="tree-node-group" data-id="${m.id}" style="cursor:pointer" onclick="openRelationPanel(${m.id})"><rect x="${x}" y="${y}" width="${nodeW}" height="${nodeH}" rx="10" fill="#1a1a2e" stroke="${im?'#d4a574':'#3a3a55'}" stroke-width="${im?2:1}"/>`;
+    if(m.avatar){
+      nodes+=`<image href="${esc(m.avatar)}" x="${x+5}" y="${y+5}" width="30" height="30" clip-path="url(#${clipId})" preserveAspectRatio="xMidYMid slice"/>`;
+    }else{
+      nodes+=`<circle cx="${x+20}" cy="${y+20}" r="15" fill="var(--bdr2)"/><text x="${x+20}" y="${y+25}" text-anchor="middle" fill="var(--text)" font-size="13">${m.name.charAt(0)}</text>`;
+    }
+    nodes+=`${im?`<text x="${x+nodeW-16}" y="${y+16}" font-size="12">🎓</text>`:''}<text x="${x+nodeW/2}" y="${y+24}" text-anchor="middle" fill="#f0d6b8" font-size="14" font-weight="600">${m.name}</text><text x="${x+nodeW/2}" y="${y+44}" text-anchor="middle" fill="#e74c3c" font-size="11">${esc(m.role||'成员')}</text><text x="${x+nodeW/2}" y="${y+58}" text-anchor="middle" fill="#8888aa" font-size="10">${(m.relations||[]).length}个关系</text></g>`;});
+  svg.setAttribute('viewBox',`0 0 ${w} ${h}`);svg.setAttribute('height',h);svg.innerHTML=lines+nodes;
+}
+
+// Relation panel (public)
+function openRelationPanel(mid) {
+  editingMemberId=mid;const m=app.members.find(x=>x.id===mid);if(!m)return;
+  document.getElementById('panelTitle').textContent=`编辑 ${m.name} 的关系`;
+  document.getElementById('panelOverlay').classList.add('show');
+  document.getElementById('relationPanel').classList.add('open');
+  const sel=document.getElementById('relTarget');
+  sel.innerHTML='<option value="">-- 选择成员 --</option>'+app.members.filter(x=>x.id!==mid).map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('');
+  document.getElementById('relLabel').value='';
+  const cur=document.getElementById('currentRelations');
+  cur.innerHTML=(m.relations||[]).length?m.relations.map(r=>{const t=app.members.find(x=>x.id===r.targetId);return `<div class="rel-list-item"><span>${t?esc(t.name):'?'} · ${esc(r.label)}</span><button class="btn btn-del btn-sm" onclick="removeRelation(${r.targetId})">删除</button></div>`;}).join(''):'<div style="color:var(--muted);font-size:12px;text-align:center;padding:10px">暂无关系</div>';
+}
+function closeRelationPanel(){document.getElementById('panelOverlay').classList.remove('show');document.getElementById('relationPanel').classList.remove('open');editingMemberId=null;}
+function addRelation() {
+  if(!editingMemberId)return;const targetId=parseInt(document.getElementById('relTarget').value);const label=document.getElementById('relLabel').value.trim();
+  if(!targetId){toast('请选择目标成员');return;}if(!label){toast('请输入关系类型');return;}
+  const m=app.members.find(x=>x.id===editingMemberId);if(!m)return;if(!m.relations)m.relations=[];
+  if(m.relations.find(r=>r.targetId===targetId)){toast('该关系已存在');return;}
+  m.relations.push({targetId,label});saveApp(app);renderMembers();renderTree();openRelationPanel(editingMemberId);toast('关系已添加');
+}
+function removeRelation(targetId) {
+  if(!editingMemberId)return;const m=app.members.find(x=>x.id===editingMemberId);if(!m)return;
+  m.relations=(m.relations||[]).filter(r=>r.targetId!==targetId);saveApp(app);renderMembers();renderTree();openRelationPanel(editingMemberId);toast('关系已删除');
+}
+
+// Events
+function renderEvents() {
+  const g=document.getElementById('eventGrid'),events=[...app.events].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if(!events.length){g.innerHTML='<div class="empty"><div class="ic">📅</div><p>暂无事件</p></div>';return;}
+  g.innerHTML=events.map(e=>`<div class="event-card">${e.image?`<img src="${esc(e.image)}" alt="${esc(e.title)}" onerror="this.style.display='none'">`:''}<div class="event-body"><h4>${esc(e.title)}</h4><div class="dt">📅 ${esc(e.date)}</div><div class="ds">${esc(e.description||'')}</div></div></div>`).join('');
+}
+
+// Mentors
+function renderMentors() {
+  const g=document.getElementById('mentorGrid');
+  if(!app.mentors.length){g.innerHTML='<div class="empty"><div class="ic">🎓</div><p>暂无导师</p></div>';return;}
+  g.innerHTML=app.mentors.map(mt=>{const m=app.members.find(x=>x.id===mt.memberId);const av=m&&m.avatar?`<div class="av" style="overflow:hidden;padding:0"><img src="${esc(m.avatar)}" style="width:100%;height:100%;object-fit:cover" alt=""></div>`:`<div class="av">${m?m.name.charAt(0):'?'}</div>`;return `<div class="mentor-card">${av}<h4>${m?esc(m.name):'未知'}</h4><div class="sp">${esc(mt.specialty||'导师')}</div><div class="xt">${esc(mt.extraInfo||'暂无介绍')}</div></div>`;}).join('');
+}
+
+// Messages
+function renderMessages() {
+  const l=document.getElementById('msgList'),msgs=[...app.messages].reverse();
+  if(!msgs.length){l.innerHTML='<div class="empty"><p>暂无留言，欢迎留下第一条</p></div>';return;}
+  l.innerHTML=msgs.map(m=>`<div class="msg-item"><div class="mh"><span class="mn">${esc(m.name||'匿名')}</span><span class="mt">${esc(m.time)}</span></div><div class="mc">${esc(m.content)}</div></div>`).join('');
+}
+function submitMsg() {
+  const name=document.getElementById('msgName').value.trim()||'匿名',content=document.getElementById('msgContent').value.trim();
+  if(!content){toast('请输入留言内容');return;}
+  const now=new Date(),time=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  app.messages.push({id:genNextId(),name,content,time});saveApp(app);document.getElementById('msgContent').value='';renderMessages();toast('留言已提交');
+}
+
+// Admin
+function toggleAdmin(){if(isAdmin){adminLogout();return;}document.getElementById('adminOverlay').classList.remove('hidden');document.getElementById('adminLoginBox').classList.remove('hidden');document.getElementById('adminPanelBox').classList.add('hidden');document.getElementById('adminPassInput').value='';setTimeout(()=>document.getElementById('adminPassInput').focus(),100);}
+function closeAdmin(){document.getElementById('adminOverlay').classList.add('hidden');}
+function adminLogin(){const pwd=document.getElementById('adminPassInput').value;if(pwd===app.adminPassword){isAdmin=true;document.getElementById('adminLoginBox').classList.add('hidden');document.getElementById('adminPanelBox').classList.remove('hidden');document.getElementById('adminBadge').textContent='管理员';document.getElementById('adminBadge').className='admin-badge';document.getElementById('btnAdminToggle').textContent='退出管理';document.getElementById('btnAdminToggle').className='btn btn-del btn-sm';refreshAdminPanel();toast('登录成功');}else{toast('密码错误');}}
+function adminLogout(){isAdmin=false;closeAdmin();document.getElementById('adminBadge').className='hidden';document.getElementById('btnAdminToggle').textContent='管理员入口';document.getElementById('btnAdminToggle').className='btn btn-outline btn-sm';refreshAll();toast('已退出');}
+function changePwd(){const op=prompt('请输入原密码：');if(!op)return;const np=prompt('请输入新密码（至少4位）：');if(!np||np.length<4){toast('新密码至少4位');return;}if(op!==app.adminPassword){toast('原密码错误');return;}app.adminPassword=np;saveApp(app);toast('密码已修改');}
+function sAT(tab){document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.admin-tab-content').forEach(c=>c.classList.remove('active'));const btn=Array.from(document.querySelectorAll('.admin-tab')).find(b=>b.textContent.includes(tab==='carousel'?'轮播':tab==='members'?'成员':tab==='events'?'事件':tab==='mentors'?'导师':'留言'));if(btn)btn.classList.add('active');document.getElementById('adm-'+tab).classList.add('active');if(tab==='mentors')updateMentorSelect();}
+
+function admAddCarousel(){const t=document.getElementById('adm-carousel-title').value.trim(),u=document.getElementById('adm-carousel-url').value.trim();if(!u){toast('请输入URL');return;}app.carouselImages.push({id:genNextId(),title:t||'图片',url:u});saveApp(app);document.getElementById('adm-carousel-title').value='';document.getElementById('adm-carousel-url').value='';renderCarousel();refreshAdminPanel();toast('已添加');}
+function admDelCarousel(id){app.carouselImages=app.carouselImages.filter(i=>i.id!==id);if(currentSlide>=app.carouselImages.length)currentSlide=0;saveApp(app);renderCarousel();refreshAdminPanel();toast('已删除');}
+function admAddMember(){
+  const n=document.getElementById('adm-m-name').value.trim();
+  if(!n){toast('请输入姓名');return;}
+  const avatarInput=document.getElementById('adm-m-avatar');
+  const memberData={id:genNextId(),name:n,role:document.getElementById('adm-m-role').value.trim(),info:document.getElementById('adm-m-info').value.trim(),avatar:'',relations:[]};
+  if(avatarInput.files&&avatarInput.files[0]){
+    const file=avatarInput.files[0];
+    if(file.size>20*1024*1024){toast('头像文件不能超过20MB');return;}
+    const reader=new FileReader();
+    reader.onload=function(e){
+      compressAvatar(e.target.result,function(compressed){
+        memberData.avatar=compressed;
+        app.members.push(memberData);
+        saveApp(app);
+        clearMemberForm();
+        renderMembers();renderTree();refreshAdminPanel();toast('已添加（含头像）');
+      });
+    };
+    reader.readAsDataURL(file);
+  }else{
+    app.members.push(memberData);
+    saveApp(app);
+    clearMemberForm();
+    renderMembers();renderTree();refreshAdminPanel();toast('已添加');
+  }
+}
+function clearMemberForm(){
+  document.getElementById('adm-m-name').value='';
+  document.getElementById('adm-m-role').value='';
+  document.getElementById('adm-m-info').value='';
+  document.getElementById('adm-m-avatar').value='';
+  document.getElementById('avatarPreview').style.display='none';
+}
+function previewAvatar(input){
+  const preview=document.getElementById('avatarPreview');
+  const img=document.getElementById('avatarPreviewImg');
+  const hint=document.getElementById('avatarSizeHint');
+  if(input.files&&input.files[0]){
+    const file=input.files[0];
+    hint.textContent=(file.size/1024/1024).toFixed(1)+'MB';
+    const reader=new FileReader();
+    reader.onload=function(e){img.src=e.target.result;};
+    reader.readAsDataURL(file);
+    preview.style.display='flex';
+  }else{preview.style.display='none';}
+}
+function compressAvatar(dataUrl,callback){
+  const img=new Image();img.onload=function(){
+    const maxW=300,maxH=300;let w=img.width,h=img.height;
+    if(w>maxW||h>maxH){const ratio=Math.min(maxW/w,maxH/h);w=Math.round(w*ratio);h=Math.round(h*ratio);}
+    const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+    const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,w,h);
+    callback(canvas.toDataURL('image/jpeg',0.75));
+  };
+  img.src=dataUrl;
+}
+function admDelMember(id){if(!confirm('确定删除该成员？'))return;app.mentors=app.mentors.filter(mt=>mt.memberId!==id);app.members.forEach(m=>{m.relations=(m.relations||[]).filter(r=>r.targetId!==id);});app.members=app.members.filter(m=>m.id!==id);saveApp(app);renderMembers();renderTree();renderMentors();refreshAdminPanel();toast('已删除');}
+function admAddEvent(){const t=document.getElementById('adm-e-title').value.trim();if(!t){toast('请输入标题');return;}app.events.push({id:genNextId(),title:t,date:document.getElementById('adm-e-date').value,description:document.getElementById('adm-e-desc').value.trim(),image:document.getElementById('adm-e-image').value.trim()});saveApp(app);document.getElementById('adm-e-title').value='';document.getElementById('adm-e-date').value='';document.getElementById('adm-e-desc').value='';document.getElementById('adm-e-image').value='';renderEvents();refreshAdminPanel();toast('已添加');}
+function admDelEvent(id){if(!confirm('确定删除？'))return;app.events=app.events.filter(e=>e.id!==id);saveApp(app);renderEvents();refreshAdminPanel();toast('已删除');}
+function updateMentorSelect(){const sel=document.getElementById('adm-mt-member'),free=app.members.filter(m=>!app.mentors.find(mt=>mt.memberId===m.id));sel.innerHTML='<option value="">-- 选择 --</option>'+free.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');}
+function admAddMentor(){const mid=parseInt(document.getElementById('adm-mt-member').value);if(!mid){toast('请选择成员');return;}if(app.mentors.find(mt=>mt.memberId===mid)){toast('该成员已是导师');return;}app.mentors.push({id:genNextId(),memberId:mid,specialty:document.getElementById('adm-mt-specialty').value.trim(),extraInfo:document.getElementById('adm-mt-extra').value.trim()});saveApp(app);document.getElementById('adm-mt-specialty').value='';document.getElementById('adm-mt-extra').value='';renderMentors();renderMembers();renderTree();refreshAdminPanel();toast('已设置');}
+function admDelMentor(id){if(!confirm('确定取消？'))return;app.mentors=app.mentors.filter(m=>m.id!==id);saveApp(app);renderMentors();renderMembers();renderTree();refreshAdminPanel();toast('已取消');}
+function admDelMsg(id){app.messages=app.messages.filter(m=>m.id!==id);saveApp(app);renderMessages();refreshAdminPanel();toast('已删除');}
+
+function refreshAdminPanel() {
+  document.getElementById('adm-carousel-list').innerHTML=app.carouselImages.length?app.carouselImages.map(i=>`<div class="admin-item"><div class="it"><strong>${esc(i.title)}</strong><span>${esc(i.url.substring(0,40))}...</span></div><div class="ia"><button class="btn btn-del btn-sm" onclick="admDelCarousel(${i.id})">删除</button></div></div>`).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
+  document.getElementById('adm-m-list').innerHTML=app.members.length?app.members.map(m=>`<div class="admin-item"><div class="it"><strong>${esc(m.name)}</strong><span>${esc(m.role||'')}</span></div><div class="ia"><button class="btn btn-del btn-sm" onclick="admDelMember(${m.id})">删除</button></div></div>`).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
+  document.getElementById('adm-e-list').innerHTML=app.events.length?app.events.map(e=>`<div class="admin-item"><div class="it"><strong>${esc(e.title)}</strong><span>${esc(e.date)}</span></div><div class="ia"><button class="btn btn-del btn-sm" onclick="admDelEvent(${e.id})">删除</button></div></div>`).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
+  document.getElementById('adm-mt-list').innerHTML=app.mentors.length?app.mentors.map(mt=>{const m=app.members.find(x=>x.id===mt.memberId);return `<div class="admin-item"><div class="it"><strong>${m?esc(m.name):'未知'}</strong><span>${esc(mt.specialty||'')}</span></div><div class="ia"><button class="btn btn-del btn-sm" onclick="admDelMentor(${mt.id})">取消</button></div></div>`}).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
+  updateMentorSelect();
+  document.getElementById('adm-msg-list').innerHTML=app.messages.length?[...app.messages].reverse().map(m=>`<div class="admin-item"><div class="it"><strong>${esc(m.name)}</strong><span>${esc(m.content.substring(0,30))}... · ${esc(m.time)}</span></div><div class="ia"><button class="btn btn-del btn-sm" onclick="admDelMsg(${m.id})">删除</button></div></div>`).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
+}
+
+function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+function refreshAll(){renderCarousel();renderMembers();renderTree();renderEvents();renderMentors();renderMessages();}
+
+// Init
+(async function init() {
+  // 先检测云服务器可用性
+  await initApiEndpoint();
+  cloudChecked = true;
+
+  // 加载数据并渲染
+  if (cloudEnabled) {
+    // 有云服务器：尝试从云端加载
+    const cloudD = await loadAppAsync();
+    if (cloudD) {
+      app = cloudD;
+    } else {
+      // 云端不可用，回退本地
+      app = loadAppFallback();
+    }
+  } else {
+    // 无云服务器：使用本地数据
+    app = loadAppFallback();
+  }
+
+  renderNav();
+  refreshAll();
+  navigate('/');
+  updateSyncStatus(cloudEnabled ? 'synced' : 'offline');
+
+  // 只有云服务器可用时才启动轮询
+  if (cloudEnabled) {
+    setTimeout(() => startPolling(), 2000);
+  }
+})();
+
+// 纯本地加载（fallback）
+function loadAppFallback() {
+  try {
+    const raw = localStorage.getItem(DB_KEY);
+    if (raw) {
+      const localData = JSON.parse(raw);
+      return { ...DEFAULTS, ...localData };
+    }
+  } catch(e) {}
+  const d = JSON.parse(JSON.stringify(DEFAULTS));
+  saveLocal(d);
+  return d;
+}
+</script>
+</body>
+</html>
