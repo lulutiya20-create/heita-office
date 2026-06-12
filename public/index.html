@@ -273,7 +273,7 @@ body{
 .tree-resize-handle:hover{background:var(--gold)}
 
 /* Unrelated members dock */
-.ft-dock{position:fixed;right:12px;top:50%;transform:translateY(-50%);width:160px;max-height:70vh;background:rgba(15,15,26,.92);border:1px solid var(--gold);border-radius:16px;display:flex;flex-direction:column;overflow-y:auto;z-index:30;padding:10px 6px;backdrop-filter:blur(8px);box-shadow:0 4px 24px rgba(0,0,0,.5)}
+.ft-dock{position:absolute;right:10px;top:20px;width:150px;max-height:calc(100% - 40px);background:rgba(15,15,26,.92);border:1px solid var(--gold);border-radius:16px;display:flex;flex-direction:column;overflow-y:auto;z-index:10;padding:10px 6px;backdrop-filter:blur(8px);box-shadow:0 4px 24px rgba(0,0,0,.5)}
 .ft-dock-title{text-align:center;font-size:11px;color:var(--gold);margin-bottom:8px;font-weight:600;letter-spacing:1px}
 .ft-dock-empty{text-align:center;color:var(--muted);font-size:10px;margin-top:20px;line-height:1.5}
 .ft-dock-card{background:var(--card);border:1px solid var(--bdr2);border-radius:12px;padding:8px;text-align:center;margin-bottom:6px;cursor:grab;transition:all .2s ease;user-select:none;-webkit-user-select:none}
@@ -283,7 +283,6 @@ body{
 .ft-dock-card .dc-av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .ft-dock-card .dc-name{font-size:11px;color:var(--gold2);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ft-dock-card .dc-role{font-size:9px;color:var(--muted)}
-.familytree-canvas.has-dock{margin-right:180px}
 
 @media(max-width:768px){
   .header{padding:0 14px;height:56px}
@@ -325,12 +324,11 @@ body{
   .sync-bar{padding:6px 10px;font-size:10px;gap:4px}
   .sync-bar .btn{font-size:10px;padding:3px 8px}
   .familytree-container{padding:10px}
-  .familytree-canvas{min-height:350px}
-  .ft-dock{width:120px;max-height:60vh;padding:8px 4px;right:4px}
+  .familytree-canvas{min-height:400px}
+  .ft-dock{position:absolute;right:6px;top:10px;width:110px;max-height:calc(100% - 20px);padding:6px 4px;border-radius:12px}
   .ft-dock-card .dc-av{width:28px;height:28px;font-size:13px}
   .ft-dock-card .dc-name{font-size:9px}
   .ft-dock-card .dc-role{font-size:8px}
-  .familytree-canvas.has-dock{margin-right:140px}
   .familytree-actions{gap:6px}
   .upload-area{flex-direction:column;align-items:stretch}
   .ft-node text{font-size:11px}
@@ -448,7 +446,7 @@ body{
 <!-- FAMILY TREE PAGE (黑塔族谱) -->
 <div class="page" id="page-familytree">
   <div class="familytree-container">
-    <div class="page-header"><h2>🌳 黑塔族谱</h2><p>全员关系图谱 · 点击节点编辑关系</p></div>
+    <div class="page-header"><h2>🌳 黑塔族谱</h2><p id="ftSubtitle">全员关系图谱 · 点击节点编辑关系</p></div>
     <div class="familytree-actions" id="ftActions">
       <button class="btn btn-sync btn-sm hidden" id="ftResetBtn" onclick="resetTreePositions()">🔄 重置布局</button>
       <button class="btn btn-outline btn-sm hidden" id="ftAdminBtn" onclick="toggleFtAdmin()">🔐 管理员编辑</button>
@@ -1239,6 +1237,7 @@ function navigate(path) {
   if(path==='/') renderCarousel();
   else if(path==='/members') { renderMembers(); }
   else if(path==='/familytree') {
+    updateFtSubtitle();
     // 管理员已登录时显示编辑按钮
     const btn=document.getElementById('ftAdminBtn');
     const hint=document.getElementById('ftAdminHint');
@@ -1592,7 +1591,9 @@ function afterLoginSuccess(){
         renderFamilyTree();
       }
     }
+    }
   } else {
+    updateFtSubtitle();
     btnPanel.classList.add('hidden');
     btnToggle.classList.remove('hidden');
     btnToggle.textContent='退出登录';
@@ -1626,7 +1627,14 @@ function doLogout(){
   document.getElementById('userBadge').className='hidden';
   document.getElementById('btnAdminPanel').classList.add('hidden');
   document.getElementById('btnAdminToggle').classList.add('hidden');
-  refreshAll();toast('已退出');
+  refreshAll();toast('已退出');updateFtSubtitle();
+}
+// 根据当前用户权限更新族谱副标题
+function updateFtSubtitle(){
+  const el=document.getElementById('ftSubtitle');
+  if(!el)return;
+  const isAdminUser=currentUser&&(currentUser.type==='super'||currentUser.type==='admin');
+  el.textContent=isAdminUser?'全员关系图谱 · 点击节点编辑关系':'全员关系图谱';
 }
 function changePwd(){
   if(!currentUser){toast('请先登录');return;}
@@ -2026,6 +2034,7 @@ function loadFtPositions(){
 }
 
 function renderFamilyTree(){
+  updateFtSubtitle();
   loadFtPositions();
   const svg=document.getElementById('ftSvg'),empty=document.getElementById('ftEmpty');
   // 只渲染有关系的成员 + 已手动放置到画布的成员
@@ -2038,7 +2047,7 @@ function renderFamilyTree(){
 
   // Canvas size — 根据实际关联成员数量动态调整
   const canvas=document.getElementById('ftCanvas');
-  const minW=Math.max(canvas.clientWidth-170||700, 700);
+  const minW=Math.max(canvas.clientWidth||700, 700);
   const w=relatedMembers.length<=2?minW:Math.max(minW,relatedMembers.length*260);
   const h=Math.max(500,relatedMembers.length*130+200);
 
@@ -2168,18 +2177,32 @@ function autoLayoutNodes(memberList, positions, w, h, allMembers){
   const others=memberList.filter(m=>!mentorIds.has(m.id));
   const nodeW=140, nodeH=70, gapX=80, gapY=100;
 
-  // Build levels (BFS from mentors)
+  // Build levels (BFS from roots) — 使用所有关系方向构建树
+  // 规则：如果A有关系指向B → B是A的上级（父节点），A在B下方
   const adj={};
-  allMembers.forEach(m=>{adj[m.id]={children:[],parent:null};});
-  allMembers.forEach(m=>{(m.relations||[]).forEach(r=>{if(r.label==='上级'&&adj[r.targetId]){adj[m.id].parent=r.targetId;adj[r.targetId].children.push(m.id);}});});
+  allMembers.forEach(m=>{adj[m.id]={children:[],parents:new Set()};});
+  allMembers.forEach(m=>{
+    (m.relations||[]).forEach(r=>{
+      if(adj[r.targetId]){
+        // m 指向 r.targetId → r.targetId 是父，m 是子
+        adj[m.id].parents.add(r.targetId);
+        adj[r.targetId].children.push(m.id);
+      }
+    });
+  });
 
   const levels=[];
   const visited=new Set();
-  // Start from mentors or roots
-  const roots=[...mentors.filter(m=>!adj[m.id].parent), ...allMembers.filter(m=>!adj[m.id].parent&&!mentorIds.has(m.id))];
+  // 根节点：没有被任何人指向的成员（没有parent）
+  const roots=allMembers.filter(m=>!adj[m.id].parents.size||adj[m.id].parents.size===0);
   if(!roots.length&&allMembers.length)roots.push(allMembers[0]);
 
-  const queue=roots.map((r,i)=>({id:r.id,level:mentorIds.has(r.id)?0:1,order:i}));
+  // 导师优先作为根节点
+  const mentorRoots=roots.filter(r=>mentorIds.has(r.id));
+  const otherRoots=roots.filter(r=>!mentorIds.has(r.id));
+  const sortedRoots=[...mentorRoots,...otherRoots];
+
+  const queue=sortedRoots.map((r,i)=>({id:r.id,level:0,order:i}));
   queue.forEach(q=>visited.add(q.id));
 
   while(queue.length){
@@ -2189,15 +2212,16 @@ function autoLayoutNodes(memberList, positions, w, h, allMembers){
     (adj[curr.id]?.children||[]).forEach(cid=>{
       if(!visited.has(cid)){
         visited.add(cid);
-        queue.push({id:cid,level:curr.level+1,order:0});
+        queue.push({id:cid,level:curr.level+1,order:levels[curr.level+1]?.length||0});
       }
     });
   }
-  // Add遗漏
+  // Add遗漏的成员到最底层
   memberList.forEach(m=>{
     if(!visited.has(m.id)){
-      if(!levels[1])levels[1]=[];
-      levels[1].push({id:m.id,level:1,order:levels[1].length});
+      const lastLevel=Math.max(0,(levels.filter(l=>l&&l.length>0)).length-1);
+      if(!levels[lastLevel+1])levels[lastLevel+1]=[];
+      levels[lastLevel+1].push({id:m.id,level:lastLevel+1,order:levels[lastLevel+1].length});
       visited.add(m.id);
     }
   });
@@ -2413,9 +2437,23 @@ function ftNodeDblClick(evt, id){
 }
 
 function resetTreePositions(){
-  if(!confirm('确定重置所有节点位置？（将恢复自动排布）'))return;
+  if(!confirm('确定重置所有节点位置？（将恢复为树形自动排布）'))return;
   app.treeNodePositions={};ftNodePositions={};
-  saveApp(app);renderFamilyTree();toast('已重置布局');
+  // 重置后立即计算树形布局并保存位置，确保刷新后也是树形
+  const canvas=document.getElementById('ftCanvas');
+  const minW=Math.max(canvas.clientWidth||700, 700);
+  // 获取所有有关联的成员
+  const allTargets=new Set();app.members.forEach(m=>{(m.relations||[]).forEach(r=>allTargets.add(r.targetId));});
+  const relatedMembers=app.members.filter(m=>(m.relations||[]).length>0||allTargets.has(m.id));
+  if(relatedMembers.length){
+    const w=Math.max(minW,relatedMembers.length*260);
+    const h=Math.max(500,relatedMembers.length*130+200);
+    const positions={};
+    autoLayoutNodes(relatedMembers,positions,w,h,app.members);
+    app.treeNodePositions=positions;
+    ftNodePositions=positions;
+  }
+  saveApp(app);renderFamilyTree();toast('已重置为树形布局');
 }
 
 function toggleFtAdmin(){
