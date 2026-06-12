@@ -774,27 +774,43 @@ async function loadAppAsync() {
       if (result.success && result.data && result.data.members) {
         lastCloudFingerprint = result.fingerprint || '';
         const cloudData = cleanCloudMeta(result.data);
-        // 🛡️ 保护机制：检测云端数据是否被重置
-        // 如果本地数据量明显多于云端（例如云端只有5个默认成员），说明云端被重置了
-        // 此时用本地数据覆盖云端，而不是反过来
+        // 🛡️ 增强保护机制：多重检测云端数据是否被重置
         const localRaw = localStorage.getItem(DB_KEY);
         if (localRaw) {
           try {
             const localParsed = JSON.parse(localRaw);
             const localCount = (localParsed.members||[]).length;
-            const cloudCount = (cloudData.members||[]).length;
-            // 云端被重置的特征：本地>10条且云端≤5条（默认数据量）
-            if (localCount > cloudCount && localCount > 10 && cloudCount <= 5) {
-              console.warn('[同步] ⚠️ 检测到云端数据被重置！用本地数据恢复云端...');
-              toast('检测到云端数据异常，正在从本地恢复...');
-              // 用本地数据覆盖云端
+            const cloudCount = (cloudData&&cloudData.members)?cloudData.members.length:0;
+            
+            // 检测本地数据是否已被用户自定义过（不是纯默认数据）
+            const defaultNames = (DEFAULTS.members||[]).map(m=>m.name).sort().join(',');
+            const localNames = (localParsed.members||[]).map(m=>m.name).sort().join(',');
+            const isCustomized = localNames !== defaultNames || localCount !== (DEFAULTS.members||[]).length;
+            // 检查本地是否有修改时间标记（比默认成员数多说明添加过）
+            const hasUserEdits = localCount > 0 && (localParsed._lastLocalModified || isCustomized || localCount > (DEFAULTS.members||[]).length);
+            
+            // 云端重置的多种特征：
+            // A) 云端返回空/null 且本地有自定义数据
+            // B) 本地成员数明显多于云端（比例超过2倍且本地>3）
+            // C) 云端数据看起来像默认数据（≤5个成员且名称匹配默认）
+            const cloudIsEmpty = !cloudData || cloudCount === 0;
+            const cloudLooksDefault = cloudCount <= 5 && cloudCount > 0 && (
+              (cloudData.members||[]).every(m => (DEFAULTS.members||[]).some(d=>d.name===m.name))
+            );
+            const localMuchLarger = localCount >= 3 && localCount > cloudCount * 2;
+            
+            if ((cloudIsEmpty || cloudLooksDefault || localMuchLarger) && hasUserEdits) {
+              console.warn('[同步] ⚠️ 检测到云端数据可能被重置！', {localCount, cloudCount, cloudIsEmpty, cloudLooksDefault, localMuchLarger, isCustomized});
+              toast('⚠️ 检测到云端数据异常，正在用本地数据恢复...');
+              // 用本地数据强制覆盖云端
               const recovered = { ...DEFAULTS, ...localParsed };
+              recovered._lastLocalModified = new Date().toISOString();
               saveLocal(recovered);
-              pushToCloud(recovered);
+              pushToCloud(recovered, true);  // force=true 强制写入
               updateSyncStatus('synced');
               return recovered;
             }
-          } catch(e) {}
+          } catch(e) { console.error('[同步] 保护机制异常:', e); }
         }
         const d = { ...DEFAULTS, ...cloudData,
           members: (cloudData.members||[]).map(m=>({avatar:'',...m})),
