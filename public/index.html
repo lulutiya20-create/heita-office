@@ -48,6 +48,13 @@ body{
 #syncBadge{font-size:16px;transition:var(--tr);line-height:1}
 #syncBadge:hover{transform:scale(1.2)}
 .admin-badge{background:var(--red);color:#fff;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.user-badge{background:var(--gold2);color:#1a1528;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
+
+.mc-like-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 20px;border:1.5px solid var(--gold);border-radius:20px;background:transparent;color:var(--gold2);font-size:13px;cursor:pointer;transition:all .25s ease}
+.mc-like-btn:hover{background:rgba(212,167,116,.12);transform:scale(1.05)}
+.mc-like-btn.liked{background:rgba(231,76,60,.15);border-color:#e74c3c;color:#e74c3c}
+.mc-like-btn.liked:hover{background:rgba(231,76,60,.25)}
+.mc-like-count{font-weight:700;font-size:15px;min-width:16px;text-align:center}
 
 .container{max-width:1100px;margin:0 auto;padding:0 20px}
 
@@ -266,7 +273,7 @@ body{
 .tree-resize-handle:hover{background:var(--gold)}
 
 /* Unrelated members dock */
-.ft-dock{position:absolute;right:0;top:0;bottom:0;width:160px;background:rgba(15,15,26,.85);border-left:1px solid var(--gold);display:flex;flex-direction:column;overflow-y:auto;z-index:20;padding:10px 6px;backdrop-filter:blur(6px)}
+.ft-dock{position:fixed;right:12px;top:50%;transform:translateY(-50%);width:160px;max-height:70vh;background:rgba(15,15,26,.92);border:1px solid var(--gold);border-radius:16px;display:flex;flex-direction:column;overflow-y:auto;z-index:30;padding:10px 6px;backdrop-filter:blur(8px);box-shadow:0 4px 24px rgba(0,0,0,.5)}
 .ft-dock-title{text-align:center;font-size:11px;color:var(--gold);margin-bottom:8px;font-weight:600;letter-spacing:1px}
 .ft-dock-empty{text-align:center;color:var(--muted);font-size:10px;margin-top:20px;line-height:1.5}
 .ft-dock-card{background:var(--card);border:1px solid var(--bdr2);border-radius:12px;padding:8px;text-align:center;margin-bottom:6px;cursor:grab;transition:all .2s ease;user-select:none;-webkit-user-select:none}
@@ -276,7 +283,7 @@ body{
 .ft-dock-card .dc-av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .ft-dock-card .dc-name{font-size:11px;color:var(--gold2);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ft-dock-card .dc-role{font-size:9px;color:var(--muted)}
-.familytree-canvas.has-dock{padding-right:170px}
+.familytree-canvas.has-dock{margin-right:180px}
 
 @media(max-width:768px){
   .header{padding:0 14px;height:56px}
@@ -319,11 +326,11 @@ body{
   .sync-bar .btn{font-size:10px;padding:3px 8px}
   .familytree-container{padding:10px}
   .familytree-canvas{min-height:350px}
-  .ft-dock{width:120px;padding:8px 4px}
+  .ft-dock{width:120px;max-height:60vh;padding:8px 4px;right:4px}
   .ft-dock-card .dc-av{width:28px;height:28px;font-size:13px}
   .ft-dock-card .dc-name{font-size:9px}
   .ft-dock-card .dc-role{font-size:8px}
-  .familytree-canvas.has-dock{padding-right:130px}
+  .familytree-canvas.has-dock{margin-right:140px}
   .familytree-actions{gap:6px}
   .upload-area{flex-direction:column;align-items:stretch}
   .ft-node text{font-size:11px}
@@ -374,9 +381,17 @@ body{
   <div class="header-actions">
     <span style="font-size:14px;cursor:pointer" id="syncBadge" title="云端同步状态" onclick="showSyncMenu()">☁</span>
     <button class="btn btn-sync btn-sm" onclick="showSyncMenu()" title="数据同步">📤 同步</button>
-    <span id="adminBadge" class="hidden"></span>
-    <button class="btn btn-gold btn-sm hidden" id="btnAdminPanel" onclick="openAdminPanel()">⚙️ 管理</button>
-    <button class="btn btn-outline btn-sm" id="btnAdminToggle" onclick="toggleAdmin()">管理员入口</button>
+    <!-- 未登录状态 -->
+    <div id="notLoggedInArea">
+      <button class="btn btn-outline btn-sm" onclick="showLoginModal()">🔑 登录</button>
+    </div>
+    <!-- 已登录状态 -->
+    <div id="loggedInArea" class="hidden" style="display:flex;align-items:center;gap:6px">
+      <span id="adminBadge" class="hidden"></span>
+      <span id="userBadge" class="hidden"></span>
+      <button class="btn btn-gold btn-sm hidden" id="btnAdminPanel" onclick="openAdminPanel()">⚙️ 管理</button>
+      <button class="btn btn-del btn-sm hidden" id="btnAdminToggle">退出</button>
+    </div>
   </div>
 </header>
 <!-- Mobile Nav -->
@@ -509,12 +524,26 @@ body{
   </div>
 </div>
 
-<!-- Admin Overlay -->
+<!-- Admin Overlay / Login -->
 <div class="admin-overlay hidden" id="adminOverlay">
   <div class="admin-box" id="adminLoginBox">
-    <h2>🔐 管理员登录</h2>
-    <input type="password" id="adminPassInput" placeholder="请输入管理员密码" onkeydown="if(event.key==='Enter')adminLogin()">
-    <button class="btn btn-red" onclick="adminLogin()" style="width:100%">登录</button>
+    <h2>🔐 登录</h2>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="btn btn-red btn-sm" id="loginTabSuper" onclick="switchLoginTab('super')" style="flex:1">管理员</button>
+      <button class="btn btn-outline btn-sm" id="loginTabMember" onclick="switchLoginTab('member')" style="flex:1">成员</button>
+    </div>
+    <!-- 超级管理员登录 -->
+    <div id="loginSuperArea">
+      <input type="password" id="adminPassInput" placeholder="请输入管理员密码" onkeydown="if(event.key==='Enter')adminLogin()">
+      <button class="btn btn-red" onclick="adminLogin()" style="width:100%;margin-top:10px">登录</button>
+    </div>
+    <!-- 成员登录 -->
+    <div id="loginMemberArea" class="hidden">
+      <input type="number" id="memberLoginId" placeholder="输入角色ID（数字）" onkeydown="if(event.key==='Enter')memberLogin()">
+      <input type="password" id="memberLoginPwd" placeholder="输入密码（默认abc123）" onkeydown="if(event.key==='Enter')memberLogin()">
+      <button class="btn btn-ok" onclick="memberLogin()" style="width:100%;margin-top:10px">登录</button>
+      <p style="font-size:11px;color:var(--muted);margin-top:8px">默认账号：角色ID / 密码：abc123</p>
+    </div>
     <button class="btn btn-outline" onclick="closeAdmin()" style="width:100%;margin-top:8px">取消</button>
   </div>
   <div class="admin-box wide hidden" id="adminPanelBox">
@@ -532,6 +561,7 @@ body{
       <button class="admin-tab" onclick="sAT('events')">事件</button>
       <button class="admin-tab" onclick="sAT('mentors')">导师</button>
       <button class="admin-tab" onclick="sAT('msgs')">留言</button>
+      <button class="admin-tab" id="admTabRoles" onclick="sAT('roles')" style="display:none">👑 角色权限</button>
     </div>
     <div class="admin-tab-content active" id="adm-carousel">
       <div class="admin-fg"><label>标题</label><input id="adm-carousel-title"></div>
@@ -594,6 +624,11 @@ body{
     <div class="admin-tab-content" id="adm-msgs">
       <p style="color:var(--muted);margin-bottom:10px;font-size:13px">管理留言</p>
       <div id="adm-msg-list"></div>
+    </div>
+    <div class="admin-tab-content" id="adm-roles">
+      <p style="color:var(--gold2);margin-bottom:14px;font-size:13px">👑 角色权限设置 — 仅超级管理员可操作</p>
+      <p style="color:var(--muted);margin-bottom:14px;font-size:12px">管理员权限：除设置管理员外的全部管理功能</p>
+      <div id="adm-roles-list"></div>
     </div>
   </div>
 </div>
@@ -667,11 +702,11 @@ const DEFAULTS = {
     {id:3,title:'训练基地',url:'https://picsum.photos/seed/heita3/1200/480'}
   ],
   members:[
-    {id:1,name:'张建国',role:'主任',info:'黑塔办事处主任，负责全面工作，经验丰富，作风严谨。',avatar:'',relations:[{targetId:2,label:'上级'},{targetId:3,label:'战友'}]},
-    {id:2,name:'李志强',role:'副主任',info:'协助主任处理日常事务，主管后勤保障工作。',avatar:'',relations:[{targetId:1,label:'下属'},{targetId:4,label:'搭档'}]},
-    {id:3,name:'王建军',role:'队长',info:'负责外勤任务执行，行动力强，善于应急处理。',avatar:'',relations:[{targetId:1,label:'战友'},{targetId:5,label:'上级'}]},
-    {id:4,name:'刘思远',role:'指导员',info:'负责思想政治工作和团队文化建设。',avatar:'',relations:[{targetId:2,label:'搭档'},{targetId:5,label:'同事'}]},
-    {id:5,name:'陈晓峰',role:'队员',info:'年轻骨干，计算机技术专长，负责信息化建设。',avatar:'',relations:[{targetId:3,label:'下属'},{targetId:4,label:'同事'}]}
+    {id:1,name:'张建国',role:'主任',info:'黑塔办事处主任，负责全面工作，经验丰富，作风严谨。',avatar:'',relations:[{targetId:2,label:'上级'},{targetId:3,label:'战友'}],password:'abc123',isAdmin:false},
+    {id:2,name:'李志强',role:'副主任',info:'协助主任处理日常事务，主管后勤保障工作。',avatar:'',relations:[{targetId:1,label:'下属'},{targetId:4,label:'搭档'}],password:'abc123',isAdmin:false},
+    {id:3,name:'王建军',role:'队长',info:'负责外勤任务执行，行动力强，善于应急处理。',avatar:'',relations:[{targetId:1,label:'战友'},{targetId:5,label:'上级'}],password:'abc123',isAdmin:false},
+    {id:4,name:'刘思远',role:'指导员',info:'负责思想政治工作和团队文化建设。',avatar:'',relations:[{targetId:2,label:'搭档'},{targetId:5,label:'同事'}],password:'abc123',isAdmin:false},
+    {id:5,name:'陈晓峰',role:'队员',info:'年轻骨干，计算机技术专长，负责信息化建设。',avatar:'',relations:[{targetId:3,label:'下属'},{targetId:4,label:'同事'}],password:'abc123',isAdmin:false}
   ],
   events:[
     {id:1,title:'2026年春季团建活动',date:'2026-04-15',description:'全体成员前往郊外开展为期两天的团建活动，包括野外拉练、团队协作游戏和篝火晚会。',image:'https://picsum.photos/seed/event1/600/400'},
@@ -685,16 +720,25 @@ const DEFAULTS = {
   messages:[
     {id:1,name:'访客小王',content:'黑塔办事处的工作氛围真好，希望有机会能够加入！',time:'2026-06-10 14:30'},
     {id:2,name:'老战友',content:'看到大家都很精神，感到很欣慰。继续保持！',time:'2026-06-08 09:15'}
-  ]
+  ],
+  likes:{},       // { [mentorId]: totalLikeCount }
+  likeLog:[]      // [{mentorId, memberId, date}] for daily limit tracking
 };
 
 let app = loadApp();
+// 数据迁移：为旧成员添加 password/isAdmin 字段
+let migrated=false;
+if(app.members){app.members.forEach(m=>{if(typeof m.password==='undefined'){m.password='abc123';migrated=true;}if(typeof m.isAdmin==='undefined'){m.isAdmin=false;migrated=true;}});}
+if(!app.likes){app.likes={};migrated=true;}
+if(!app.likeLog){app.likeLog=[];migrated=true;}
+if(migrated)saveLocal(app);
 // 清理旧数据：移除轮播图中默认的"图片"标题
 let cleaned=false;
 if(app.carouselImages){app.carouselImages.forEach(i=>{if(i.title==='图片'){i.title='';cleaned=true;}});}
 if(app.events){app.events.forEach(e=>{if(e.title==='图片'){e.title='';cleaned=true;}});}
 if(cleaned)saveLocal(app);
 let isAdmin = false;
+let currentUser = null; // {type:'super'|'admin', memberId:number} | null
 let currentSlide = 0;
 let carouselTimer = null;
 let currentPage = '/';
@@ -1236,9 +1280,10 @@ function showMemberDetail(id) {
     <div style="text-align:center">
       ${avatarDisp}
       <h3 style="color:var(--gold2);margin-bottom:4px">${esc(m.name)}</h3>
-      <div style="color:var(--red2);margin-bottom:12px">${esc(m.role||'成员')}</div>
+      <div style="color:var(--red2);margin-bottom:12px">${esc(m.role||'成员')} ${m.isAdmin?'<span style="background:var(--gold);color:#1a1528;padding:2px 8px;border-radius:10px;font-size:10px;margin-left:4px">管理员</span>':''}</div>
       <div style="background:var(--bg);padding:14px;border-radius:var(--rs);color:var(--text);font-size:13px;line-height:1.8;margin-bottom:14px">${esc(m.info||'暂无简介')}</div>
       ${im?`<div style="margin-top:14px"><h4 style="color:var(--gold2);margin-bottom:8px">导师信息</h4><div style="background:var(--bg);padding:14px;border-radius:var(--rs);font-size:13px;line-height:1.8;color:var(--text)">专长：${esc(im.specialty||'无')}<br><br>${esc(im.extraInfo||'暂无')}</div></div>`:''}
+      ${currentUser&&currentUser.memberId===m.id?`<button class="btn btn-outline btn-sm" onclick="changeMemberPwd()" style="margin-top:12px">🔑 修改密码</button>`:''}
     </div>`;
   document.getElementById('memberModal').classList.remove('hidden');
 }
@@ -1290,10 +1335,18 @@ function renderMentors() {
   track.innerHTML=app.mentors.map((mt,i)=>{
     const m=app.members.find(x=>x.id===mt.memberId);
     const imgHtml=mt.image?`<img src="${esc(mt.image)}" alt="${m?esc(m.name):''}">`:'';
+    const totalLikes=(app.likes||{})[mt.id]||0;
+    const hasLikedToday=currentUser&&currentUser.memberId?(app.likeLog||[]).filter(l=>l.mentorId===mt.id&&l.memberId===currentUser.memberId&&l.date===todayStr()).length>0:false;
     const centerBody=`<div class="mc-card-body">
         <h4>${m?esc(m.name):'未知'}</h4>
         <div class="mc-sp">${esc(mt.specialty||'导师')}</div>
         <div class="mc-xt">${esc(mt.extraInfo||'暂无介绍')}</div>
+        <div style="margin-top:16px;text-align:center;padding-top:12px;border-top:1px solid var(--bdr2)">
+          <button class="mc-like-btn ${hasLikedToday?'liked':''}" onclick="event.stopPropagation();mentorLike(${mt.id})" title="${hasLikedToday?'已点赞':'为导师点赞'}">
+            <span style="font-size:20px">❤</span>
+            <span class="mc-like-count">${totalLikes}</span>
+          </button>
+        </div>
       </div>`;
     return `<div class="mc-card${i===mCarouselIdx?' mc-center':' mc-hidden'}${mt.image?'':' no-img'}" id="mc-${i}" onclick="mentorCarouselGo(${i})">
       ${imgHtml}
@@ -1323,6 +1376,30 @@ function mentorCarouselGo(idx){mCarouselIdx=idx;mentorCarouselRender();}
 function mentorCarouselPrev(){if(!app.mentors.length)return;mCarouselIdx=(mCarouselIdx-1+app.mentors.length)%app.mentors.length;mentorCarouselRender();}
 function mentorCarouselNext(){if(!app.mentors.length)return;mCarouselIdx=(mCarouselIdx+1)%app.mentors.length;mentorCarouselRender();}
 
+// 导师点赞系统
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function getDailyLikeCount(){
+  if(!currentUser||!currentUser.memberId)return 0;
+  return(app.likeLog||[]).filter(l=>l.memberId===currentUser.memberId&&l.date===todayStr()).length;
+}
+function mentorLike(mentorId){
+  if(!currentUser){showLoginModal();toast('请先登录后点赞');return;}
+  if(!currentUser.memberId){toast('管理员账号无法点赞');return;}
+  const dailyCount=getDailyLikeCount();
+  if(dailyCount>=10){toast('今日点赞次数已用完（10次/天）');return;}
+  // 检查是否已给该导师点过
+  if((app.likeLog||[]).find(l=>l.mentorId===mentorId&&l.memberId===currentUser.memberId&&l.date===todayStr())){
+    toast('今天已经为该导师点赞过啦~');return;}
+  // 记录点赞
+  app.likes=app.likes||{};
+  app.likes[mentorId]=(app.likes[mentorId]||0)+1;
+  app.likeLog=app.likeLog||[];
+  app.likeLog.push({mentorId:mentorId,memberId:currentUser.memberId,date:todayStr(),ts:Date.now()});
+  saveApp(app);
+  renderMentors();
+  toast(`❤️ 点赞成功！剩余${10-dailyCount-1}次`);
+}
+
 // Messages
 function renderMessages() {
   const l=document.getElementById('msgList'),msgs=[...app.messages].reverse();
@@ -1338,40 +1415,100 @@ function submitMsg() {
 
 // Admin
 function toggleAdmin(){
-  if(isAdmin){
-    if(confirm('确定退出管理员账户？')) adminLogout();
+  if(currentUser){
+    doLogout();
     return;
   }
-  showAdminLogin();
+  showLoginModal();
 }
-function showAdminLogin(){
+function showLoginModal(){
   document.getElementById('adminOverlay').classList.remove('hidden');
   document.getElementById('adminLoginBox').classList.remove('hidden');
   document.getElementById('adminPanelBox').classList.add('hidden');
   document.getElementById('adminPassInput').value='';
-  setTimeout(()=>document.getElementById('adminPassInput').focus(),100);
+  document.getElementById('memberLoginId').value='';
+  document.getElementById('memberLoginPwd').value='';
+  switchLoginTab('super');
 }
-function openAdminPanel(){
-  document.getElementById('adminOverlay').classList.remove('hidden');
-  document.getElementById('adminLoginBox').classList.add('hidden');
-  document.getElementById('adminPanelBox').classList.remove('hidden');
-  sAT('carousel');
-  refreshAdminPanel();
+function switchLoginTab(tab){
+  const superArea=document.getElementById('loginSuperArea');
+  const memberArea=document.getElementById('loginMemberArea');
+  const tabSuper=document.getElementById('loginTabSuper');
+  const tabMember=document.getElementById('loginTabMember');
+  if(tab==='super'){
+    superArea.classList.remove('hidden');memberArea.classList.add('hidden');
+    tabSuper.className='btn btn-red btn-sm';tabSuper.style.flex='1';
+    tabMember.className='btn btn-outline btn-sm';tabMember.style.flex='1';
+    setTimeout(()=>document.getElementById('adminPassInput').focus(),100);
+  }else{
+    superArea.classList.add('hidden');memberArea.classList.remove('hidden');
+    tabSuper.className='btn btn-outline btn-sm';tabSuper.style.flex='1';
+    tabMember.className='btn btn-ok btn-sm';tabMember.style.flex='1';
+    setTimeout(()=>document.getElementById('memberLoginId').focus(),100);
+  }
 }
-function closeAdmin(){document.getElementById('adminOverlay').classList.add('hidden');}
+// 超级管理员登录
 function adminLogin(){
   const pwd=document.getElementById('adminPassInput').value;
   if(pwd===app.adminPassword){
-    isAdmin=true;
-    document.getElementById('adminLoginBox').classList.add('hidden');
-    document.getElementById('adminPanelBox').classList.remove('hidden');
-    document.getElementById('adminBadge').textContent='管理员';
-    document.getElementById('adminBadge').className='admin-badge';
-    document.getElementById('btnAdminToggle').textContent='退出';
-    document.getElementById('btnAdminToggle').className='btn btn-del btn-sm';
-    document.getElementById('btnAdminPanel').classList.remove('hidden');
-    // 如果当前在族谱页面且之前尝试进入编辑模式，自动开启
-    if(currentPage==='/familytree'){
+    currentUser={type:'super'};
+    afterLoginSuccess();
+    refreshAdminPanel();toast('🔐 超级管理员登录成功');
+  }else{toast('密码错误');}
+}
+// 成员登录
+function memberLogin(){
+  const idStr=document.getElementById('memberLoginId').value;
+  const pwd=document.getElementById('memberLoginPwd').value;
+  const mid=parseInt(idStr);
+  if(!idStr||isNaN(mid)){toast('请输入角色ID（数字）');return;}
+  const m=app.members.find(x=>x.id===mid);
+  if(!m){toast('未找到该角色');return;}
+  const memberPwd=m.password||'abc123';
+  if(pwd!==memberPwd){toast('密码错误');return;}
+  currentUser={type:m.isAdmin?'admin':'normal', memberId:mid};
+  afterLoginSuccess();
+  toast(`欢迎回来，${m.name}`);
+}
+function afterLoginSuccess(){
+  document.getElementById('adminLoginBox').classList.add('hidden');
+  document.getElementById('notLoggedInArea').classList.add('hidden');
+  document.getElementById('loggedInArea').classList.remove('hidden');
+
+  // 更新头部显示
+  const isSuper = currentUser.type === 'super';
+  const isAdminUser = currentUser.type === 'admin' || isSuper;
+  isAdmin = isAdminUser;
+
+  // Badge
+  const badge = document.getElementById('adminBadge');
+  const userBadge = document.getElementById('userBadge');
+  if(isSuper){
+    badge.textContent='👑 超管';badge.className='admin-badge';badge.classList.remove('hidden');
+    userBadge.className='hidden';
+  } else if(currentUser.memberId){
+    const m = app.members.find(x=>x.id===currentUser.memberId);
+    badge.textContent = (m&&m.isAdmin) ? '⚡ 管理员' : '';
+    badge.className = (m&&m.isAdmin) ? 'admin-badge' : 'hidden';
+    userBadge.textContent = m?m.name:'成员'; userBadge.className='user-badge'; userBadge.classList.remove('hidden');
+  }
+
+  // Buttons
+  const btnPanel = document.getElementById('btnAdminPanel');
+  const btnToggle = document.getElementById('btnAdminToggle');
+  if(isAdminUser){
+    btnPanel.classList.remove('hidden');
+    btnToggle.classList.remove('hidden');
+    btnToggle.textContent='退出登录';
+    btnToggle.className='btn btn-del btn-sm';
+    btnToggle.onclick = doLogout;
+
+    // 超级管理员显示角色权限标签
+    const rolesTab = document.getElementById('admTabRoles');
+    if(rolesTab) rolesTab.style.display = isSuper ? '' : 'none';
+
+    // 族谱页面自动开启编辑模式
+    if(currentUser.type !== 'normal' && currentPage==='/familytree'){
       const btn=document.getElementById('ftAdminBtn');
       const hint=document.getElementById('ftAdminHint');
       const resetBtn=document.getElementById('ftResetBtn');
@@ -1385,12 +1522,25 @@ function adminLogin(){
         renderFamilyTree();
       }
     }
-    refreshAdminPanel();toast('登录成功');
-  }else{toast('密码错误');}
+  } else {
+    btnPanel.classList.add('hidden');
+    btnToggle.classList.remove('hidden');
+    btnToggle.textContent='退出登录';
+    btnToggle.className='btn btn-del btn-sm';
+    btnToggle.onclick = doLogout;
+  }
 }
-function adminLogout(){
-  isAdmin=false;closeAdmin();ftAdminMode=false;
-  // 如果当前在族谱页面，重置族谱编辑UI
+function openAdminPanel(){
+  if(!currentUser||currentUser.type==='normal'){toast('无权限');return;}
+  document.getElementById('adminOverlay').classList.remove('hidden');
+  document.getElementById('adminLoginBox').classList.add('hidden');
+  document.getElementById('adminPanelBox').classList.remove('hidden');
+  sAT('carousel');
+  refreshAdminPanel();
+}
+function closeAdmin(){document.getElementById('adminOverlay').classList.add('hidden');}
+function doLogout(){
+  currentUser=null;isAdmin=false;closeAdmin();ftAdminMode=false;
   if(currentPage==='/familytree'){
     const btn=document.getElementById('ftAdminBtn');
     const hint=document.getElementById('ftAdminHint');
@@ -1400,14 +1550,40 @@ function adminLogout(){
     if(resetBtn)resetBtn.classList.add('hidden');
     renderFamilyTree();
   }
+  document.getElementById('notLoggedInArea').classList.remove('hidden');
+  document.getElementById('loggedInArea').classList.add('hidden');
   document.getElementById('adminBadge').className='hidden';
-  document.getElementById('btnAdminToggle').textContent='管理员入口';
-  document.getElementById('btnAdminToggle').className='btn btn-outline btn-sm';
+  document.getElementById('userBadge').className='hidden';
   document.getElementById('btnAdminPanel').classList.add('hidden');
+  document.getElementById('btnAdminToggle').classList.add('hidden');
   refreshAll();toast('已退出');
 }
-function changePwd(){const op=prompt('请输入原密码：');if(!op)return;const np=prompt('请输入新密码（至少4位）：');if(!np||np.length<4){toast('新密码至少4位');return;}if(op!==app.adminPassword){toast('原密码错误');return;}app.adminPassword=np;saveApp(app);toast('密码已修改');}
-function sAT(tab){document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.admin-tab-content').forEach(c=>c.classList.remove('active'));const btn=Array.from(document.querySelectorAll('.admin-tab')).find(b=>b.textContent.includes(tab==='carousel'?'轮播':tab==='members'?'成员':tab==='events'?'事件':tab==='mentors'?'导师':'留言'));if(btn)btn.classList.add('active');document.getElementById('adm-'+tab).classList.add('active');if(tab==='mentors')updateMentorSelect();}
+function changePwd(){
+  if(!currentUser){toast('请先登录');return;}
+  // 超级管理员改管理员密码
+  const op=prompt('请输入原密码：');if(!op)return;
+  const np=prompt('请输入新密码（至少4位）：');if(!np||np.length<4){toast('新密码至少4位');return;}
+  if(currentUser.type==='super'){
+    if(op!==app.adminPassword){toast('原密码错误');return;}
+    app.adminPassword=np;saveApp(app);toast('管理员密码已修改');
+  }else if(currentUser.memberId){
+    const m=app.members.find(x=>x.id===currentUser.memberId);
+    if(!m)return;
+    if(op!==(m.password||'abc123')){toast('原密码错误');return;}
+    m.password=np;saveApp(app);toast('✅ 密码已修改');
+  }
+}
+// 成员在个人页面改密码
+function changeMemberPwd(){
+  if(!currentUser||!currentUser.memberId){showLoginModal();return;}
+  const op=prompt('请输入当前密码：');if(!op)return;
+  const np=prompt('请输入新密码（至少4位）：');if(!np||np.length<4){toast('新密码至少4位');return;}
+  const m=app.members.find(x=>x.id===currentUser.memberId);
+  if(!m)return;
+  if(op!==(m.password||'abc123')){toast('当前密码错误');return;}
+  m.password=np;saveApp(app);toast('✅ 密码已修改');
+}
+function sAT(tab){document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.admin-tab-content').forEach(c=>c.classList.remove('active'));const tabMap={'carousel':'轮播','members':'成员','events':'事件','mentors':'导师','msgs':'留言','roles':'角色权限'};const btn=Array.from(document.querySelectorAll('.admin-tab')).find(b=>b.textContent.includes(tabMap[tab]));if(btn)btn.classList.add('active');document.getElementById('adm-'+tab).classList.add('active');if(tab==='mentors')updateMentorSelect();if(tab==='roles')refreshRolesList();}
 
 // admAddCarousel replaced below with file upload support
 function admDelCarousel(id){app.carouselImages=app.carouselImages.filter(i=>i.id!==id);if(currentSlide>=app.carouselImages.length)currentSlide=0;saveApp(app);renderCarousel();refreshAdminPanel();toast('已删除');}
@@ -1440,7 +1616,7 @@ function admUpsertMember(){
       toast('✅ 成员信息已更新');
     } else {
       // 添加模式：创建新成员
-      const newMember = { id: genNextId(), ...memberData, relations: [] };
+      const newMember = { id: genNextId(), ...memberData, relations: [], password:'abc123', isAdmin:false };
       app.members.push(newMember);
       saveApp(app);
       clearMemberForm();
@@ -1648,6 +1824,26 @@ function refreshAdminPanel() {
   document.getElementById('adm-mt-list').innerHTML=app.mentors.length?app.mentors.map(mt=>{const m=app.members.find(x=>x.id===mt.memberId);return `<div class="admin-item"><div class="it"><strong>${m?esc(m.name):'未知'}</strong><span>${esc(mt.specialty||'')}</span></div><div class="ia"><button class="btn btn-ok btn-sm" onclick="editAdminMentor(${mt.id})" title="编辑导师">✏️</button><button class="btn btn-del btn-sm" onclick="admDelMentor(${mt.id})">取消</button></div></div>`}).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
   updateMentorSelect();
   document.getElementById('adm-msg-list').innerHTML=app.messages.length?[...app.messages].reverse().map(m=>`<div class="admin-item"><div class="it"><strong>${esc(m.name)}</strong><span>${esc(m.content.substring(0,30))}... · ${esc(m.time)}</span></div><div class="ia"><button class="btn btn-del btn-sm" onclick="admDelMsg(${m.id})">删除</button></div></div>`).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
+  // 角色权限列表（仅超级管理员可操作，但所有管理员可见）
+  if(document.getElementById('adm-roles-list')) refreshRolesList();
+}
+
+function refreshRolesList(){
+  const el=document.getElementById('adm-roles-list');
+  if(!el)return;
+  el.innerHTML=app.members.map(m=>{
+    const isAdm = m.isAdmin === true;
+    return `<div class="admin-item"><div class="it"><strong>${esc(m.name)}</strong><span>ID:${m.id} · ${esc(m.role||'成员')}</span></div><div class="ia"><span style="font-size:12px;padding:4px 10px;border-radius:8px;${isAdm?'background:rgba(212,167,116,.15);color:var(--gold2);border:1px solid var(--gold)':'background:var(--bg);color:var(--muted);border:1px solid var(--bdr2)'}">${isAdm?'⚡ 管理员':'普通成员'}</span><button class="btn btn-${isAdm?'del':'ok'} btn-sm" onclick="toggleMemberAdmin(${m.id})" ${currentUser&&currentUser.type!=='super'?'disabled title="仅超管可操作" style="opacity:.5;cursor:not-allowed"':''}>${isAdm?'撤销管理员':'设为管理员'}</button></div></div>`;
+  }).join('');
+}
+function toggleMemberAdmin(id){
+  if(!currentUser||currentUser.type!=='super'){toast('仅超级管理员可操作');return;}
+  const m=app.members.find(x=>x.id===id);
+  if(!m)return;
+  m.isAdmin=!m.isAdmin;
+  saveApp(app);
+  refreshRolesList();
+  toast(m.isAdmin?`✅ ${m.name} 已设为管理员`:`⬇️ ${m.name} 已撤销管理员`);
 }
 
 function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
