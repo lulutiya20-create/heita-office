@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>黑塔办事处</title> <!-- v261214-fix-pc-v4 -->
+<title>黑塔办事处</title> <!-- v261214-fix-pc-v5 -->
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -389,6 +389,7 @@ body{
     <div id="loggedInArea" class="hidden" style="display:flex;align-items:center;gap:6px">
       <span id="adminBadge" class="hidden"></span>
       <span id="userBadge" class="hidden" style="cursor:pointer" title="点击打开个人中心"></span>
+      <span id="versionTag" style="font-size:10px;color:#888;margin-left:4px">v?</span>
       <button class="btn btn-gold btn-sm hidden" id="btnAdminPanel" onclick="openAdminPanel()">⚙️ 管理</button>
       <button class="btn btn-del btn-sm hidden" id="btnAdminToggle">退出</button>
     </div>
@@ -1815,6 +1816,8 @@ function openPersonalCenter(){
   }
   document.getElementById('pcNameDisplay').textContent = m.name;
   document.getElementById('pc-info-input').value = m.info || '';
+  // DEBUG toast
+  toast('✅ 个人中心已打开');
   document.getElementById('pc-old-pwd').value = '';
   document.getElementById('pc-new-pwd').value = '';
   // 重置头像预览
@@ -2772,9 +2775,15 @@ function toggleFtAdmin(){
       }
     }
   }, 3000);
-  // 全局 Escape 键关闭所有遮罩
+  // 全局 Escape 键关闭所有遮罩 + Ctrl+P 打开个人中心
   document.addEventListener('keydown', function(evt) {
     if(evt.key === 'Escape') closeAllOverlays();
+    // Ctrl+P 打开个人中心（调试用）
+    if(evt.ctrlKey && evt.key === 'p') {
+      evt.preventDefault();
+      toast('🐛 Ctrl+P 触发 openPersonalCenter()');
+      openPersonalCenter();
+    }
   });
 })();
 
