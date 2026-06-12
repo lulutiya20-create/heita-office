@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>黑塔办事处</title> <!-- v261213-fix-pc-click -->
+<title>黑塔办事处</title> <!-- v261214-fix-pc-v2 -->
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -695,62 +695,6 @@ let syncPending = false;
 let lastCloudFingerprint = '';
 let pollTimer = null;
 const POLL_INTERVAL = 5000;
-// 最大重试次数（用于 Render 冷启动等临时故障）
-const MAX_RETRIES = 3;
-const RETRY_DELAY_MS = 2000;
-
-// 🛡️ 安全 JSON fetch：自动处理非 JSON 响应（如 Render 冷启动返回 HTML）
-// 返回 { ok, data, status, text } 或在完全失败时 throw
-async function safeFetchJson(url, opts = {}) {
-  const retries = opts.retries !== undefined ? opts.retries : MAX_RETRIES;
-  const timeout = opts.timeout || 10000;
-
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), timeout);
-
-      const resp = await fetch(url, { ...(opts.fetchOpts || {}), signal: controller.signal });
-      clearTimeout(timer);
-
-      // 检查 content-type，非 JSON 时给出明确错误
-      const ct = (resp.headers.get('content-type') || '').toLowerCase();
-      if (!ct.includes('application/json')) {
-        // 服务器返回了 HTML（可能是 503 冷启动页、错误页等）
-        const text = await resp.text().catch(() => '');
-        console.warn(`[safeFetch] ⚠️ 服务器返回非 JSON (attempt ${attempt}/${retries}, HTTP ${resp.status}, type: ${ct})`);
-        if (text.length < 200) {
-          console.warn('[safeFetch] 响应内容:', text);
-        } else {
-          console.warn('[safeFetch] 响应内容(前200字符):', text.substring(0, 200));
-        }
-        if (attempt < retries) {
-          console.warn(`[safeFetch] ⏳ 等待 ${RETRY_DELAY_MS}ms 后重试...`);
-          await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
-          continue;
-        }
-        return { ok: false, data: null, status: resp.status, text: '服务器返回了非 JSON 响应（可能正在启动中）', isHtml: true };
-      }
-
-      const result = await resp.json();
-      if (resp.ok) {
-        return { ok: true, data: result, status: resp.status };
-      } else {
-        return { ok: false, data: result, status: resp.status, text: result.message || 'HTTP ' + resp.status };
-      }
-    } catch(e) {
-      const msg = e.name === 'AbortError' ? '请求超时' : e.message;
-      console.warn(`[safeFetch] ⚠️ 请求失败 (attempt ${attempt}/${retries}): ${msg}`);
-      if (attempt < retries) {
-        console.warn(`[safeFetch] ⏳ 等待 ${RETRY_DELAY_MS}ms 后重试...`);
-        await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
-        continue;
-      }
-      throw e;
-    }
-  }
-  return { ok: false, data: null, status: 0, text: '所有重试均失败' };
-}
 
 // 初始化 API 端点（自动检测可用性 — 直接用 /api/data 检测）
 async function initApiEndpoint() {
@@ -769,15 +713,16 @@ async function initApiEndpoint() {
     // 如果已有 /api/data 后缀直接用，否则追加
     const dataUrl = url.endsWith('/api/data') ? url : url.replace(/\/$/, '') + '/api/data';
     try {
-      const result = await safeFetchJson(dataUrl, { timeout: 8000, retries: 2 });
-      if (result.ok && result.data && result.data.success) {
-        API_DATA = dataUrl;
-        cloudEnabled = true;
-        lastCloudFingerprint = result.data.fingerprint || '';
-        console.log('[同步] ✅ 云服务器已连接:', API_DATA, '指纹:', lastCloudFingerprint.substring(0,8));
-        return true;
-      } else {
-        console.log('[同步] 端点不可用:', dataUrl.substring(0, 40), result.text || `HTTP ${result.status}`);
+      const resp = await fetch(dataUrl, { signal: AbortSignal.timeout(5000) });
+      if (resp.ok) {
+        const result = await resp.json();
+        if (result.success) {
+          API_DATA = dataUrl;
+          cloudEnabled = true;
+          lastCloudFingerprint = result.fingerprint || '';
+          console.log('[同步] ✅ 云服务器已连接:', API_DATA, '指纹:', lastCloudFingerprint.substring(0,8));
+          return true;
+        }
       }
     } catch(e) {
       console.log('[同步] 尝试连接失败:', dataUrl.substring(0, 40), e.message);
@@ -855,13 +800,14 @@ function cleanCloudMeta(d) {
 
 // 异步加载：优先从云端获取，回退本地，最后用默认值
 async function loadAppAsync() {
-  // 1. 尝试从云端加载（使用安全 fetch，自动处理冷启动 HTML 响应）
+  // 1. 尝试从云端加载
   try {
-    const result = await safeFetchJson(API_DATA, { timeout: 15000, retries: 3 });
-    if (result.ok && result.data && result.data.success) {
-      const respData = result.data;
-      lastCloudFingerprint = respData.fingerprint || '';
-      const cloudData = cleanCloudMeta(respData.data);
+    const resp = await fetch(API_DATA);
+    if (resp.ok) {
+      const result = await resp.json();
+      if (result.success && result.data && result.data.members) {
+        lastCloudFingerprint = result.fingerprint || '';
+        const cloudData = cleanCloudMeta(result.data);
             // 🛡️ 增强保护机制：多重检测云端数据是否被重置
         const localRaw = localStorage.getItem(DB_KEY);
         if (localRaw) {
@@ -1038,19 +984,8 @@ function pushToCloud(data, force = false) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ data: cleanData, fingerprint: fp, force: force ? true : undefined })
   })
-  .then(async r => {
-    // 🛡️ 安全解析：检查 content-type
-    const ct = (r.headers.get('content-type') || '').toLowerCase();
-    if (!ct.includes('application/json')) {
-      console.warn('[同步] ⚠ 推送响应非 JSON (HTTP ' + r.status + ', type: ' + ct + ')');
-      updateSyncStatus('error');
-      syncPending = false;
-      return;
-    }
-    return r.json();
-  })
+  .then(r => r.json())
   .then(result => {
-    if (!result) return; // 被上面的安全检查拦截了
     if (result.success) {
       lastCloudFingerprint = result.fingerprint || '';
       updateSyncStatus('synced');
@@ -1075,11 +1010,12 @@ function pushToCloud(data, force = false) {
 // 智能冲突解决：拉取最新数据 → 合并本地修改 → 重新推送
 async function resolveConflict(localData) {
   try {
-    const result = await safeFetchJson(API_DATA, { timeout: 12000, retries: 2 });
-    if (!result.ok || !result.data || !result.data.success || !result.data.data) throw new Error(result.text || '无效响应');
+    const resp = await fetch(API_DATA);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const result = await resp.json();
+    if (!result.success || !result.data) throw new Error('无效响应');
 
-    const respData = result.data;
-    const serverData = cleanCloudMeta(respData.data);
+    const serverData = cleanCloudMeta(result.data);
     const merged = mergeData(serverData, localData);
     const mergedClean = cleanCloudMeta(merged);
 
@@ -1087,7 +1023,7 @@ async function resolveConflict(localData) {
     const pushResp = await fetch(API_DATA, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data: mergedClean, fingerprint: respData.fingerprint || '', force: true })
+      body: JSON.stringify({ data: mergedClean, fingerprint: result.fingerprint || '', force: true })
     });
     const pushResult = await pushResp.json();
 
@@ -1197,13 +1133,12 @@ function mergeData(server, local) {
 
 function forceCloudRefresh() {
   updateSyncStatus('syncing');
-  safeFetchJson(API_DATA, { timeout: 15000, retries: 2 })
+  fetch(API_DATA)
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(result => {
-      if (!result.ok) throw new Error(result.text || '服务器响应异常');
-      const respData = result.data;
-      if (respData.success && respData.data && respData.data.members) {
-        lastCloudFingerprint = respData.fingerprint || '';
-        const cloudData = cleanCloudMeta(respData.data);
+      if (result.success && result.data && result.data.members) {
+        lastCloudFingerprint = result.fingerprint || '';
+        const cloudData = cleanCloudMeta(result.data);
         app = { ...DEFAULTS, ...cloudData,
           members: (cloudData.members||[]).map(m=>({avatar:'',...m})),
           events: cloudData.events||DEFAULTS.events,
@@ -1234,16 +1169,16 @@ function startPolling() {
   pollTimer = setInterval(async () => {
     if (syncPending) return;
     try {
-      const result = await safeFetchJson(API_DATA, { timeout: 8000, retries: 1 });
-      if (!result.ok || !result.data || !result.data.success || !result.data.data) return;
-
-      const respData = result.data;
+      const resp = await fetch(API_DATA);
+      if (!resp.ok) return;
+      const result = await resp.json();
+      if (!result.success || !result.data) return;
       // 比较指纹，只在真的有变化时才更新
-      if (respData.fingerprint && respData.fingerprint !== lastCloudFingerprint) {
-        if (!respData.data.members || respData.data.members.length === 0) return; // 无效数据
+      if (result.fingerprint && result.fingerprint !== lastCloudFingerprint) {
+        if (!result.data.members || result.data.members.length === 0) return; // 无效数据
         console.log('[轮询] 检测到云端数据变更 (指纹不同), 自动拉取...');
-        lastCloudFingerprint = respData.fingerprint;
-        const cloudData = cleanCloudMeta(respData.data);
+        lastCloudFingerprint = result.fingerprint;
+        const cloudData = cleanCloudMeta(result.data);
         const newApp = { ...DEFAULTS, ...cloudData,
           members: (cloudData.members||[]).map(m=>({avatar:'',...m})),
           events: cloudData.events||DEFAULTS.events,
@@ -1258,7 +1193,7 @@ function startPolling() {
           if (currentPage === '/') navigate('/');
           else navigate(currentPage);
           updateSyncStatus('synced');
-          console.log('[轮询] ✅ 数据已自动更新, 新指纹:', respData.fingerprint.substring(0,8));
+          console.log('[轮询] ✅ 数据已自动更新, 新指纹:', result.fingerprint.substring(0,8));
         }
       }
     } catch(e) { /* 静默失败 */ }
@@ -1456,28 +1391,19 @@ function renderMembers() {
 }
 
 function showMemberDetail(id) {
-  try {
-    const m=app.members.find(x=>x.id===id);
-    if(!m)return;
-    const im=app.mentors.find(mt=>mt.memberId===m.id);
-    const avatarDisp=m.avatar?`<div class="ma-lg" style="overflow:hidden;padding:0"><img src="${esc(m.avatar)}" style="width:100%;height:100%;object-fit:cover" alt=""></div>`:`<div class="ma-lg">${m.name.charAt(0)}</div>`;
-    const body=document.getElementById('memberModalBody');
-    if(!body)return;
-    body.innerHTML=`
-      <div style="text-align:center">
-        ${avatarDisp}
-        <h3 style="color:var(--gold2);margin-bottom:4px">${esc(m.name)}</h3>
-        <div style="color:var(--red2);margin-bottom:12px">${esc(m.role||'成员')} ${m.isAdmin?'<span style="background:var(--gold);color:#1a1528;padding:2px 8px;border-radius:10px;font-size:10px;margin-left:4px">管理员</span>':''}</div>
-        <div style="background:var(--bg);padding:14px;border-radius:var(--rs);color:var(--text);font-size:13px;line-height:1.8;margin-bottom:14px">${esc(m.info||'暂无简介')}</div>
-        ${im?`<div style="margin-top:14px"><h4 style="color:var(--gold2);margin-bottom:8px">导师信息</h4><div style="background:var(--bg);padding:14px;border-radius:var(--rs);font-size:13px;line-height:1.8;color:var(--text)">专长：${esc(im.specialty||'无')}<br><br>${esc(im.extraInfo||'暂无')}</div></div>`:''}
-        ${currentUser&&currentUser.memberId===m.id?`<button class="btn btn-outline btn-sm" onclick="changeMemberPwd()" style="margin-top:12px">🔑 修改密码</button>`:''}
-      </div>`;
-    const modal=document.getElementById('memberModal');
-    if(!modal)return;
-    modal.classList.remove('hidden');
-  } catch(e) {
-    console.error('[showMemberDetail] Error:', e);
-  }
+  const m=app.members.find(x=>x.id===id);if(!m)return;
+  const im=app.mentors.find(mt=>mt.memberId===m.id);
+  const avatarDisp=m.avatar?`<div class="ma-lg" style="overflow:hidden;padding:0"><img src="${esc(m.avatar)}" style="width:100%;height:100%;object-fit:cover" alt=""></div>`:`<div class="ma-lg">${m.name.charAt(0)}</div>`;
+  document.getElementById('memberModalBody').innerHTML=`
+    <div style="text-align:center">
+      ${avatarDisp}
+      <h3 style="color:var(--gold2);margin-bottom:4px">${esc(m.name)}</h3>
+      <div style="color:var(--red2);margin-bottom:12px">${esc(m.role||'成员')} ${m.isAdmin?'<span style="background:var(--gold);color:#1a1528;padding:2px 8px;border-radius:10px;font-size:10px;margin-left:4px">管理员</span>':''}</div>
+      <div style="background:var(--bg);padding:14px;border-radius:var(--rs);color:var(--text);font-size:13px;line-height:1.8;margin-bottom:14px">${esc(m.info||'暂无简介')}</div>
+      ${im?`<div style="margin-top:14px"><h4 style="color:var(--gold2);margin-bottom:8px">导师信息</h4><div style="background:var(--bg);padding:14px;border-radius:var(--rs);font-size:13px;line-height:1.8;color:var(--text)">专长：${esc(im.specialty||'无')}<br><br>${esc(im.extraInfo||'暂无')}</div></div>`:''}
+      ${currentUser&&currentUser.memberId===m.id?`<button class="btn btn-outline btn-sm" onclick="changeMemberPwd()" style="margin-top:12px">🔑 修改密码</button>`:''}
+    </div>`;
+  document.getElementById('memberModal').classList.remove('hidden');
 }
 
 // Tree (with auto-layout: mentors at top, juniors at bottom)
@@ -1742,31 +1668,22 @@ function afterLoginSuccess(){
   // Badge
   const badge = document.getElementById('adminBadge');
   const userBadge = document.getElementById('userBadge');
-  if(!userBadge){console.error('userBadge missing!');}
   if(isSuper){
     badge.textContent='👑 超管';badge.className='admin-badge';badge.classList.remove('hidden');
-    if(userBadge){userBadge.className='hidden';}
+    userBadge.className='hidden';
   } else if(currentUser.memberId){
     const m = app.members.find(x=>x.id===currentUser.memberId);
     badge.textContent = (m&&m.isAdmin) ? '⚡ 管理员' : '';
     badge.className = (m&&m.isAdmin) ? 'admin-badge' : 'hidden';
-    if(userBadge){
-      userBadge.textContent = m?m.name:'成员'; userBadge.className='user-badge'; userBadge.classList.remove('hidden');
-      // 普通成员点击姓名 → 打开个人中心（使用 addEventListener，不会被覆盖）
-      if(m && !m.isAdmin){
-        userBadge.style.cursor = 'pointer';
-        userBadge.title = '点击打开个人中心';
-        // 先移除旧的监听器（通过 cloneNode 方式），再重新添加
-        const newBadge = userBadge.cloneNode(true);
-        userBadge.parentNode.replaceChild(newBadge, userBadge);
-        newBadge.addEventListener('click', function(e){
-          e.stopPropagation();
-          openPersonalCenter();
-        });
-      } else {
-        userBadge.style.cursor = 'default';
-        userBadge.title = '';
-      }
+    userBadge.textContent = m?m.name:'成员'; userBadge.className='user-badge'; userBadge.classList.remove('hidden');
+    // 普通成员点击姓名 → 打开个人中心
+    if(m && !m.isAdmin){
+      userBadge.style.cursor = 'pointer';
+      userBadge.title = '点击打开个人中心';
+      userBadge.addEventListener('click', function(e){ e.stopPropagation(); openPersonalCenter(); });
+    } else {
+      userBadge.style.cursor = 'default';
+      userBadge.title = '';
     }
   }
 
@@ -1880,23 +1797,13 @@ function changeMemberPwd(){
 }
 
 // ==================== 个人中心 ====================
-// 个人中心入口
-function tryOpenPersonalCenter(){
-  if(!currentUser||!currentUser.memberId){toast('请先登录');return;}
-  const m=app.members.find(x=>x.id===currentUser.memberId);
-  if(!m){toast('成员数据异常');return;}
-  if(m.isAdmin)return;
-  openPersonalCenter();
-}
 function openPersonalCenter(){
   if(!currentUser||!currentUser.memberId){toast('请先登录');return;}
   const m = app.members.find(x=>x.id===currentUser.memberId);
   if(!m){toast('成员数据异常');return;}
 
   // 显示个人中心遮罩 + 面板
-  const ov=document.getElementById('pcOverlay');
-  if(!ov){console.error('[个人中心] pcOverlay not found!');toast('界面错误：找不到个人中心面板');return;}
-  ov.classList.remove('hidden');
+  document.getElementById('pcOverlay').classList.remove('hidden');
 
   // 填充当前数据
   const avDisplay = document.getElementById('pcAvatarDisplay');
