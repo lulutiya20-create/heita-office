@@ -539,10 +539,11 @@ body{
     </div>
     <!-- 成员登录 -->
     <div id="loginMemberArea" class="hidden">
-      <input type="number" id="memberLoginId" placeholder="输入角色ID（数字）" onkeydown="if(event.key==='Enter')memberLogin()">
+      <input type="text" id="memberLoginName" placeholder="输入或选择角色名称" list="memberNameList" autocomplete="off" onkeydown="if(event.key==='Enter')memberLogin()" oninput="onMemberLoginInput(this.value)">
+      <datalist id="memberNameList"></datalist>
       <input type="password" id="memberLoginPwd" placeholder="输入密码（默认abc123）" onkeydown="if(event.key==='Enter')memberLogin()">
       <button class="btn btn-ok" onclick="memberLogin()" style="width:100%;margin-top:10px">登录</button>
-      <p style="font-size:11px;color:var(--muted);margin-top:8px">默认账号：角色ID / 密码：abc123</p>
+      <p style="font-size:11px;color:var(--muted);margin-top:8px">选择角色名称 / 密码：abc123</p>
     </div>
     <button class="btn btn-outline" onclick="closeAdmin()" style="width:100%;margin-top:8px">取消</button>
   </div>
@@ -1426,8 +1427,9 @@ function showLoginModal(){
   document.getElementById('adminLoginBox').classList.remove('hidden');
   document.getElementById('adminPanelBox').classList.add('hidden');
   document.getElementById('adminPassInput').value='';
-  document.getElementById('memberLoginId').value='';
+  document.getElementById('memberLoginName').value='';
   document.getElementById('memberLoginPwd').value='';
+  refreshMemberNameList();
   switchLoginTab('super');
 }
 function switchLoginTab(tab){
@@ -1444,7 +1446,8 @@ function switchLoginTab(tab){
     superArea.classList.add('hidden');memberArea.classList.remove('hidden');
     tabSuper.className='btn btn-outline btn-sm';tabSuper.style.flex='1';
     tabMember.className='btn btn-ok btn-sm';tabMember.style.flex='1';
-    setTimeout(()=>document.getElementById('memberLoginId').focus(),100);
+    refreshMemberNameList();
+    setTimeout(()=>document.getElementById('memberLoginName').focus(),100);
   }
 }
 // 超级管理员登录
@@ -1456,22 +1459,38 @@ function adminLogin(){
     refreshAdminPanel();toast('🔐 超级管理员登录成功');
   }else{toast('密码错误');}
 }
-// 成员登录
+// 成员登录（按角色名称）
 function memberLogin(){
-  const idStr=document.getElementById('memberLoginId').value;
+  const nameStr=document.getElementById('memberLoginName').value.trim();
   const pwd=document.getElementById('memberLoginPwd').value;
-  const mid=parseInt(idStr);
-  if(!idStr||isNaN(mid)){toast('请输入角色ID（数字）');return;}
-  const m=app.members.find(x=>x.id===mid);
+  if(!nameStr){toast('请选择或输入角色名称');return;}
+  // 支持名称模糊匹配
+  const m=app.members.find(x=>x.name===nameStr || x.name.indexOf(nameStr)!==-1);
   if(!m){toast('未找到该角色');return;}
   const memberPwd=m.password||'abc123';
   if(pwd!==memberPwd){toast('密码错误');return;}
-  currentUser={type:m.isAdmin?'admin':'normal', memberId:mid};
+  currentUser={type:m.isAdmin?'admin':'normal', memberId:m.id};
   afterLoginSuccess();
   toast(`欢迎回来，${m.name}`);
 }
+// 刷新成员名称下拉列表
+function refreshMemberNameList(){
+  const dl=document.getElementById('memberNameList');
+  if(!dl) return;
+  dl.innerHTML='';
+  (app.members||[]).forEach(m=>{
+    const opt=document.createElement('option');
+    opt.value=m.name;
+    dl.appendChild(opt);
+  });
+}
+// 成员登录输入时自动提示
+function onMemberLoginInput(val){
+  /* datalist 已处理 autocomplete */
+}
 function afterLoginSuccess(){
   document.getElementById('adminLoginBox').classList.add('hidden');
+  document.getElementById('adminOverlay').classList.add('hidden'); // 关闭遮罩层，防止黑屏
   document.getElementById('notLoggedInArea').classList.add('hidden');
   document.getElementById('loggedInArea').classList.remove('hidden');
 
