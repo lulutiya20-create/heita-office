@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>黑塔办事处</title> <!-- v261ec19 -->
+<title>黑塔办事处</title> <!-- v261213-fix-persistence -->
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -776,32 +776,35 @@ async function loadAppAsync() {
       if (result.success && result.data && result.data.members) {
         lastCloudFingerprint = result.fingerprint || '';
         const cloudData = cleanCloudMeta(result.data);
-        // 🛡️ 增强保护机制：多重检测云端数据是否被重置
+            // 🛡️ 增强保护机制：多重检测云端数据是否被重置
         const localRaw = localStorage.getItem(DB_KEY);
         if (localRaw) {
           try {
             const localParsed = JSON.parse(localRaw);
             const localCount = (localParsed.members||[]).length;
             const cloudCount = (cloudData&&cloudData.members)?cloudData.members.length:0;
-            
+
             // 检测本地数据是否已被用户自定义过（不是纯默认数据）
             const defaultNames = (DEFAULTS.members||[]).map(m=>m.name).sort().join(',');
             const localNames = (localParsed.members||[]).map(m=>m.name).sort().join(',');
             const isCustomized = localNames !== defaultNames || localCount !== (DEFAULTS.members||[]).length;
             // 检查本地是否有修改时间标记（比默认成员数多说明添加过）
             const hasUserEdits = localCount > 0 && (localParsed._lastLocalModified || isCustomized || localCount > (DEFAULTS.members||[]).length);
-            
+
             // 云端重置的多种特征：
             // A) 云端返回空/null 且本地有自定义数据
-            // B) 本地成员数明显多于云端（比例超过2倍且本地>3）
-            // C) 云端数据看起来像默认数据（≤5个成员且名称匹配默认）
+            // B) 本地成员数 >= 云端*2（含等于）且本地>3（原用>导致10 vs 5*2=10时不触发）
+            // C) 云端数据看起来像默认数据（<=5个成员且名称匹配默认）
+            // D) 本地有修改记录但云端数据和默认完全一致
             const cloudIsEmpty = !cloudData || cloudCount === 0;
             const cloudLooksDefault = cloudCount <= 5 && cloudCount > 0 && (
               (cloudData.members||[]).every(m => (DEFAULTS.members||[]).some(d=>d.name===m.name))
             );
-            const localMuchLarger = localCount >= 3 && localCount > cloudCount * 2;
-            
-            if ((cloudIsEmpty || cloudLooksDefault || localMuchLarger) && hasUserEdits) {
+            const localMuchLarger = localCount >= 3 && localCount >= cloudCount * 2;
+            // 更激进：本地超过默认数量，云端恰好是默认数量
+            const localExceedsDefault = localCount > (DEFAULTS.members||[]).length && cloudCount === (DEFAULTS.members||[]).length;
+
+            if ((cloudIsEmpty || cloudLooksDefault || localMuchLarger || localExceedsDefault) && hasUserEdits && localCount > 0) {
               console.warn('[同步] ⚠️ 检测到云端数据可能被重置！', {localCount, cloudCount, cloudIsEmpty, cloudLooksDefault, localMuchLarger, isCustomized});
               toast('⚠️ 检测到云端数据异常，正在用本地数据恢复...');
               // 用本地数据强制覆盖云端
@@ -813,6 +816,26 @@ async function loadAppAsync() {
               return recovered;
             }
           } catch(e) { console.error('[同步] 保护机制异常:', e); }
+        }
+        // 🛡️ 安全网：再次检查——如果本地成员更多且云端像默认数据，优先保留本地
+        const localRaw2 = localStorage.getItem(DB_KEY);
+        if (localRaw2) {
+          try {
+            const lp = JSON.parse(localRaw2);
+            const lc = (lp.members||[]).length;
+            const cc = (cloudData&&cloudData.members)?cloudData.members.length:0;
+            const cloudIsDefault = cc <= 5 && cc > 0 && (cloudData.members||[]).every(m => (DEFAULTS.members||[]).some(d=>d.name===m.name));
+            if (lc > cc && cloudIsDefault && lc > (DEFAULTS.members||[]).length) {
+              console.warn('[同步] 🛡 安全网触发：保留本地数据（' + lc + '成员），拒绝云端默认数据（' + cc + '成员）');
+              toast('🛡 已保留本地数据，忽略云端重置');
+              const recovered = { ...DEFAULTS, ...lp };
+              recovered._lastLocalModified = new Date().toISOString();
+              saveLocal(recovered);
+              pushToCloud(recovered, true);
+              updateSyncStatus('synced');
+              return recovered;
+            }
+          } catch(e2) {}
         }
         const d = { ...DEFAULTS, ...cloudData,
           members: (cloudData.members||[]).map(m=>({avatar:'',...m})),
@@ -906,8 +929,8 @@ function debouncedPushToCloud(data) {
 }
 
 function saveLocal(data) {
-  // 记录本地修改时间戳，用于云端重置检测
-  if(data && !data._lastLocalModified){
+  // 每次保存都记录/更新本地修改时间戳，用于云端重置检测
+  if(data){
     data._lastLocalModified = new Date().toISOString();
   }
   localStorage.setItem(DB_KEY, JSON.stringify(data));
