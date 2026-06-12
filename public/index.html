@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>黑塔办事处</title> <!-- v261213-safe-fetch -->
+<title>黑塔办事处</title> <!-- v261213-fix-pc-click -->
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -388,7 +388,7 @@ body{
     <!-- 已登录状态 -->
     <div id="loggedInArea" class="hidden" style="display:flex;align-items:center;gap:6px">
       <span id="adminBadge" class="hidden"></span>
-      <span id="userBadge" class="hidden" onclick="tryOpenPersonalCenter()"></span>
+      <span id="userBadge" class="hidden" style="cursor:pointer" title="点击打开个人中心"></span>
       <button class="btn btn-gold btn-sm hidden" id="btnAdminPanel" onclick="openAdminPanel()">⚙️ 管理</button>
       <button class="btn btn-del btn-sm hidden" id="btnAdminToggle">退出</button>
     </div>
@@ -1456,14 +1456,13 @@ function renderMembers() {
 }
 
 function showMemberDetail(id) {
-  console.log('[DEBUG] showMemberDetail called, id='+id);
   try {
     const m=app.members.find(x=>x.id===id);
-    if(!m){console.error('[DEBUG] Member not found, id='+id);return;}
+    if(!m)return;
     const im=app.mentors.find(mt=>mt.memberId===m.id);
     const avatarDisp=m.avatar?`<div class="ma-lg" style="overflow:hidden;padding:0"><img src="${esc(m.avatar)}" style="width:100%;height:100%;object-fit:cover" alt=""></div>`:`<div class="ma-lg">${m.name.charAt(0)}</div>`;
     const body=document.getElementById('memberModalBody');
-    if(!body){console.error('[DEBUG] memberModalBody not found!');return;}
+    if(!body)return;
     body.innerHTML=`
       <div style="text-align:center">
         ${avatarDisp}
@@ -1474,12 +1473,10 @@ function showMemberDetail(id) {
         ${currentUser&&currentUser.memberId===m.id?`<button class="btn btn-outline btn-sm" onclick="changeMemberPwd()" style="margin-top:12px">🔑 修改密码</button>`:''}
       </div>`;
     const modal=document.getElementById('memberModal');
-    if(!modal){console.error('[DEBUG] memberModal not found!');return;}
-    console.log('[DEBUG] Showing memberModal, modal classList='+modal.classList);
+    if(!modal)return;
     modal.classList.remove('hidden');
   } catch(e) {
-    console.error('[DEBUG] Error in showMemberDetail:', e);
-    alert('Error in showMemberDetail: '+e.message);
+    console.error('[showMemberDetail] Error:', e);
   }
 }
 
@@ -1755,13 +1752,19 @@ function afterLoginSuccess(){
     badge.className = (m&&m.isAdmin) ? 'admin-badge' : 'hidden';
     if(userBadge){
       userBadge.textContent = m?m.name:'成员'; userBadge.className='user-badge'; userBadge.classList.remove('hidden');
-      // 普通成员点击姓名 → 打开个人中心
+      // 普通成员点击姓名 → 打开个人中心（使用 addEventListener，不会被覆盖）
       if(m && !m.isAdmin){
-        userBadge.onclick = function(){ openPersonalCenter(); };
-        userBadge.title = '点击打开个人中心';
         userBadge.style.cursor = 'pointer';
+        userBadge.title = '点击打开个人中心';
+        // 先移除旧的监听器（通过 cloneNode 方式），再重新添加
+        const newBadge = userBadge.cloneNode(true);
+        userBadge.parentNode.replaceChild(newBadge, userBadge);
+        newBadge.addEventListener('click', function(e){
+          e.stopPropagation();
+          openPersonalCenter();
+        });
       } else {
-        userBadge.onclick = null;
+        userBadge.style.cursor = 'default';
         userBadge.title = '';
       }
     }
@@ -1877,26 +1880,23 @@ function changeMemberPwd(){
 }
 
 // ==================== 个人中心 ====================
-// 个人中心入口（HTML onclick 备用，防止 JS onclick 未绑定）
+// 个人中心入口
 function tryOpenPersonalCenter(){
-  alert('DEBUG-1: tryOpenPersonalCenter called, currentUser='+(currentUser?currentUser.type:'null'));
   if(!currentUser||!currentUser.memberId){toast('请先登录');return;}
   const m=app.members.find(x=>x.id===currentUser.memberId);
   if(!m){toast('成员数据异常');return;}
-  if(m.isAdmin)return; // 管理员走管理面板，不打开个人中心
+  if(m.isAdmin)return;
   openPersonalCenter();
 }
 function openPersonalCenter(){
-  alert('DEBUG-2: openPersonalCenter called');
   if(!currentUser||!currentUser.memberId){toast('请先登录');return;}
   const m = app.members.find(x=>x.id===currentUser.memberId);
   if(!m){toast('成员数据异常');return;}
 
-  // 显示个人中心遮罩 + 面板（容错：检查元素是否存在）
+  // 显示个人中心遮罩 + 面板
   const ov=document.getElementById('pcOverlay');
-  if(!ov){toast('界面错误：找不到个人中心遮罩');alert('DEBUG-3: pcOverlay MISSING');console.error('pcOverlay missing');return;}
+  if(!ov){console.error('[个人中心] pcOverlay not found!');toast('界面错误：找不到个人中心面板');return;}
   ov.classList.remove('hidden');
-  alert('DEBUG-4: pcOverlay shown, ov.classList='+ov.classList);
 
   // 填充当前数据
   const avDisplay = document.getElementById('pcAvatarDisplay');
@@ -2736,18 +2736,14 @@ function onFtDockDragEnd(evt){
 }
 
 function ftNodeClick(evt, id){
-  console.log('[DEBUG] ftNodeClick called, id='+id+', isAdmin='+isAdmin+', ftAdminMode='+ftAdminMode);
-  alert('DEBUG-ftNodeClick: id='+id+', isAdmin='+isAdmin+', ftAdminMode='+ftAdminMode);
   // Don't open modal if was dragging
-  if(ftDragging){console.log('[DEBUG] ftNodeClick: was dragging, return');return;}
+  if(ftDragging)return;
   // 管理员编辑模式需要双击才进入编辑，单击不做操作
   // 非管理员单击查看成员详情
   if(isAdmin && ftAdminMode){
     // 单击忽略（拖动时也不会触发），双击由 ondblclick 处理
-    console.log('[DEBUG] ftNodeClick: admin mode, return without action');
     return;
   } else {
-    console.log('[DEBUG] ftNodeClick: calling showMemberDetail('+id+')');
     showMemberDetail(id);
   }
 }
