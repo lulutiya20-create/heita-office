@@ -141,21 +141,23 @@ body{
 .mentor-carousel{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:20px;user-select:none}
 .mc-arrow{background:rgba(212,167,116,.15);border:1px solid var(--gold);color:var(--gold);font-size:22px;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--tr);flex-shrink:0;z-index:10}
 .mc-arrow:hover{background:var(--gold);color:#0f0f1a}
-.mc-viewport{flex:1;overflow:hidden;position:relative;height:640px;perspective:1200px}
+.mc-viewport{flex:1;overflow:hidden;position:relative;height:720px;perspective:1200px}
 .mc-track{display:flex;align-items:center;justify-content:center;height:100%;position:absolute;left:0;right:0;transition:transform .5s cubic-bezier(.23,1,.32,1)}
 .mc-card{position:absolute;width:200px;border-radius:20px;overflow:hidden;transition:all .5s cubic-bezier(.23,1,.32,1);cursor:pointer;background:var(--card);border:1px solid var(--bdr2)}
-.mc-card.mc-center{width:320px;box-shadow:0 8px 40px rgba(212,167,116,.25);border-color:var(--gold);z-index:5;transform:translateX(-50%) scale(1)}
-.mc-card.mc-left{transform:translateX(calc(-50% - 260px)) rotateY(28deg) scale(.72);z-index:3;opacity:.65;filter:brightness(.55)}
-.mc-card.mc-right{transform:translateX(calc(-50% + 260px)) rotateY(-28deg) scale(.72);z-index:3;opacity:.65;filter:brightness(.55)}
-.mc-card.mc-hidden{display:none}
+.mc-card.mc-center{width:380px;left:50%;top:50%;transform:translate(-50%,-50%) scale(1);box-shadow:0 8px 40px rgba(212,167,116,.25);border-color:var(--gold);z-index:5}
+.mc-card.mc-left{left:50%;top:50%;transform:translate(calc(-50% - 280px),-50%) rotateY(28deg) scale(.65);z-index:3;opacity:.55;filter:brightness(.45)}
+.mc-card.mc-right{left:50%;top:50%;transform:translate(calc(-50% + 280px),-50%) rotateY(-28deg) scale(.65);z-index:3;opacity:.55;filter:brightness(.45)}
+.mc-card.mc-hidden{display:none !important}
 .mc-card img{width:100%;aspect-ratio:9/16;object-fit:cover;display:block;border-radius:20px}
 .mc-card.mc-center img{border-radius:20px 20px 0 0}
+.mc-card.no-img .mc-card-body{border-radius:20px;padding-top:36px;padding-bottom:36px}
+.mc-card.no-img.mc-center .mc-card-body{min-height:380px;display:flex;flex-direction:column;justify-content:center}
 .mc-card .mc-simple-overlay{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(10,10,20,.95),transparent);padding:20px 12px 14px;text-align:center;border-radius:0 0 20px 20px}
 .mc-card .mc-simple-overlay h4{font-size:15px;color:#fff;font-weight:600;text-shadow:0 2px 6px rgba(0,0,0,.8)}
-.mc-card-body{padding:18px;text-align:left}
-.mc-card-body h4{font-size:20px;color:var(--gold2);margin-bottom:4px}
-.mc-card-body .mc-sp{font-size:13px;color:var(--red2);margin-bottom:10px}
-.mc-card-body .mc-xt{font-size:13px;color:var(--muted);line-height:1.7;max-height:100px;overflow-y:auto}
+.mc-card-body{padding:20px;text-align:left}
+.mc-card-body h4{font-size:22px;color:var(--gold2);margin-bottom:4px}
+.mc-card-body .mc-sp{font-size:14px;color:var(--red2);margin-bottom:12px}
+.mc-card-body .mc-xt{font-size:14px;color:var(--muted);line-height:1.8;max-height:160px;overflow-y:auto}
 .mc-card-body .mc-xt::-webkit-scrollbar{width:4px}
 .mc-card-body .mc-xt::-webkit-scrollbar-thumb{background:var(--gold);border-radius:2px}
 .mc-dots{display:flex;gap:8px;justify-content:center;margin-top:16px}
@@ -165,10 +167,10 @@ body{
   .mentor-carousel{gap:4px}
   .mc-arrow{width:36px;height:36px;font-size:16px}
   .mc-viewport{height:520px}
-  .mc-card{width:160px}
-  .mc-card.mc-center{width:220px}
-  .mc-card.mc-left{transform:translateX(calc(-50% - 170px)) rotateY(22deg) scale(.68)}
-  .mc-card.mc-right{transform:translateX(calc(-50% + 170px)) rotateY(-22deg) scale(.68)}
+  .mc-card{width:140px}
+  .mc-card.mc-center{width:260px;left:50%;top:50%;transform:translate(-50%,-50%) scale(1)}
+  .mc-card.mc-left{left:50%;top:50%;transform:translate(calc(-50% - 200px),-50%) rotateY(22deg) scale(.58)}
+  .mc-card.mc-right{left:50%;top:50%;transform:translate(calc(-50% + 200px),-50%) rotateY(-22deg) scale(.58)}
 }
 
 .msg-board{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:28px;max-width:700px;margin:0 auto 40px}
@@ -241,7 +243,7 @@ body{
 /* Family tree page */
 .familytree-container{max-width:1200px;margin:0 auto;padding:20px}
 .familytree-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:16px}
-.familytree-canvas{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);overflow:auto;position:relative;min-height:500px;touch-action:none;cursor:grab}
+.familytree-canvas{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);overflow:auto;position:relative;min-height:500px;max-height:70vh;touch-action:none;cursor:grab}
 .familytree-canvas::-webkit-scrollbar{width:10px;height:10px}
 .familytree-canvas::-webkit-scrollbar-track{background:rgba(0,0,0,.2);border-radius:5px}
 .familytree-canvas::-webkit-scrollbar-thumb{background:var(--gold);border-radius:5px}
@@ -585,7 +587,7 @@ body{
         <input type="file" id="adm-mt-image" accept="image/*" onchange="handleMentorFile(event)">
         <div id="mentorFileHint" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
       </div>
-      <button class="btn btn-red btn-sm" onclick="admAddMentor()">设为导师</button>
+      <button class="btn btn-red btn-sm" id="adm-mt-btn" onclick="admAddMentor()">设为导师</button>
       <div style="margin-top:14px" id="adm-mt-list"></div>
     </div>
     <div class="admin-tab-content" id="adm-msgs">
@@ -1286,14 +1288,13 @@ function renderMentors() {
   const total=app.mentors.length;
   track.innerHTML=app.mentors.map((mt,i)=>{
     const m=app.members.find(x=>x.id===mt.memberId);
-    const imgSrc=mt.image||(m&&m.avatar?m.avatar:'');
-    const imgHtml=imgSrc?`<img src="${esc(imgSrc)}" alt="${m?esc(m.name):''}">`:`<div style="aspect-ratio:9/16;background:linear-gradient(135deg,#1a1528,#0f0f1a);display:flex;align-items:center;justify-content:center;font-size:48px;color:var(--gold)">${m?m.name.charAt(0):'?'}</div>`;
+    const imgHtml=mt.image?`<img src="${esc(mt.image)}" alt="${m?esc(m.name):''}">`:'';
     const centerBody=`<div class="mc-card-body">
         <h4>${m?esc(m.name):'未知'}</h4>
         <div class="mc-sp">${esc(mt.specialty||'导师')}</div>
         <div class="mc-xt">${esc(mt.extraInfo||'暂无介绍')}</div>
       </div>`;
-    return `<div class="mc-card${i===mCarouselIdx?' mc-center':' mc-hidden'}" id="mc-${i}" onclick="mentorCarouselGo(${i})">
+    return `<div class="mc-card${i===mCarouselIdx?' mc-center':' mc-hidden'}${mt.image?'':' no-img'}" id="mc-${i}" onclick="mentorCarouselGo(${i})">
       ${imgHtml}
       ${centerBody}
     </div>`;
@@ -1309,7 +1310,10 @@ function mentorCarouselRender(){
   // 只显示居中卡片，隐藏所有侧边卡片
   for(let i=0;i<total;i++){
     const c=document.getElementById('mc-'+i);
-    if(c)c.className='mc-card'+(i===mCarouselIdx?' mc-center':' mc-hidden');
+    if(c){
+      const hasImg=c.querySelector('img');
+      c.className='mc-card'+(i===mCarouselIdx?' mc-center':' mc-hidden')+(hasImg?'':' no-img');
+    }
   }
   // Dots
   document.querySelectorAll('.mc-dot').forEach((d,i)=>{d.classList.toggle('active',i===mCarouselIdx);});
@@ -1525,19 +1529,41 @@ function compressAvatar(dataUrl,callback){compressImage(dataUrl,300,300,0.75,cal
 function compressCarouselImg(dataUrl,callback){compressImage(dataUrl,1920,1080,0.9,callback);}
 function compressEventImg(dataUrl,callback){compressImage(dataUrl,1920,1080,0.9,callback);}
 function compressMentorImg(dataUrl,callback){compressImage(dataUrl,1080,1920,0.9,callback);}
-function admDelMember(id){if(!confirm('确定删除该成员？'))return;app.mentors=app.mentors.filter(mt=>mt.memberId!==id);app.members.forEach(m=>{m.relations=(m.relations||[]).filter(r=>r.targetId!==id);});app.members=app.members.filter(m=>m.id!==id);saveApp(app);renderMembers();renderFamilyTree();renderMentors();refreshAdminPanel();toast('已删除');}
+function admDelMember(id){if(!confirm('确定删除该成员？'))return;app.mentors=app.mentors.filter(mt=>mt.memberId!==id);app.members.forEach(m=>{m.relations=(m.relations||[]).filter(r=>r.targetId!==id);});app.members=app.members.filter(m=>m.id!==id);if(app.treeNodePositions)delete app.treeNodePositions[id];saveApp(app);renderMembers();renderFamilyTree();renderMentors();refreshAdminPanel();toast('已删除');}
 // admAddEvent replaced below with file upload support
 function admDelEvent(id){if(!confirm('确定删除？'))return;app.events=app.events.filter(e=>e.id!==id);saveApp(app);renderEvents();refreshAdminPanel();toast('已删除');}
-function updateMentorSelect(){const sel=document.getElementById('adm-mt-member'),free=app.members.filter(m=>!app.mentors.find(mt=>mt.memberId===m.id));sel.innerHTML='<option value="">-- 选择 --</option>'+free.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');}
+function updateMentorSelect(){const sel=document.getElementById('adm-mt-member'),exclude=editingAdminMentorId?app.mentors.filter(mt=>mt.id!==editingAdminMentorId):app.mentors;const free=app.members.filter(m=>!exclude.find(mt=>mt.memberId===m.id));sel.innerHTML='<option value="">-- 选择 --</option>'+free.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');if(editingAdminMentorId){const mt=app.mentors.find(mt=>mt.id===editingAdminMentorId);if(mt)sel.value=mt.memberId;}}
+let editingAdminMentorId = null; // 正在编辑的导师 ID
+
 function admAddMentor(){
   const mid=parseInt(document.getElementById('adm-mt-member').value);
+  const spec = document.getElementById('adm-mt-specialty').value.trim();
+  const extra = document.getElementById('adm-mt-extra').value.trim();
+
+  if(editingAdminMentorId){
+    // 编辑模式
+    const mt = app.mentors.find(x => x.id === editingAdminMentorId);
+    if (!mt) { toast('导师不存在'); return; }
+    if (mid && mid !== mt.memberId && app.mentors.find(mt2 => mt2.memberId === mid)) { toast('该成员已是导师'); return; }
+    if (mid) mt.memberId = mid;
+    mt.specialty = spec;
+    mt.extraInfo = extra;
+    if (pendingMentorImg) mt.image = pendingMentorImg;
+    saveApp(app);
+    cancelEditMentor();
+    renderMentors(); renderMembers(); renderFamilyTree(); refreshAdminPanel();
+    toast('✅ 导师信息已更新');
+    return;
+  }
+
+  // 添加模式
   if(!mid){toast('请选择成员');return;}
   if(app.mentors.find(mt=>mt.memberId===mid)){toast('该成员已是导师');return;}
   const addMentor=(imgData)=>{
     app.mentors.push({
       id:genNextId(),memberId:mid,
-      specialty:document.getElementById('adm-mt-specialty').value.trim(),
-      extraInfo:document.getElementById('adm-mt-extra').value.trim(),
+      specialty:spec,
+      extraInfo:extra,
       image:imgData||''
     });
     saveApp(app);
@@ -1552,14 +1578,55 @@ function admAddMentor(){
   if(pendingMentorImg){addMentor(pendingMentorImg);}
   else{addMentor('');}
 }
-function admDelMentor(id){if(!confirm('确定取消？'))return;app.mentors=app.mentors.filter(m=>m.id!==id);saveApp(app);renderMentors();renderMembers();renderFamilyTree();refreshAdminPanel();toast('已取消');}
+function admDelMentor(id){if(!confirm('确定取消？'))return;app.mentors=app.mentors.filter(m=>m.id!==id);if(editingAdminMentorId===id)cancelEditMentor();saveApp(app);renderMentors();renderMembers();renderFamilyTree();refreshAdminPanel();toast('已取消');}
+function editAdminMentor(id){
+  const mt = app.mentors.find(x => x.id === id);
+  if (!mt) return;
+  editingAdminMentorId = id;
+  document.getElementById('adm-mt-member').value = mt.memberId;
+  document.getElementById('adm-mt-specialty').value = mt.specialty || '';
+  document.getElementById('adm-mt-extra').value = mt.extraInfo || '';
+  document.getElementById('adm-mt-image').value = '';
+  document.getElementById('mentorFileHint').textContent = '';
+  pendingMentorImg = '';
+  const btn = document.getElementById('adm-mt-btn');
+  if (btn) { btn.textContent = '💾 保存导师'; btn.className = 'btn btn-ok btn-sm'; }
+  // 添加取消按钮
+  let cancelBtn = document.getElementById('adm-mt-cancel');
+  if (!cancelBtn) {
+    cancelBtn = document.createElement('button');
+    cancelBtn.id = 'adm-mt-cancel';
+    cancelBtn.className = 'btn btn-outline btn-sm';
+    cancelBtn.textContent = '取消编辑';
+    cancelBtn.onclick = cancelEditMentor;
+    cancelBtn.style.marginLeft = '8px';
+    btn.parentNode.appendChild(cancelBtn);
+  } else {
+    cancelBtn.classList.remove('hidden');
+  }
+  document.getElementById('adm-mt-member').scrollIntoView({ behavior: 'smooth' });
+}
+function cancelEditMentor(){
+  editingAdminMentorId = null;
+  document.getElementById('adm-mt-member').value = '';
+  document.getElementById('adm-mt-specialty').value = '';
+  document.getElementById('adm-mt-extra').value = '';
+  document.getElementById('adm-mt-image').value = '';
+  document.getElementById('mentorFileHint').textContent = '';
+  pendingMentorImg = '';
+  const btn = document.getElementById('adm-mt-btn');
+  if (btn) { btn.textContent = '设为导师'; btn.className = 'btn btn-red btn-sm'; }
+  const cancelBtn = document.getElementById('adm-mt-cancel');
+  if (cancelBtn) cancelBtn.classList.add('hidden');
+  updateMentorSelect();
+}
 function admDelMsg(id){app.messages=app.messages.filter(m=>m.id!==id);saveApp(app);renderMessages();refreshAdminPanel();toast('已删除');}
 
 function refreshAdminPanel() {
   document.getElementById('adm-carousel-list').innerHTML=app.carouselImages.length?app.carouselImages.map(i=>`<div class="admin-item"><div class="it"><strong>${esc(i.title)}</strong><span>${esc(i.url.substring(0,40))}...</span></div><div class="ia"><button class="btn btn-del btn-sm" onclick="admDelCarousel(${i.id})">删除</button></div></div>`).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
   document.getElementById('adm-m-list').innerHTML=app.members.length?app.members.map(m=>`<div class="admin-item"><div class="it"><strong>${esc(m.name)}</strong><span>${esc(m.role||'')}${app.mentors.find(mt=>mt.memberId===m.id)?' · 🎓导师':''}</span></div><div class="ia"><button class="btn btn-ok btn-sm" onclick="editAdminMember(${m.id})" title="编辑成员">✏️</button><button class="btn btn-del btn-sm" onclick="admDelMember(${m.id})">删除</button></div></div>`).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
   document.getElementById('adm-e-list').innerHTML=app.events.length?app.events.map(e=>`<div class="admin-item"><div class="it"><strong>${esc(e.title)}</strong><span>${esc(e.date)}</span></div><div class="ia"><button class="btn btn-del btn-sm" onclick="admDelEvent(${e.id})">删除</button></div></div>`).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
-  document.getElementById('adm-mt-list').innerHTML=app.mentors.length?app.mentors.map(mt=>{const m=app.members.find(x=>x.id===mt.memberId);return `<div class="admin-item"><div class="it"><strong>${m?esc(m.name):'未知'}</strong><span>${esc(mt.specialty||'')}</span></div><div class="ia"><button class="btn btn-del btn-sm" onclick="admDelMentor(${mt.id})">取消</button></div></div>`}).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
+  document.getElementById('adm-mt-list').innerHTML=app.mentors.length?app.mentors.map(mt=>{const m=app.members.find(x=>x.id===mt.memberId);return `<div class="admin-item"><div class="it"><strong>${m?esc(m.name):'未知'}</strong><span>${esc(mt.specialty||'')}</span></div><div class="ia"><button class="btn btn-ok btn-sm" onclick="editAdminMentor(${mt.id})" title="编辑导师">✏️</button><button class="btn btn-del btn-sm" onclick="admDelMentor(${mt.id})">取消</button></div></div>`}).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
   updateMentorSelect();
   document.getElementById('adm-msg-list').innerHTML=app.messages.length?[...app.messages].reverse().map(m=>`<div class="admin-item"><div class="it"><strong>${esc(m.name)}</strong><span>${esc(m.content.substring(0,30))}... · ${esc(m.time)}</span></div><div class="ia"><button class="btn btn-del btn-sm" onclick="admDelMsg(${m.id})">删除</button></div></div>`).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
 }
@@ -1766,11 +1833,12 @@ function renderFamilyTree(){
   const dockList=document.getElementById('ftDockList');
   const dockEmpty=document.getElementById('ftDockEmpty');
   const allTgts=new Set();app.members.forEach(m=>{(m.relations||[]).forEach(r=>allTgts.add(r.targetId));});
-  const unrelated=app.members.filter(m=>(!m.relations||!m.relations.length)&&!allTgts.has(m.id));
+  const hasPositions = app.treeNodePositions && Object.keys(app.treeNodePositions).length>0;
+  const unrelated=app.members.filter(m=>(!m.relations||!m.relations.length)&&!allTgts.has(m.id)&&(!hasPositions||!app.treeNodePositions[m.id]));
   if(unrelated.length){
     dock.style.display='flex';
     canvas.classList.add('has-dock');
-    if(dockEmpty)dockEmpty.style.display=unrelated.length?'none':'block';
+    if(dockEmpty)dockEmpty.style.display='none';
     dockList.innerHTML=unrelated.map(m=>{
       const avHtml=m.avatar?`<img src="${esc(m.avatar)}" alt="">`:`<span>${m.name.charAt(0)}</span>`;
       return `<div class="ft-dock-card" data-id="${m.id}" onmousedown="startFtDockDrag(event,${m.id})" ontouchstart="startFtDockDrag(event,${m.id})">
