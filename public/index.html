@@ -227,6 +227,7 @@ body{
 .footer{text-align:center;padding:24px;border-top:1px solid var(--bdr);color:var(--muted);font-size:12px}
 .empty{text-align:center;padding:40px;color:var(--muted);border:2px dashed var(--bdr);border-radius:var(--r);font-size:14px}
 .empty .ic{font-size:40px;margin-bottom:10px}
+.admin-overlay.hidden{pointer-events:none!important}
 .hidden{display:none!important}
 
 /* Hamburger menu */
@@ -524,7 +525,7 @@ body{
 </div>
 
 <!-- Admin Overlay / Login -->
-<div class="admin-overlay hidden" id="adminOverlay">
+<div class="admin-overlay hidden" id="adminOverlay" onclick="if(event.target===this)closeAllOverlays()">
   <div class="admin-box" id="adminLoginBox">
     <h2>🔐 登录</h2>
     <div style="display:flex;gap:8px;margin-bottom:14px">
@@ -1538,9 +1539,24 @@ function refreshMemberNameList(){
 function onMemberLoginInput(val){
   /* datalist 已处理 autocomplete */
 }
+function closeAllOverlays(){
+  // 强制关闭所有遮罩层，防止界面无法点击
+  try{
+    document.getElementById('adminOverlay').classList.add('hidden');
+    document.getElementById('adminLoginBox').classList.add('hidden');
+    document.getElementById('adminPanelBox').classList.add('hidden');
+    // 如果关系面板没开，也关闭 panelOverlay
+    if(!document.getElementById('relationPanel').classList.contains('open')){
+      document.getElementById('panelOverlay').classList.remove('show');
+    }
+    // 关闭移动端导航
+    document.getElementById('mobileNav').classList.remove('open');
+    document.getElementById('hamburgerBtn').classList.remove('open');
+  }catch(e){}
+}
 function afterLoginSuccess(){
-  document.getElementById('adminLoginBox').classList.add('hidden');
-  document.getElementById('adminOverlay').classList.add('hidden'); // 关闭遮罩层，防止黑屏
+  // 先强制关闭所有遮罩
+  closeAllOverlays();
   document.getElementById('notLoggedInArea').classList.add('hidden');
   document.getElementById('loggedInArea').classList.remove('hidden');
 
@@ -1609,7 +1625,7 @@ function openAdminPanel(){
   sAT('carousel');
   refreshAdminPanel();
 }
-function closeAdmin(){document.getElementById('adminOverlay').classList.add('hidden');}
+function closeAdmin(){document.getElementById('adminOverlay').classList.add('hidden');closeAllOverlays();}
 function doLogout(){
   currentUser=null;isAdmin=false;closeAdmin();ftAdminMode=false;
   if(currentPage==='/familytree'){
@@ -2511,6 +2527,17 @@ function toggleFtAdmin(){
   if (cloudEnabled) {
     setTimeout(() => startPolling(), 2000);
   }
+  // 定时保险：每3秒检查并关闭异常遮罩层
+  setInterval(() => {
+    const ov = document.getElementById('adminOverlay');
+    const lb = document.getElementById('adminLoginBox');
+    const pb = document.getElementById('adminPanelBox');
+    if (ov && !ov.classList.contains('hidden')) {
+      if (lb.classList.contains('hidden') && pb.classList.contains('hidden')) {
+        ov.classList.add('hidden');
+      }
+    }
+  }, 3000);
 })();
 
 // 纯本地加载（fallback）
