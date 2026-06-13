@@ -6,7 +6,7 @@
 <meta name="cache-control" content="no-cache, no-store, must-revalidate">
 <meta name="pragma" content="no-cache">
 <meta name="expires" content="0">
-<title>黑塔办事处</title> <!-- v260613-fix-syntax -->
+<title>黑塔办事处</title> <!-- v260613-coldstart-fix -->
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -701,26 +701,29 @@ let pollTimer = null;
 const POLL_INTERVAL = 5000;
 
 // 安全 fetch JSON：处理 Render 冷启动返回 HTML 的情况，自动重试
+// Render 免费版冷启动可能需要 30-60 秒，所以默认重试 10 次并递增等待时间
 async function safeFetchJson(url, opts, retries) {
-  retries = retries || 3;
+  retries = retries || 10;
   for (var attempt = 0; attempt < retries; attempt++) {
     try {
-      var resp = await fetch(url, opts || { signal: AbortSignal.timeout(8000) });
+      var resp = await fetch(url, opts || { signal: AbortSignal.timeout(10000) });
       var ct = resp.headers.get('content-type') || '';
       if (!ct.includes('application/json')) {
-        // 服务器返回 HTML（冷启动中），等待后重试
+        // 服务器返回 HTML（冷启动中），等待后重试（递增等待：3s,4s,5s...）
         if (attempt < retries - 1) {
-          console.log('[同步] 服务器冷启动中，' + (attempt+1) + '/' + retries + '，2秒后重试...');
-          await new Promise(function(r){ setTimeout(r, 2000); });
+          var waitMs = Math.min(3000 + attempt * 1000, 8000);
+          console.log('[同步] 🔄 云服务器启动中 (' + (attempt+1) + '/' + retries + ')，' + (waitMs/1000) + '秒后重试...');
+          await new Promise(function(r){ setTimeout(r, waitMs); });
           continue;
         }
-        throw new Error('服务器返回非JSON响应（冷启动中）');
+        throw new Error('服务器返回非JSON响应（冷启动超时）');
       }
       return await resp.json();
     } catch(e) {
-      if (attempt < retries - 1 && (e.name === 'TimeoutError' || e.message.includes('timed out') || e.message.includes('冷启动'))) {
-        console.log('[同步] 连接超时，' + (attempt+1) + '/' + retries + '，2秒后重试...');
-        await new Promise(function(r){ setTimeout(r, 2000); });
+      if (attempt < retries - 1 && (e.name === 'TimeoutError' || e.message.includes('timed out') || e.message.includes('冷启动') || e.message.includes('Failed to fetch') || e.message.includes('NetworkError'))) {
+        var waitMs2 = Math.min(3000 + attempt * 1000, 8000);
+        console.log('[同步] ⏳ 连接中 (' + (attempt+1) + '/' + retries + ')，' + (waitMs2/1000) + '秒后重试...');
+        await new Promise(function(r){ setTimeout(r, waitMs2); });
         continue;
       }
       throw e;
