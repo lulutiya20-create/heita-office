@@ -475,6 +475,10 @@ app.post('/api/sync-to-atlas', async (req, res) => {
   const ok = await tryConnectMongo();
   if (ok) {
     const local = readFromFile();
+    if (local) {
+      // 等待后台写入完成,确保数据真的到 Atlas
+      await writeToMongoAsync(local);
+    }
     const fingerprint = local ? crypto.createHash('md5').update(JSON.stringify(local)).digest('hex') : '';
     res.json({ success: true, message: '已同步到 Atlas', mongo: true, fingerprint });
   } else {
