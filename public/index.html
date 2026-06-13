@@ -6,7 +6,7 @@
 <meta name="cache-control" content="no-cache, no-store, must-revalidate">
 <meta name="pragma" content="no-cache">
 <meta name="expires" content="0">
-<title>黑塔办事处</title> <!-- v260613-rc5 -->
+<title>黑塔办事处</title> <!-- v260613-rc6 -->
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -871,13 +871,21 @@ async function loadAppAsync() {
     if (raw) {
       const localData = JSON.parse(raw);
       const localCount = (localData.members||[]).length;
+      // 二次验证：检查 localStorage 是否只有元数据（被截断）
+      if (localCount === 0 || (raw && raw.length < 2000 && localCount < (DEFAULTS.members||[]).length)) {
+        console.warn('[同步] ⚠️ 本地数据不完整（' + localCount + ' 成员），不主动上传云端');
+        // 返回默认数据，不上传
+        const d = JSON.parse(JSON.stringify(DEFAULTS));
+        saveLocal(d);
+        updateSyncStatus('synced');
+        return d;
+      }
       const d = { ...DEFAULTS, ...localData };
-      // 只在本地为空（默认数据）时主动上传，避免把过期数据覆盖到云端
-      if (localCount === 0 || localCount === (DEFAULTS.members||[]).length) {
-        pushToCloud(d);
+      // 安全策略：只在该数据看起来完整时才上传
+      if (localCount > 0) {
+        console.log('[同步] 本地有 ' + localCount + ' 成员，临时使用（不主动覆盖云端）');
       }
       updateSyncStatus('synced');
-      console.log('[同步] 使用本地缓存 (' + localCount + ' 名成员)');
       return d;
     }
   } catch(e) {}
