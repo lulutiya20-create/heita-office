@@ -779,27 +779,59 @@ const DEFAULTS = {
     {id:3,title:'训练基地',url:'https://picsum.photos/seed/heita3/1200/480'}
   ],
   members:[
-    {id:1,name:'张建国',role:'主任',info:'黑塔办事处主任，负责全面工作，经验丰富，作风严谨。',avatar:'',relations:[{targetId:2,label:'上级'},{targetId:3,label:'战友'}],password:'abc123',isAdmin:false},
-    {id:2,name:'李志强',role:'副主任',info:'协助主任处理日常事务，主管后勤保障工作。',avatar:'',relations:[{targetId:1,label:'下属'},{targetId:4,label:'搭档'}],password:'abc123',isAdmin:false},
-    {id:3,name:'王建军',role:'队长',info:'负责外勤任务执行，行动力强，善于应急处理。',avatar:'',relations:[{targetId:1,label:'战友'},{targetId:5,label:'上级'}],password:'abc123',isAdmin:false},
-    {id:4,name:'刘思远',role:'指导员',info:'负责思想政治工作和团队文化建设。',avatar:'',relations:[{targetId:2,label:'搭档'},{targetId:5,label:'同事'}],password:'abc123',isAdmin:false},
-    {id:5,name:'陈晓峰',role:'队员',info:'年轻骨干，计算机技术专长，负责信息化建设。',avatar:'',relations:[{targetId:3,label:'下属'},{targetId:4,label:'同事'}],password:'abc123',isAdmin:false}
+    {id:1781264631988060,name:'露露緹雅',role:'永青一页',info:'高难苦手，全职业精通（大概）',avatar:'https://picsum.photos/seed/露露緹雅/200/200',relations:[{"targetId": 1781265442775372, "label": "导师→豆芽"}, {"targetId": 1781270850892094, "label": "导师→豆芽"}],password:'abc123',isAdmin:true},
+    {id:1781265442775372,name:'阿换',role:'瞬灭二页',info:'',avatar:'https://picsum.photos/seed/阿换/200/200',relations:[],password:'abc123',isAdmin:true},
+    {id:1781270458888535,name:'千早铃',role:'瞬灭二页',info:'',avatar:'https://picsum.photos/seed/千早铃/200/200',relations:[{"targetId": 1781274831961022, "label": "导师→豆芽"}, {"targetId": 1781270947924747, "label": "导师→豆芽"}, {"targetId": 1781275036424644, "label": "导师→豆芽"}, {"targetId": 1781270656571088, "label": "导师→豆芽"}],password:'abc123',isAdmin:true},
+    {id:1781270492991774,name:'洛格芙',role:'瞬灭二页',info:'休闲玩法高手',avatar:'https://picsum.photos/seed/洛格芙/200/200',relations:[],password:'abc123',isAdmin:true},
+    {id:1781270509527252,name:'阿薰',role:'瞬灭二页',info:'贤者学者基础/高难部分，不了解游戏背景/剧情',avatar:'https://picsum.photos/seed/阿薰/200/200',relations:[{"targetId": 1781270721550646, "label": "导师→豆芽"}, {"targetId": 1781270730688350, "label": "导师→豆芽"}],password:'abc123',isAdmin:true},
+    {id:1781270533704364,name:'环绪',role:'瞬灭二页',info:'',avatar:'https://picsum.photos/seed/环绪/200/200',relations:[{"targetId": 1781275162565912, "label": "导师→豆芽"}, {"targetId": 1781270509527252, "label": "导师→豆芽"}],password:'abc123',isAdmin:true},
+    {id:1781270625683341,name:'笨白菜',role:'不朽四页',info:'',avatar:'https://picsum.photos/seed/笨白菜/200/200',relations:[{"targetId": 1781270635985147, "label": "导师→豆芽"}],password:'abc123',isAdmin:true},
+    {id:1781270635985147,name:'超级大白菜',role:'不朽四页',info:'',avatar:'https://picsum.photos/seed/超级大白菜/200/200',relations:[],password:'abc123',isAdmin:false},
+    {id:1781270656571088,name:'喵喵喵喵喵',role:'不朽四页',info:'',avatar:'https://picsum.photos/seed/喵喵喵喵喵/200/200',relations:[],password:'abc123',isAdmin:false},
+    {id:1781270721550646,name:'Hetian',role:'未来八页',info:'',avatar:'https://picsum.photos/seed/Hetian/200/200',relations:[],password:'abc123',isAdmin:false},
+    {id:1781270730688350,name:'萧萧雨欣',role:'未来八页',info:'',avatar:'https://picsum.photos/seed/萧萧雨欣/200/200',relations:[],password:'abc123',isAdmin:false},
+    {id:1781270769406259,name:'浅睡三天',role:'不朽四页',info:'',avatar:'https://picsum.photos/seed/浅睡三天/200/200',relations:[],password:'abc123',isAdmin:false},
+    {id:1781270850892094,name:'胧夜',role:'不朽四页',info:'',avatar:'https://picsum.photos/seed/胧夜/200/200',relations:[{"targetId": 1781270863310571, "label": "导师→豆芽"}],password:'abc123',isAdmin:false},
+    {id:1781270863310571,name:'橙橙猫',role:'未来八页',info:'',avatar:'https://picsum.photos/seed/橙橙猫/200/200',relations:[],password:'abc123',isAdmin:false},
+    {id:1781270901648232,name:'把酒执剑',role:'未来八页',info:'',avatar:'https://picsum.photos/seed/把酒执剑/200/200',relations:[],password:'abc123',isAdmin:false},
+    {id:1781270947924747,name:'无敌太刀大王',role:'不朽四页',info:'',avatar:'https://picsum.photos/seed/无敌太刀大王/200/200',relations:[{"targetId": 1781274976229300, "label": "导师→豆芽"}],password:'abc123',isAdmin:false},
+    {id:1781274787606056,name:'密西西比',role:'未来八页',info:'',avatar:'https://picsum.photos/seed/密西西比/200/200',relations:[],password:'abc123',isAdmin:false},
+    {id:1781274831961022,name:'浮繁生若幻梦',role:'不朽四页',info:'',avatar:'https://picsum.photos/seed/浮繁生若幻梦/200/200',relations:[],password:'abc123',isAdmin:false},
+    {id:1781274941113450,name:'青釉小果',role:'瞬灭二页',info:'',avatar:'https://picsum.photos/seed/青釉小果/200/200',relations:[],password:'abc123',isAdmin:false},
+    {id:1781274976229300,name:'切居登猫',role:'不朽四页',info:'',avatar:'https://picsum.photos/seed/切居登猫/200/200',relations:[{"targetId": 1781274787606056, "label": "导师→豆芽"}],password:'abc123',isAdmin:false},
+    {id:1781274996408971,name:'马枪王小桃',role:'不朽四页',info:'',avatar:'https://picsum.photos/seed/马枪王小桃/200/200',relations:[],password:'abc123',isAdmin:false},
+    {id:1781275019894468,name:'悠希',role:'不朽四页',info:'',avatar:'https://picsum.photos/seed/悠希/200/200',relations:[],password:'abc123',isAdmin:false},
+    {id:1781275036424644,name:'春铃系花',role:'未来八页',info:'',avatar:'https://picsum.photos/seed/春铃系花/200/200',relations:[],password:'abc123',isAdmin:false},
+    {id:1781275129298184,name:'阿婷',role:'未来八页',info:'',avatar:'https://picsum.photos/seed/阿婷/200/200',relations:[],password:'abc123',isAdmin:false},
+    {id:1781275162565912,name:'小米洋芋',role:'瞬灭二页',info:'',avatar:'https://picsum.photos/seed/小米洋芋/200/200',relations:[{"targetId": 1781270625683341, "label": "导师→豆芽"}, {"targetId": 1781275198259204, "label": "导师→豆芽"}],password:'abc123',isAdmin:false},
+    {id:1781275198259204,name:'湫湫湫',role:'不朽四页',info:'',avatar:'https://picsum.photos/seed/湫湫湫/200/200',relations:[],password:'abc123',isAdmin:false},
+    {id:1781275479685253,name:'米修sama',role:'瞬灭二页',info:'',avatar:'https://picsum.photos/seed/米修sama/200/200',relations:[{"targetId": 1781270492991774, "label": "导师→豆芽"}, {"targetId": 1781270458888535, "label": "导师→豆芽"}, {"targetId": 1781270533704364, "label": "导师→豆芽"}, {"targetId": 1781274941113450, "label": "导师→豆芽"}],password:'abc123',isAdmin:false}
   ],
   events:[
-    {id:1,title:'2026年春季团建活动',date:'2026-04-15',description:'全体成员前往郊外开展为期两天的团建活动，包括野外拉练、团队协作游戏和篝火晚会。',image:'https://picsum.photos/seed/event1/600/400'},
-    {id:2,title:'新成员入职欢迎会',date:'2026-03-20',description:'欢迎新成员加入黑塔办事处大家庭，举办了简朴而温馨的欢迎仪式。',image:'https://picsum.photos/seed/event2/600/400'},
-    {id:3,title:'年终总结大会',date:'2026-01-10',description:'回顾过去一年的工作成果，表彰先进，展望未来发展方向。',image:'https://picsum.photos/seed/event3/600/400'}
+    {id:1,title:'黑塔办事处正式成立',date:'2026-04-01',description:'黑塔办事处成立日,欢迎所有成员加入这个温暖的大家庭。',image:'https://picsum.photos/seed/event1/600/400'},
+    {id:2,title:'2026年春季团建',date:'2026-05-15',description:'春季团建活动圆满结束,期待下次相聚!',image:'https://picsum.photos/seed/event2/600/400'},
+    {id:3,title:'2026年夏季活动',date:'2026-06-20',description:'夏季活动即将开始,敬请期待!',image:'https://picsum.photos/seed/event3/600/400'}
   ],
   mentors:[
-    {id:1,memberId:1,specialty:'行政管理',extraInfo:'从事管理工作20余年，拥有丰富的团队领导经验。曾多次荣获优秀管理者称号，擅长战略规划和危机处理。'},
-    {id:2,memberId:3,specialty:'战术指挥',extraInfo:'具备优秀的现场指挥能力，参与过多项重大任务的策划与执行。注重实战训练，培养了一批优秀骨干。'}
+    {id:1781265450013799,memberId:1781264631988060,specialty:'高难',extraInfo:'啥都会一点，全职业有logs蓝色+水平',image:'https://picsum.photos/seed/mentor1781264631988060/400/400'},
+    {id:1781265455223816,memberId:1781265442775372,specialty:'',extraInfo:'',image:'https://picsum.photos/seed/mentor1781265442775372/400/400'},
+    {id:1781270458888621,memberId:1781270458888535,specialty:'',extraInfo:'',image:'https://picsum.photos/seed/mentor1781270458888535/400/400'},
+    {id:1781270492991933,memberId:1781270492991774,specialty:'摄影',extraInfo:'只喜欢拍照/装修等休闲玩法，无法提供任何职业进阶技巧',image:'https://picsum.photos/seed/mentor1781270492991774/400/400'},
+    {id:1781270533705380,memberId:1781270533704364,specialty:'',extraInfo:'',image:'https://picsum.photos/seed/mentor1781270533704364/400/400'},
+    {id:1781270625683380,memberId:1781270625683341,specialty:'',extraInfo:'',image:'https://picsum.photos/seed/mentor1781270625683341/400/400'},
+    {id:1781270635985279,memberId:1781270635985147,specialty:'',extraInfo:'',image:'https://picsum.photos/seed/mentor1781270635985147/400/400'},
+    {id:1781274941114665,memberId:1781274941113450,specialty:'',extraInfo:'',image:'https://picsum.photos/seed/mentor1781274941113450/400/400'},
+    {id:1781275479686473,memberId:1781275479685253,specialty:'',extraInfo:'',image:'https://picsum.photos/seed/mentor1781275479685253/400/400'},
+    {id:1781275795519039,memberId:1781270509527252,specialty:'',extraInfo:'贤者，学者高难相关',image:'https://picsum.photos/seed/mentor1781270509527252/400/400'}
   ],
   messages:[
-    {id:1,name:'访客小王',content:'黑塔办事处的工作氛围真好，希望有机会能够加入！',time:'2026-06-10 14:30'},
-    {id:2,name:'老战友',content:'看到大家都很精神，感到很欣慰。继续保持！',time:'2026-06-08 09:15'}
+    {id:1781268829652735,name:'露露緹雅',content:'test',time:'2026-06-12 20:53'},
+    {id:1781268844280532,name:'露露緹雅',content:'test成功',time:'2026-06-12 20:54'},
+    {id:1781311830735884,name:'Hetian',content:'熬夜万岁（（（（（大家不要像我一样熬夜）',time:'2026-06-13 08:50'}
   ],
-  likes:{},       // { [mentorId]: totalLikeCount }
-  likeLog:[]      // [{mentorId, memberId, date}] for daily limit tracking
+  treeNodePositions:{"1781265442775372": {"x": 206, "y": 571}, "1781270492991774": {"x": 403.33331298828125, "y": 413}, "1781264631988060": {"x": 237, "y": 219}, "1781275479685253": {"x": 556.3333129882812, "y": 211.66665649414062}, "1781274831961022": {"x": 522, "y": 585}, "1781270533704364": {"x": 885, "y": 416}, "1781270458888535": {"x": 572, "y": 430}, "1781275162565912": {"x": 825, "y": 567}, "1781270509527252": {"x": 1047, "y": 573}, "1781270625683341": {"x": 820, "y": 726}, "1781270635985147": {"x": 843, "y": 848}, "1781270721550646": {"x": 972, "y": 670}, "1781270730688350": {"x": 1180, "y": 655}, "1781270947924747": {"x": 369, "y": 567}, "1781274976229300": {"x": 352, "y": 690}, "1781274787606056": {"x": 343, "y": 831}, "1781275036424644": {"x": 679, "y": 574}, "1781275198259204": {"x": 650, "y": 723}, "1781274941113450": {"x": 1180, "y": 423}, "1781270850892094": {"x": 29, "y": 543}, "1781270863310571": {"x": 36, "y": 673}, "1781270656571088": {"x": 742, "y": 469}},
+  likes:{"1781275795519039":1},       // { [mentorId]: totalLikeCount }
+  likeLog:[{mentorId:1781275795519039,memberId:1781275129298184,date:'2026-06-13'}]      // [{mentorId, memberId, date}] for daily limit tracking
 };
 
 let app = loadApp();
