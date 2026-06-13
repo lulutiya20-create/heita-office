@@ -295,24 +295,48 @@ async function writeData(data) {
   // 1) 本地文件立即写入（快，永远成功）
   fileOk = writeToFile(savedData);
 
-  if (useMongo && mongoDb) {
-    // 2) Atlas 写入: 同步等待 (最多 25s) - 这是单点写入,Atlas 延迟通常 < 5s
-    //    保证 PUT 返回时数据已在 Atlas
-    try {
-      const wp = mongoDb.collection(COLLECTION_NAME).updateOne(
-        { _id: 'main' },
-        { $set: { data, _fingerprint: fingerprint, _updatedAt: now }, $setOnInsert: { _id: 'main' } },
-        { upsert: true, maxTimeMS: 25000 }
-      );
-      await Promise.race([
-        wp,
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Atlas 写入超时 25s')), 25000))
-      ]);
-      mongoOk = true;
-      console.log('[MongoDB] 同步写入成功');
-    } catch (e) {
-      console.error('[MongoDB] 同步写入失败,本地文件已保存:', e.message);
-      // mongoOk 保持 false,等下次重连
+  // 2) Atlas 写入: 每次都重试 3 次,确保连上次失败的也补上
+  if (MONGODB_URI) {
+    const t0 = Date.now();
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        // 如果连接已断,先重连
+        if (!useMongo || !mongoDb) {
+          if (mongoRetrying) {
+            console.log('[MongoDB] 正在重连,跳过本次写入尝试', attempt);
+            break;
+          }
+          mongoRetrying = true;
+          try {
+            await tryConnectMongo();
+          } finally {
+            mongoRetrying = false;
+          }
+          if (!useMongo || !mongoDb) {
+            console.log('[MongoDB] 重连失败,放弃写入', attempt);
+            break;
+          }
+        }
+        // 真正写入
+        await mongoDb.collection(COLLECTION_NAME).updateOne(
+          { _id: 'main' },
+          { $set: { data, _fingerprint: fingerprint, _updatedAt: now }, $setOnInsert: { _id: 'main' } },
+          { upsert: true, maxTimeMS: 12000 }
+        );
+        mongoOk = true;
+        console.log('[MongoDB] 写入成功, attempt=' + attempt + ', 用时 ' + (Date.now()-t0) + 'ms');
+        break;
+      } catch (e) {
+        console.error('[MongoDB] 写入失败 attempt=' + attempt + ':', e.message);
+        useMongo = false;
+        mongoDb = null;
+        if (mongoClient) {
+          try { await mongoClient.close(true); } catch (e2) {}
+          mongoClient = null;
+        }
+        // 继续重试
+        if (attempt < 3) await new Promise(r => setTimeout(r, 1000));
+      }
     }
   }
 
