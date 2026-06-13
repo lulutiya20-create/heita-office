@@ -230,7 +230,7 @@ async function writeToMongoAsync(data) {
     console.log('[MongoDB] 写入成功, 大小:', JSON.stringify(data).length, 'bytes');
   } catch (e) {
     console.error('[MongoDB] 后台写入失败:', e.message);
-    useMongo = false;
+    // 写入失败: 不污染 useMongo, 留给下次重连循环处理
   }
 }
 
