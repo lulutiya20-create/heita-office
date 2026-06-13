@@ -48,7 +48,8 @@ app.use((req, res, next) => {
 let mongoDebugLog = [];
 
 async function tryConnectMongo() {
-  if (useMongo) return true;
+  // 不再用 useMongo 作短路,因为 useMongo 可能 stale
+  if (mongoRetrying) return false;
   if (!MONGODB_URI) {
     console.log('[MongoDB] 未配置 MONGODB_URI,跳过重连');
     return false;
