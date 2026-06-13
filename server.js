@@ -33,14 +33,37 @@ app.use((req, res, next) => {
 
 // ===================== MongoDB 主动重连 =====================
 
+// 保存最近 10 次连接错误
+let mongoDebugLog = [];
+
 async function tryConnectMongo() {
   if (useMongo) return true;
   if (!MONGODB_URI) {
     console.log('[MongoDB] 未配置 MONGODB_URI,跳过重连');
     return false;
   }
+  const t0 = Date.now();
+  // 先 DNS 解析看是否能解析出来
+  let hostname = '';
   try {
-    console.log('[MongoDB] 尝试连接 Atlas...');
+    const u = new URL(MONGODB_URI);
+    hostname = u.hostname;
+  } catch (e) {
+    hostname = MONGODB_URI.split('@').pop().split('/')[0].split('?')[0];
+  }
+  const dns = require('dns');
+  let dnsInfo = '';
+  try {
+    const dnsRes = await new Promise((resolve, reject) => {
+      dns.lookup(hostname, { all: true }, (err, addrs) => err ? reject(err) : resolve(addrs));
+    });
+    dnsInfo = 'DNS OK: ' + dnsRes.map(a => a.address).join(',');
+  } catch (e) {
+    dnsInfo = 'DNS FAIL: ' + e.code + ' ' + e.message;
+  }
+  try {
+    console.log('[MongoDB] 尝试连接 Atlas... URI hostname=' + hostname);
+    console.log('[MongoDB] ' + dnsInfo);
     const { MongoClient } = require('mongodb');
     if (mongoClient) {
       try { await mongoClient.close(); } catch (e) {}
@@ -53,18 +76,35 @@ async function tryConnectMongo() {
       socketTimeoutMS: 20000,
       maxPoolSize: 5,
       minPoolSize: 1,
-      retryWrites: true
+      retryWrites: true,
+      directConnection: false
     });
+    console.log('[MongoDB] 调用 client.connect() ...');
     await mongoClient.connect();
+    console.log('[MongoDB] client.connect() 完成,耗时 ' + (Date.now() - t0) + 'ms');
     mongoDb = mongoClient.db(DB_NAME);
     await mongoDb.collection(COLLECTION_NAME).findOne({ _id: 'main' }, { maxTimeMS: 8000 });
     useMongo = true;
     console.log('✅ MongoDB Atlas 连接成功！');
+    mongoDebugLog.push({ ok: true, time: new Date().toISOString(), ms: Date.now() - t0 });
+    if (mongoDebugLog.length > 10) mongoDebugLog = mongoDebugLog.slice(-10);
     await syncLocalToAtlas();
     return true;
   } catch (e) {
-    console.error('❌ MongoDB 连接失败:', e.message);
+    const ms = Date.now() - t0;
+    const errMsg = e.name + ': ' + e.message;
+    console.error('❌ MongoDB 连接失败 (' + ms + 'ms):', errMsg);
+    console.error('   错误码:', e.code, '| codeName:', e.codeName);
+    console.error('   完整错误:', JSON.stringify({name: e.name, message: e.message, code: e.code, codeName: e.codeName, topology: e.topologyDescription && e.topologyDescription.servers}, null, 2).substring(0, 500));
+    mongoDebugLog.push({ ok: false, time: new Date().toISOString(), ms, error: errMsg, code: e.code, codeName: e.codeName, dns: dnsInfo, hostname });
+    if (mongoDebugLog.length > 10) mongoDebugLog = mongoDebugLog.slice(-10);
     useMongo = false;
+    // 强制关闭 client 释放连接
+    if (mongoClient) {
+      try { await mongoClient.close(true); } catch (e2) {}
+      mongoClient = null;
+      mongoDb = null;
+    }
     return false;
   }
 }
@@ -322,6 +362,29 @@ app.get('/api/status', async (req, res) => {
 
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, mongo: useMongo, timestamp: new Date().toISOString() });
+});
+
+// 返回最近 10 次连接错误 + DNS 解析详情
+app.get('/api/mongo-debug', (req, res) => {
+  res.json({
+    mongo_connected: useMongo,
+    mongodb_uri_hostname: (() => {
+      try {
+        const u = new URL(MONGODB_URI);
+        return u.hostname;
+      } catch (e) {
+        return MONGODB_URI.split('@').pop().split('?')[0];
+      }
+    })(),
+    mongodb_uri_user: (() => {
+      try {
+        const u = new URL(MONGODB_URI);
+        return u.username;
+      } catch (e) { return '?'; }
+    })(),
+    recent_attempts: mongoDebugLog,
+    timestamp: new Date().toISOString()
+  });
 });
 
 app.post('/api/sync-to-atlas', async (req, res) => {
