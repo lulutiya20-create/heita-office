@@ -413,12 +413,40 @@ body{
   <span>设备ID: <strong class="device-id" id="deviceIdDisplay"></strong></span>
   <button class="btn btn-sync btn-sm" onclick="forceCloudRefresh()" title="从云端拉取最新数据">🔄 拉取云端</button>
   <button class="btn btn-sync btn-sm" onclick="exportData()">📥 导出备份</button>
+  <button class="btn btn-sync btn-sm" onclick="showJsonbinConfig()" title="配置 JSONBin.io 云端同步（永久免费 10K 请求/月）">☁️ JSONBin 配置</button>
   <span id="adminSyncBtns" style="display:none;gap:10px;flex-wrap:wrap">
   <button class="btn btn-sync btn-sm" onclick="document.getElementById('importFileInput').click()">📤 导入备份</button>
   <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importData(event)">
   <span style="font-size:10px;color:var(--muted)">数据自动保存到本地 · 有云服务器时自动实时同步 · 多设备共享</span>
   <button class="btn btn-sync btn-sm" onclick="forcePushToCloud()" title="立即将本地数据强制推送到云端（覆盖云端）" style="background:var(--gold);color:var(--bg);font-weight:600">☁️ 强制同步到云端</button>
   </span>
+</div>
+
+<!-- JSONBin 配置弹窗 -->
+<div id="jsonbinModal" class="overlay" style="display:none">
+  <div class="modal" style="max-width:560px;padding:24px">
+    <h3 style="margin:0 0 12px;color:var(--gold)">☁️ JSONBin.io 同步配置</h3>
+    <p style="font-size:13px;color:var(--muted);line-height:1.6">
+      配置后所有设备共享同一份云端数据，自动实时同步。<br>
+      <strong>免费层</strong>：10,000 请求/月（60s 轮询约 43,200/月，超额）。建议用 5 分钟轮询。<br>
+      <strong>首次使用</strong>：去 <a href="https://jsonbin.io/" target="_blank" style="color:var(--gold)">jsonbin.io</a> 邮箱注册 → 创建一个 Bin → 复制 Bin ID 和 Master Key 粘贴到下面。
+    </p>
+    <div style="display:flex;flex-direction:column;gap:10px;margin:14px 0">
+      <label style="font-size:12px;color:var(--muted)">Bin ID</label>
+      <input type="text" id="jsonbinBinInput" placeholder="例如 65a1234abcd5678ef9012345" style="padding:8px 10px;background:var(--card2);border:1px solid var(--bdr);color:var(--text);border-radius:6px">
+      <label style="font-size:12px;color:var(--muted)">Master Key</label>
+      <input type="password" id="jsonbinKeyInput" placeholder="$2b$10$..." style="padding:8px 10px;background:var(--card2);border:1px solid var(--bdr);color:var(--text);border-radius:6px">
+      <label style="font-size:12px;color:var(--muted)">轮询间隔（秒，最小 60）</label>
+      <input type="number" id="jsonbinPollInput" placeholder="300" value="300" min="60" style="padding:8px 10px;background:var(--card2);border:1px solid var(--bdr);color:var(--text);border-radius:6px">
+    </div>
+    <div id="jsonbinStatus" style="font-size:12px;color:var(--muted);min-height:18px"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap">
+      <button class="btn" onclick="testJsonbin()" style="background:var(--card2);color:var(--text)">🔌 测试连接</button>
+      <button class="btn" onclick="clearJsonbinConfig()" style="background:var(--card2);color:#e74c3c">🗑 清除配置</button>
+      <button class="btn" onclick="closeJsonbinConfig()" style="background:var(--card2);color:var(--text)">取消</button>
+      <button class="btn" onclick="saveJsonbinFromUI()" style="background:var(--gold);color:var(--bg);font-weight:600">保存</button>
+    </div>
+  </div>
 </div>
 
 <!-- HOME PAGE -->
@@ -690,13 +718,20 @@ body{
 //   3. 纯离线模式 → localStorage only
 const DB_KEY = 'heita_office_v2';
 // 可配置的 API 服务器地址（留空则使用同源 /api/data）
-const API_SERVER_URL = 'https://heita-office.onrender.com';
+const API_SERVER_URL = '';  // Render 已挂, 默认不用
+// JSONBin.io 配置 (云端 JSON 存储, 免费 10K 请求/月)
+// 在 localStorage 中存: JSONBIN_BIN_ID + JSONBIN_MASTER_KEY
+// 所有设备共享同一对值即可同步
+const JSONBIN_API = 'https://api.jsonbin.io/v3/b';
+let jsonbinBinId = '';        // 从 localStorage 读取
+let jsonbinMasterKey = '';    // 从 localStorage 读取
 // 自动检测可用的 API 端点
 let API_DATA = '';
 let cloudEnabled = false;
 let cloudChecked = false;
 let syncPending = false;
 let lastCloudFingerprint = '';
+let jsonbinChecked = false;
 let pollTimer = null;
 // 流量优化: 5秒 → 60秒, 同时支持 ?poll=N (秒) URL 参数覆盖
 const POLL_INTERVAL = (() => {
@@ -776,6 +811,116 @@ async function initApiEndpoint() {
   cloudEnabled = false;
   console.log('[同步] ⚠ 未检测到云服务器，使用离线模式');
   return false;
+}
+
+// ===================== JSONBin.io 同步层 =====================
+// 免费云端 JSON 存储: https://jsonbin.io
+// 工作流程:
+//   1. 首次访问: 提示用户输入 Bin ID + Master Key (用户在 jsonbin.io 创建)
+//   2. 之后所有设备共享同一对值,自动 PUT/GET 同步
+//   3. Master Key 存在 localStorage (跨设备需要用户手动输入一次)
+
+function loadJsonbinConfig() {
+  try {
+    jsonbinBinId = localStorage.getItem('jsonbin_bin_id') || '';
+    jsonbinMasterKey = localStorage.getItem('jsonbin_master_key') || '';
+  } catch (e) {
+    jsonbinBinId = '';
+    jsonbinMasterKey = '';
+  }
+  return jsonbinBinId && jsonbinMasterKey;
+}
+
+function saveJsonbinConfig(binId, masterKey) {
+  jsonbinBinId = binId;
+  jsonbinMasterKey = masterKey;
+  try {
+    localStorage.setItem('jsonbin_bin_id', binId);
+    localStorage.setItem('jsonbin_master_key', masterKey);
+  } catch (e) {
+    console.warn('[JSONBin] localStorage 写入失败:', e);
+  }
+}
+
+async function jsonbinRead() {
+  if (!jsonbinBinId || !jsonbinMasterKey) return null;
+  try {
+    const url = JSONBIN_API + '/' + jsonbinBinId + '/latest';
+    const resp = await fetch(url, {
+      headers: { 'X-Master-Key': jsonbinMasterKey },
+      signal: AbortSignal.timeout(15000)
+    });
+    if (!resp.ok) {
+      console.warn('[JSONBin] GET 失败:', resp.status);
+      return null;
+    }
+    const json = await resp.json();
+    // jsonbin 返回: { record: <user data>, metadata: {...} }
+    return json.record || null;
+  } catch (e) {
+    console.warn('[JSONBin] GET 异常:', e.message);
+    return null;
+  }
+}
+
+async function jsonbinWrite(data) {
+  if (!jsonbinBinId || !jsonbinMasterKey) return false;
+  try {
+    const url = JSONBIN_API + '/' + jsonbinBinId;
+    const resp = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': jsonbinMasterKey
+      },
+      body: JSON.stringify(data),
+      signal: AbortSignal.timeout(20000)
+    });
+    if (!resp.ok) {
+      console.warn('[JSONBin] PUT 失败:', resp.status);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.warn('[JSONBin] PUT 异常:', e.message);
+    return false;
+  }
+}
+
+// 计算 JSONBin 数据的指纹 (用于检测变更)
+function jsonbinFingerprint(data) {
+  if (!data) return '';
+  try {
+    return btoa(unescape(encodeURIComponent(JSON.stringify(data))))
+      .replace(/[+/=]/g, '').substring(0, 32);
+  } catch (e) {
+    return String(data._updatedAt || '');
+  }
+}
+
+async function tryJsonbin() {
+  if (jsonbinChecked) return cloudEnabled;
+  jsonbinChecked = true;
+  if (!loadJsonbinConfig()) {
+    console.log('[JSONBin] 未配置 Bin ID/Master Key,跳过');
+    return false;
+  }
+  const data = await jsonbinRead();
+  if (data && data.members) {
+    // 接管同步: 把云端数据存到 localStorage
+    try {
+      localStorage.setItem(DB_KEY, JSON.stringify(data));
+    } catch (e) { /* ignore quota */ }
+    cloudEnabled = true;
+    lastCloudFingerprint = jsonbinFingerprint(data);
+    console.log('[JSONBin] ✅ 同步成功, 成员数:', data.members.length);
+    return true;
+  }
+  return false;
+}
+
+async function pushToJsonbin(data) {
+  return await jsonbinWrite(data);
 }
 
 const DEFAULTS = {
@@ -874,6 +1019,32 @@ function cleanCloudMeta(d) {
 
 // 异步加载：优先从云端获取，回退本地，最后用默认值
 async function loadAppAsync() {
+  // 0. 优先尝试 JSONBin 同步（GitHub Pages + 静态托管场景）
+  const jsonbinOk = await tryJsonbin();
+  if (jsonbinOk) {
+    // 同步成功 → 读 localStorage（已由 tryJsonbin 写入）
+    try {
+      const raw = localStorage.getItem(DB_KEY);
+      if (raw) {
+        const d = JSON.parse(raw);
+        const localCount = (d.members || []).length;
+        if (localCount > 0) {
+          const out = { ...DEFAULTS, ...d,
+            members: (d.members||[]).map(m=>({avatar:'',...m})),
+            events: d.events||DEFAULTS.events,
+            mentors: d.mentors||DEFAULTS.mentors,
+            messages: d.messages||DEFAULTS.messages,
+            carouselImages: d.carouselImages||DEFAULTS.carouselImages
+          };
+          saveLocal(out);
+          updateSyncStatus('synced');
+          console.log('[JSONBin 同步] ✅ 加载 ' + localCount + ' 名成员');
+          return out;
+        }
+      }
+    } catch (e) { console.warn('[JSONBin] 读 localStorage 失败:', e); }
+  }
+
   // 1. 尝试从云端加载（重试 8 次，足够覆盖 Render 冷启动 + MongoDB Atlas 唤醒）
   try {
     const result = await safeFetchJson(API_DATA, { signal: AbortSignal.timeout(12000) }, 8);
@@ -892,6 +1063,12 @@ async function loadAppAsync() {
             carouselImages: cloudData.carouselImages||DEFAULTS.carouselImages
           };
           saveLocal(d);
+          // 如果 JSONBin 已配置, 顺便同步过去
+          if (jsonbinBinId && jsonbinMasterKey) {
+            pushToJsonbin(d).then(ok => {
+              if (ok) console.log('[JSONBin 同步] 自动同步云端到 JSONBin 成功');
+            });
+          }
           updateSyncStatus('synced');
           console.log('[同步] ✅ 已从云端获取 ' + cloudCount + ' 名成员');
           return d;
@@ -933,6 +1110,12 @@ async function loadAppAsync() {
   const d = JSON.parse(JSON.stringify(DEFAULTS));
   saveLocal(d);
   pushToCloud(d);
+  // 如果 JSONBin 已配置, 也推一份
+  if (jsonbinBinId && jsonbinMasterKey) {
+    pushToJsonbin(d).then(ok => {
+      if (ok) console.log('[JSONBin] 初始数据已上传');
+    });
+  }
   updateSyncStatus('synced');
   return d;
 }
@@ -1009,11 +1192,32 @@ function saveLocal(data) {
   localStorage.setItem(DB_KEY, JSON.stringify(data));
 }
 
-function pushToCloud(data, force = false) {
-  if (!cloudEnabled || syncPending) return;
+async function pushToCloud(data, force = false) {
+  if (syncPending) return;
   syncPending = true;
   updateSyncStatus('syncing');
 
+  // 1) 优先推送 JSONBin (GitHub Pages 场景)
+  if (jsonbinBinId && jsonbinMasterKey) {
+    const cleanData = cleanCloudMeta(data);
+    const ok = await pushToJsonbin(cleanData);
+    if (ok) {
+      lastCloudFingerprint = jsonbinFingerprint(cleanData);
+      updateSyncStatus('synced');
+      syncPending = false;
+      console.log('[JSONBin 同步] 推送成功');
+      return;
+    }
+    console.warn('[JSONBin] 推送失败,继续尝试 /api/data');
+  }
+
+  if (!cloudEnabled) {
+    syncPending = false;
+    updateSyncStatus('synced');
+    return;
+  }
+
+  // 2) 回退到传统 /api/data (Render 等)
   // 强制推送时清空指纹，跳过冲突检测
   const fp = force ? '' : lastCloudFingerprint;
 
@@ -1206,6 +1410,37 @@ function startPolling() {
   stopPolling();
   pollTimer = setInterval(async () => {
     if (syncPending) return;
+    // 1) 优先 JSONBin 轮询
+    if (jsonbinBinId && jsonbinMasterKey) {
+      try {
+        const data = await jsonbinRead();
+        if (data && data.members) {
+          const fp = jsonbinFingerprint(data);
+          if (fp && fp !== lastCloudFingerprint) {
+            console.log('[JSONBin 轮询] 检测到变更, 自动拉取...');
+            lastCloudFingerprint = fp;
+            const newApp = { ...DEFAULTS, ...data,
+              members: (data.members||[]).map(m=>({avatar:'',...m})),
+              events: data.events||DEFAULTS.events,
+              mentors: data.mentors||DEFAULTS.mentors,
+              messages: data.messages||DEFAULTS.messages,
+              carouselImages: data.carouselImages||DEFAULTS.carouselImages
+            };
+            if (JSON.stringify(newApp) !== JSON.stringify(app)) {
+              app = newApp;
+              saveLocal(app);
+              refreshAll();
+              if (currentPage === '/') navigate('/');
+              else navigate(currentPage);
+              updateSyncStatus('synced');
+              console.log('[JSONBin 轮询] ✅ 数据已自动更新, 新指纹:', fp.substring(0,8));
+            }
+          }
+        }
+      } catch (e) { /* 静默 */ }
+      return;
+    }
+    // 2) 回退到 /api/data 轮询
     try {
       const result = await safeFetchJson(API_DATA, { signal: AbortSignal.timeout(8000) }, 2);
       if (!result || !result.success || !result.data) return;
@@ -1238,6 +1473,101 @@ function startPolling() {
 
 function stopPolling() {
   if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+}
+
+// ===================== JSONBin UI 控制器 =====================
+function showSyncMenu() {
+  showJsonbinConfig();
+}
+
+function showJsonbinConfig() {
+  const m = document.getElementById('jsonbinModal');
+  if (!m) return;
+  m.style.display = 'flex';
+  // 预填已存值
+  const binEl = document.getElementById('jsonbinBinInput');
+  const keyEl = document.getElementById('jsonbinKeyInput');
+  const pollEl = document.getElementById('jsonbinPollInput');
+  if (binEl) binEl.value = localStorage.getItem('jsonbin_bin_id') || '';
+  if (keyEl) keyEl.value = localStorage.getItem('jsonbin_master_key') || '';
+  if (pollEl) {
+    const cur = localStorage.getItem('jsonbin_poll_interval');
+    pollEl.value = cur ? Math.max(60, parseInt(cur)/1000) : 300;
+  }
+  setJsonbinStatus(jsonbinBinId && jsonbinMasterKey
+    ? '✅ 已配置,当前使用 JSONBin 同步' : '⚠️ 未配置');
+}
+
+function closeJsonbinConfig() {
+  const m = document.getElementById('jsonbinModal');
+  if (m) m.style.display = 'none';
+}
+
+function setJsonbinStatus(text, color) {
+  const el = document.getElementById('jsonbinStatus');
+  if (!el) return;
+  el.textContent = text;
+  el.style.color = color || 'var(--muted)';
+}
+
+function saveJsonbinFromUI() {
+  const binId = (document.getElementById('jsonbinBinInput').value || '').trim();
+  const masterKey = (document.getElementById('jsonbinKeyInput').value || '').trim();
+  const pollSec = Math.max(60, parseInt(document.getElementById('jsonbinPollInput').value || '300', 10));
+  if (!binId || !masterKey) {
+    setJsonbinStatus('❌ Bin ID 和 Master Key 都必须填', '#e74c3c');
+    return;
+  }
+  saveJsonbinConfig(binId, masterKey);
+  localStorage.setItem('jsonbin_poll_interval', String(pollSec * 1000));
+  setJsonbinStatus('✅ 已保存！正在拉取云端数据...', 'var(--gold)');
+  // 重新尝试同步
+  jsonbinChecked = false;
+  cloudEnabled = false;
+  setTimeout(async () => {
+    const ok = await tryJsonbin();
+    if (ok) {
+      // 触发重新加载
+      location.reload();
+    } else {
+      setJsonbinStatus('❌ 配置已保存,但拉取云端失败 - 请检查 Bin ID 和 Master Key', '#e74c3c');
+    }
+  }, 500);
+}
+
+async function testJsonbin() {
+  const binId = (document.getElementById('jsonbinBinInput').value || '').trim();
+  const masterKey = (document.getElementById('jsonbinKeyInput').value || '').trim();
+  if (!binId || !masterKey) {
+    setJsonbinStatus('❌ 请先填写 Bin ID 和 Master Key', '#e74c3c');
+    return;
+  }
+  setJsonbinStatus('🔌 测试中...', 'var(--gold)');
+  const savedBin = jsonbinBinId;
+  const savedKey = jsonbinMasterKey;
+  jsonbinBinId = binId;
+  jsonbinMasterKey = masterKey;
+  const data = await jsonbinRead();
+  jsonbinBinId = savedBin;
+  jsonbinMasterKey = savedKey;
+  if (data !== null) {
+    setJsonbinStatus('✅ 连接成功! 成员数: ' + (data.members||[]).length, '#27ae60');
+  } else {
+    setJsonbinStatus('❌ 连接失败 - 请检查 Bin ID 和 Master Key', '#e74c3c');
+  }
+}
+
+function clearJsonbinConfig() {
+  if (!confirm('确定要清除 JSONBin 配置吗?这会停止多设备同步。')) return;
+  localStorage.removeItem('jsonbin_bin_id');
+  localStorage.removeItem('jsonbin_master_key');
+  localStorage.removeItem('jsonbin_poll_interval');
+  jsonbinBinId = '';
+  jsonbinMasterKey = '';
+  jsonbinChecked = false;
+  cloudEnabled = false;
+  setJsonbinStatus('已清除,降级为本地模式', 'var(--muted)');
+  setTimeout(() => location.reload(), 800);
 }
 
 let syncStatusTimer = null;
