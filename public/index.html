@@ -700,7 +700,35 @@ let lastCloudFingerprint = '';
 let pollTimer = null;
 const POLL_INTERVAL = 5000;
 
-// 初始化 API 端点（自动检测可用性 — 直接用 /api/data 检测）
+// 安全 fetch JSON：处理 Render 冷启动返回 HTML 的情况，自动重试
+async function safeFetchJson(url, opts, retries) {
+  retries = retries || 3;
+  for (var attempt = 0; attempt < retries; attempt++) {
+    try {
+      var resp = await fetch(url, opts || { signal: AbortSignal.timeout(8000) });
+      var ct = resp.headers.get('content-type') || '';
+      if (!ct.includes('application/json')) {
+        // 服务器返回 HTML（冷启动中），等待后重试
+        if (attempt < retries - 1) {
+          console.log('[同步] 服务器冷启动中，' + (attempt+1) + '/' + retries + '，2秒后重试...');
+          await new Promise(function(r){ setTimeout(r, 2000); });
+          continue;
+        }
+        throw new Error('服务器返回非JSON响应（冷启动中）');
+      }
+      return await resp.json();
+    } catch(e) {
+      if (attempt < retries - 1 && (e.name === 'TimeoutError' || e.message.includes('timed out') || e.message.includes('冷启动'))) {
+        console.log('[同步] 连接超时，' + (attempt+1) + '/' + retries + '，2秒后重试...');
+        await new Promise(function(r){ setTimeout(r, 2000); });
+        continue;
+      }
+      throw e;
+    }
+  }
+}
+
+// 初始化 API 端点（自动检测可用性 — 直接用 /api/data 检测，支持冷启动重试）
 async function initApiEndpoint() {
   // 候选端点列表
   const candidates = [];
@@ -717,16 +745,13 @@ async function initApiEndpoint() {
     // 如果已有 /api/data 后缀直接用，否则追加
     const dataUrl = url.endsWith('/api/data') ? url : url.replace(/\/$/, '') + '/api/data';
     try {
-      const resp = await fetch(dataUrl, { signal: AbortSignal.timeout(5000) });
-      if (resp.ok) {
-        const result = await resp.json();
-        if (result.success) {
-          API_DATA = dataUrl;
-          cloudEnabled = true;
-          lastCloudFingerprint = result.fingerprint || '';
-          console.log('[同步] ✅ 云服务器已连接:', API_DATA, '指纹:', lastCloudFingerprint.substring(0,8));
-          return true;
-        }
+      const result = await safeFetchJson(dataUrl, { signal: AbortSignal.timeout(8000) }, 3);
+      if (result && result.success) {
+        API_DATA = dataUrl;
+        cloudEnabled = true;
+        lastCloudFingerprint = result.fingerprint || '';
+        console.log('[同步] ✅ 云服务器已连接:', API_DATA, '指纹:', lastCloudFingerprint.substring(0,8));
+        return true;
       }
     } catch(e) {
       console.log('[同步] 尝试连接失败:', dataUrl.substring(0, 40), e.message);
@@ -806,9 +831,8 @@ function cleanCloudMeta(d) {
 async function loadAppAsync() {
   // 1. 尝试从云端加载
   try {
-    const resp = await fetch(API_DATA);
-    if (resp.ok) {
-      const result = await resp.json();
+    const result = await safeFetchJson(API_DATA, { signal: AbortSignal.timeout(8000) }, 3);
+    if (result) {
       if (result.success && result.data && result.data.members) {
         lastCloudFingerprint = result.fingerprint || '';
         const cloudData = cleanCloudMeta(result.data);
