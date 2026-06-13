@@ -150,7 +150,7 @@ async function syncLocalToAtlas() {
     return;
   }
   try {
-    await writeToMongo(local);
+    await writeToMongoAsync(local);
     console.log('[同步] 本地 data.json 已同步到 Atlas');
   } catch (e) {
     console.error('[同步] 同步失败:', e.message);
@@ -192,13 +192,19 @@ async function readFromMongo() {
   }
 }
 
-async function writeToMongo(data) {
+async function writeToMongoAsync(data) {
+  // 异步后台写入 Atlas，不阻塞 PUT 响应
   if (!useMongo || !mongoDb) {
-    throw new Error('MongoDB 不可用');
+    if (MONGODB_URI && !mongoRetrying) {
+      // 触发一次重连尝试
+      tryConnectMongo().catch(() => {});
+    }
+    return;
   }
   const fingerprint = crypto.createHash('md5').update(JSON.stringify(data)).digest('hex');
   const now = new Date().toISOString();
-  await mongoDb.collection(COLLECTION_NAME).updateOne(
+  // 写入不阻塞主流程，使用单独超时（更长，给 Atlas M0 充足时间）
+  const writePromise = mongoDb.collection(COLLECTION_NAME).updateOne(
     { _id: 'main' },
     {
       $set: { data, _fingerprint: fingerprint, _updatedAt: now },
@@ -206,8 +212,16 @@ async function writeToMongo(data) {
     },
     { upsert: true }
   );
-  console.log('[MongoDB] 写入成功, 大小:', JSON.stringify(data).length, 'bytes');
-  return { fingerprint, updatedAt: now };
+  const timeoutPromise = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('Atlas 写入超时(30s)')), 30000)
+  );
+  try {
+    await Promise.race([writePromise, timeoutPromise]);
+    console.log('[MongoDB] 写入成功, 大小:', JSON.stringify(data).length, 'bytes');
+  } catch (e) {
+    console.error('[MongoDB] 后台写入失败:', e.message);
+    useMongo = false;
+  }
 }
 
 function readFromFile() {
@@ -262,16 +276,26 @@ async function writeData(data) {
   let mongoOk = false;
   let fileOk = false;
 
+  // 1) 本地文件立即写入（快，永远成功）
   fileOk = writeToFile(savedData);
 
   if (useMongo) {
+    // 2) Atlas 写入改为后台异步，不阻塞 PUT 响应
+    //    返回前给一个"kick-off"短超时（仅检测连接是否还活着）
     try {
-      await withTimeout(writeToMongo(data), 10000, false);
-      mongoOk = true;
+      await withTimeout(
+        mongoDb.admin().ping().maxTimeMS(2000),
+        2500,
+        null
+      ).then((r) => { if (r) mongoOk = true; });
     } catch (e) {
-      console.error('[MongoDB] 写入失败,本地文件已保存:', e.message);
-      useMongo = false;
+      // ping 失败也不影响 — 异步写入会用更长的超时
+      console.warn('[MongoDB] ping 检测失败,转入后台写入:', e.message);
     }
+    // 启动后台写入（不等它完成）
+    writeToMongoAsync(data).catch((e) => {
+      console.error('[MongoDB] 异步写入异常:', e.message);
+    });
   }
 
   if (!mongoOk && MONGODB_URI && !mongoRetrying) {

@@ -985,8 +985,8 @@ function pushToCloud(data, force = false) {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ data: cleanData, fingerprint: fp, force: force ? true : undefined }),
-    signal: AbortSignal.timeout(8000)
-  }, 2)
+    signal: AbortSignal.timeout(20000)
+  }, 1)
   .then(result => {
     if (result.success) {
       lastCloudFingerprint = result.fingerprint || '';
