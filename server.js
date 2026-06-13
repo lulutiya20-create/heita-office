@@ -64,13 +64,18 @@ async function tryConnectMongo() {
   } catch (e) {
     console.log('[MongoDB] URI 解析失败:', e.message);
   }
+  // 修复 dns.lookup 失败: 多个 hostname 用空格隔开
   const dns = require('dns');
   let dnsInfo = '';
   try {
-    const checks = await Promise.all(hostnames.map(h => new Promise((resolve) => {
-      dns.lookup(h.split(':')[0], (err, addr) => resolve(h + '->' + (err ? err.code : addr)));
+    const hostList = hostnames.map(h => h.split(':')[0]);
+    const checks = await Promise.all(hostList.map(h => new Promise((resolve) => {
+      dns.lookup(h, (err, addr) => {
+        if (err) resolve(h + '->FAIL:' + err.code);
+        else resolve(h + '->' + addr);
+      });
     })));
-    dnsInfo = 'DNS: ' + checks.join(', ');
+    dnsInfo = 'DNS(' + checks.length + '): ' + checks.join(' | ');
   } catch (e) {
     dnsInfo = 'DNS FAIL: ' + e.code + ' ' + e.message;
   }
@@ -95,6 +100,10 @@ async function tryConnectMongo() {
     console.log('[MongoDB] 调用 client.connect() ...');
     await mongoClient.connect();
     console.log('[MongoDB] client.connect() 完成,耗时 ' + (Date.now() - t0) + 'ms');
+    // 重要: client.connect() 返回不等于真正连上,需要等 ready
+    console.log('[MongoDB] 等待 topology ready...');
+    await mongoClient.db('admin').command({ ping: 1 }, { maxTimeMS: 8000 });
+    console.log('[MongoDB] ping 成功!');
     mongoDb = mongoClient.db(DB_NAME);
     await mongoDb.collection(COLLECTION_NAME).findOne({ _id: 'main' }, { maxTimeMS: 8000 });
     useMongo = true;
