@@ -6,7 +6,7 @@
 <meta name="cache-control" content="no-cache, no-store, must-revalidate">
 <meta name="pragma" content="no-cache">
 <meta name="expires" content="0">
-<title>黑塔办事处</title> <!-- v260613-rc4 -->
+<title>黑塔办事处</title> <!-- v260613-rc5 -->
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -835,105 +835,54 @@ function cleanCloudMeta(d) {
 
 // 异步加载：优先从云端获取，回退本地，最后用默认值
 async function loadAppAsync() {
-  // 1. 尝试从云端加载
+  // 1. 尝试从云端加载（重试 8 次，足够覆盖 Render 冷启动 + MongoDB Atlas 唤醒）
   try {
-    const result = await safeFetchJson(API_DATA, { signal: AbortSignal.timeout(8000) }, 3);
+    const result = await safeFetchJson(API_DATA, { signal: AbortSignal.timeout(12000) }, 8);
     if (result) {
+      // ✅ 情况 A：云端有完整数据 → 直接采用云端
       if (result.success && result.data && result.data.members) {
         lastCloudFingerprint = result.fingerprint || '';
         const cloudData = cleanCloudMeta(result.data);
-            // 🛡️ 增强保护机制：多重检测云端数据是否被重置
-        const localRaw = localStorage.getItem(DB_KEY);
-        if (localRaw) {
-          try {
-            const localParsed = JSON.parse(localRaw);
-            const localCount = (localParsed.members||[]).length;
-            const cloudCount = (cloudData&&cloudData.members)?cloudData.members.length:0;
-
-            // 检测本地数据是否已被用户自定义过（不是纯默认数据）
-            const defaultNames = (DEFAULTS.members||[]).map(m=>m.name).sort().join(',');
-            const localNames = (localParsed.members||[]).map(m=>m.name).sort().join(',');
-            const isCustomized = localNames !== defaultNames || localCount !== (DEFAULTS.members||[]).length;
-            // 检查本地是否有修改时间标记（比默认成员数多说明添加过）
-            const hasUserEdits = localCount > 0 && (localParsed._lastLocalModified || isCustomized || localCount > (DEFAULTS.members||[]).length);
-
-            // 云端重置的多种特征：
-            // A) 云端返回空/null 且本地有自定义数据
-            // B) 本地成员数 >= 云端*2（含等于）且本地>3（原用>导致10 vs 5*2=10时不触发）
-            // C) 云端数据看起来像默认数据（<=5个成员且名称匹配默认）
-            // D) 本地有修改记录但云端数据和默认完全一致
-            const cloudIsEmpty = !cloudData || cloudCount === 0;
-            const cloudLooksDefault = cloudCount <= 5 && cloudCount > 0 && (
-              (cloudData.members||[]).every(m => (DEFAULTS.members||[]).some(d=>d.name===m.name))
-            );
-            const localMuchLarger = localCount >= 3 && localCount >= cloudCount * 2;
-            // 更激进：本地超过默认数量，云端恰好是默认数量
-            const localExceedsDefault = localCount > (DEFAULTS.members||[]).length && cloudCount === (DEFAULTS.members||[]).length;
-
-            if ((cloudIsEmpty || cloudLooksDefault || localMuchLarger || localExceedsDefault) && hasUserEdits && localCount > 0) {
-              console.warn('[同步] ⚠️ 检测到云端数据可能被重置！', {localCount, cloudCount, cloudIsEmpty, cloudLooksDefault, localMuchLarger, isCustomized});
-              toast('⚠️ 检测到云端数据异常，正在用本地数据恢复...');
-              // 用本地数据强制覆盖云端
-              const recovered = { ...DEFAULTS, ...localParsed };
-              recovered._lastLocalModified = new Date().toISOString();
-              saveLocal(recovered);
-              pushToCloud(recovered, true);  // force=true 强制写入
-              updateSyncStatus('synced');
-              return recovered;
-            }
-          } catch(e) { console.error('[同步] 保护机制异常:', e); }
+        const cloudCount = (cloudData && cloudData.members) ? cloudData.members.length : 0;
+        if (cloudCount > 0) {
+          const d = { ...DEFAULTS, ...cloudData,
+            members: (cloudData.members||[]).map(m=>({avatar:'',...m})),
+            events: cloudData.events||DEFAULTS.events,
+            mentors: cloudData.mentors||DEFAULTS.mentors,
+            messages: cloudData.messages||DEFAULTS.messages,
+            carouselImages: cloudData.carouselImages||DEFAULTS.carouselImages
+          };
+          saveLocal(d);
+          updateSyncStatus('synced');
+          console.log('[同步] ✅ 已从云端获取 ' + cloudCount + ' 名成员');
+          return d;
         }
-        // 🛡️ 安全网：再次检查——如果本地成员更多且云端像默认数据，优先保留本地
-        const localRaw2 = localStorage.getItem(DB_KEY);
-        if (localRaw2) {
-          try {
-            const lp = JSON.parse(localRaw2);
-            const lc = (lp.members||[]).length;
-            const cc = (cloudData&&cloudData.members)?cloudData.members.length:0;
-            const cloudIsDefault = cc <= 5 && cc > 0 && (cloudData.members||[]).every(m => (DEFAULTS.members||[]).some(d=>d.name===m.name));
-            if (lc > cc && cloudIsDefault && lc > (DEFAULTS.members||[]).length) {
-              console.warn('[同步] 🛡 安全网触发：保留本地数据（' + lc + '成员），拒绝云端默认数据（' + cc + '成员）');
-              toast('🛡 已保留本地数据，忽略云端重置');
-              const recovered = { ...DEFAULTS, ...lp };
-              recovered._lastLocalModified = new Date().toISOString();
-              saveLocal(recovered);
-              pushToCloud(recovered, true);
-              updateSyncStatus('synced');
-              return recovered;
-            }
-          } catch(e2) {}
-        }
-        const d = { ...DEFAULTS, ...cloudData,
-          members: (cloudData.members||[]).map(m=>({avatar:'',...m})),
-          events: cloudData.events||DEFAULTS.events,
-          mentors: cloudData.mentors||DEFAULTS.mentors,
-          messages: cloudData.messages||DEFAULTS.messages,
-          carouselImages: cloudData.carouselImages||DEFAULTS.carouselImages
-        };
-        saveLocal(d);
-        updateSyncStatus('synced');
-        return d;
+        // 云端有 data 但 members 为空（极少见）→ 继续回退
+        console.warn('[同步] ⚠️ 云端 data 存在但无成员，尝试回退');
       }
     }
   } catch(e) {
-    console.log('[同步] 云端加载失败，使用本地数据:', e.message);
-    cloudEnabled = false;
+    console.log('[同步] 云端加载失败:', e.message);
   }
 
-  // 2. 回退到本地 localStorage
+  // 2. 云端暂时不可用 → 回退到 localStorage（不主动上传，避免覆盖云端）
   try {
     const raw = localStorage.getItem(DB_KEY);
     if (raw) {
       const localData = JSON.parse(raw);
+      const localCount = (localData.members||[]).length;
       const d = { ...DEFAULTS, ...localData };
-      // 本地数据 → 尝试上传到云端
-      pushToCloud(d);
+      // 只在本地为空（默认数据）时主动上传，避免把过期数据覆盖到云端
+      if (localCount === 0 || localCount === (DEFAULTS.members||[]).length) {
+        pushToCloud(d);
+      }
       updateSyncStatus('synced');
+      console.log('[同步] 使用本地缓存 (' + localCount + ' 名成员)');
       return d;
     }
   } catch(e) {}
 
-  // 3. 默认数据
+  // 3. 完全没有数据 → 用默认 + 上传
   const d = JSON.parse(JSON.stringify(DEFAULTS));
   saveLocal(d);
   pushToCloud(d);
@@ -955,11 +904,22 @@ function loadApp() {
     // 后台异步加载云端数据
     loadAppAsync().then(cloudD => {
       if (cloudD) {
-        app = cloudD;
-        refreshAll();
-        if (currentPage === '/') navigate('/');
-        else navigate(currentPage);
-        console.log('[同步] 已从云端更新数据');
+        // 比较数据差异，有变化才刷新页面
+        if (JSON.stringify(cloudD.members) !== JSON.stringify(app.members) ||
+            JSON.stringify(cloudD.carouselImages) !== JSON.stringify(app.carouselImages) ||
+            JSON.stringify(cloudD.mentors) !== JSON.stringify(app.mentors) ||
+            JSON.stringify(cloudD.events) !== JSON.stringify(app.events) ||
+            JSON.stringify(cloudD.messages) !== JSON.stringify(app.messages)) {
+          console.log('[同步] ✅ 云端与本地不同，已更新 (' +
+            '本地 ' + (app.members||[]).length + ' → 云端 ' + (cloudD.members||[]).length + ' 成员)');
+          toast('☁ 已从云端同步最新数据 (' + (cloudD.members||[]).length + ' 名成员)');
+          app = cloudD;
+          refreshAll();
+          if (currentPage === '/') navigate('/');
+          else navigate(currentPage);
+        } else {
+          console.log('[同步] 云端与本地一致，无需更新');
+        }
       }
     });
     return d;
