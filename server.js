@@ -297,18 +297,8 @@ async function writeData(data) {
 
   if (useMongo && mongoDb) {
     // 2) Atlas 写入改为后台异步，不阻塞 PUT 响应
-    //    返回前给一个"kick-off"短超时（仅检测连接是否还活着）
-    try {
-      await withTimeout(
-        mongoDb.admin().ping().maxTimeMS(2000),
-        2500,
-        null
-      ).then((r) => { if (r) mongoOk = true; });
-    } catch (e) {
-      // ping 失败也不影响 — 异步写入会用更长的超时
-      console.warn('[MongoDB] ping 检测失败,转入后台写入:', e.message);
-    }
-    // 启动后台写入（不等它完成）
+    //    启动后台写入（不等它完成）— 让 writeToMongoAsync 自己管理超时
+    mongoOk = true;  // 乐观: 连接可用就标记 ok,后台失败不会回退 PUT 响应
     writeToMongoAsync(data).catch((e) => {
       console.error('[MongoDB] 异步写入异常:', e.message);
     });
