@@ -85,15 +85,20 @@ async function syncLocalToAtlas() {
 
 function startMongoReconnectLoop() {
   if (!MONGODB_URI) return;
-  setInterval(async () => {
-    if (useMongo || mongoRetrying) return;
-    mongoRetrying = true;
-    const ok = await tryConnectMongo();
-    mongoRetrying = false;
-    if (ok) {
-      console.log('[重连] MongoDB 已恢复,使用 Atlas 存储');
-    }
-  }, 30000);
+  // 第一次重连只等 5 秒（让应用先正常启动），之后每 60 秒
+  setTimeout(() => {
+    setInterval(async () => {
+      if (useMongo || mongoRetrying) return;
+      mongoRetrying = true;
+      const ok = await tryConnectMongo();
+      mongoRetrying = false;
+      if (ok) {
+        console.log('[重连] MongoDB 已恢复,使用 Atlas 存储');
+      } else {
+        console.log('[重连] MongoDB 仍未恢复,继续等待下次重试');
+      }
+    }, 60000); // 每 60 秒重试
+  }, 5000);
 }
 
 // ===================== 数据读写层 =====================
