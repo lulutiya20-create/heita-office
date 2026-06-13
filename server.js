@@ -89,37 +89,27 @@ async function tryConnectMongo() {
       mongoClient = null;
       mongoDb = null;
     }
-    // 使用 directConnection 模式 - 只连第一个 shard,避免 replicaSet 协商卡住
-    // 注意: query string 里加 directConnection=true 要带引号
-    const firstHost = hostnames[0];
+    // 用副本集名 + 多 host,让驱动自动选 primary (避免 "not primary" 错误)
+    // Atlas free cluster 的 replica set 名通常是 Cluster0-shard-0 (M0) 或类似
+    // 三个 shard host 都列在 URI 里,驱动会从 hello/ismaster 自动发现拓扑
+    // 不再用 directConnection=true (那会强制单节点, 命中 secondary 就写失败)
     let directUri = MONGODB_URI;
-    if (firstHost) {
-      directUri = MONGODB_URI.replace(
-        /@(ac-q5xfbdw-shard-00-[0-9]+\.xc6yvnr\.mongodb\.net:[0-9]+,)*(ac-q5xfbdw-shard-00-[0-9]+\.xc6yvnr\.mongodb\.net:[0-9]+)\/?/,
-        '@' + firstHost + '/'
-      );
-      // 在 query string 里加 directConnection=true (用字符串值)
-      if (directUri.includes('?')) {
-        if (!directUri.includes('directConnection=')) {
-          directUri += '&directConnection=true';
-        }
-      } else {
-        directUri += '?directConnection=true';
-      }
+    // 去掉 SRV 模式下可能没有的 ?directConnection= 参数
+    directUri = directUri.replace(/[?&]directConnection=[^&]*/g, '');
+    // 强制加 replicaSet 参数
+    if (!/[?&]replicaSet=/.test(directUri)) {
+      directUri += (directUri.includes('?') ? '&' : '?') + 'replicaSet=Cluster0-shard-0';
     }
     console.log('[MongoDB] directUri=' + directUri.replace(/:[^:@]+@/, ':***@'));
     mongoClient = new MongoClient(directUri, {
       connectTimeoutMS: 15000,
-      serverSelectionTimeoutMS: 15000,
-      socketTimeoutMS: 20000,
-      // 关键修复: 保持心跳保活,避免 Atlas M0 空闲断开连接
+      serverSelectionTimeoutMS: 30000,  // 副本集发现需要更长时间
+      socketTimeoutMS: 45000,
       heartbeatFrequencyMS: 10000,
       minPoolSize: 2,
       maxPoolSize: 10,
       waitQueueTimeoutMS: 5000,
-      retryWrites: true,
-      // directConnection URI 模式下 disable 掉 SRV poller
-      directConnection: true
+      retryWrites: true
     });
     console.log('[MongoDB] 调用 client.connect() ...');
     await mongoClient.connect();
