@@ -217,11 +217,14 @@ async function writeToMongoAsync(data) {
     setTimeout(() => reject(new Error('Atlas 写入超时(30s)')), 30000)
   );
   try {
-    await Promise.race([writePromise, timeoutPromise]);
-    console.log('[MongoDB] 写入成功, 大小:', JSON.stringify(data).length, 'bytes');
+    const result = await Promise.race([writePromise, timeoutPromise]);
+    console.log('[MongoDB] 写入成功, 大小:', JSON.stringify(data).length, 'bytes, matched:', result.matchedCount, 'modified:', result.modifiedCount, 'upsertedId:', result.upsertedId);
   } catch (e) {
-    console.error('[MongoDB] 后台写入失败:', e.message);
-    // 写入失败: 不污染 useMongo, 留给下次重连循环处理
+    const errMsg = e.name + ': ' + e.message;
+    console.error('[MongoDB] 后台写入失败:', errMsg);
+    mongoDebugLog.push({ ok: false, time: new Date().toISOString(), ms: 0, error: '[writeAsync] ' + errMsg, op: 'updateOne' });
+    if (mongoDebugLog.length > 10) mongoDebugLog = mongoDebugLog.slice(-10);
+    throw e;  // 让调用方知道失败
   }
 }
 
