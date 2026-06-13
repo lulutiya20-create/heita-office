@@ -88,24 +88,22 @@ async function tryConnectMongo() {
       mongoClient = null;
       mongoDb = null;
     }
-    mongoClient = new MongoClient(MONGODB_URI, {
+    // 使用 directConnection 模式 - 只连第一个 shard,避免 replicaSet 协商卡住
+    const firstHost = hostnames[0];
+    const directUri = MONGODB_URI.replace(
+      /@(ac-q5xfbdw-shard-00-[0-9]+\.xc6yvnr\.mongodb\.net:[0-9]+,)*(ac-q5xfbdw-shard-00-[0-9]+\.xc6yvnr\.mongodb\.net:[0-9]+)\/?/,
+      '@' + firstHost + '/?directConnection=true'
+    );
+    console.log('[MongoDB] directUri=' + directUri.replace(/:[^:@]+@/, ':***@'));
+    mongoClient = new MongoClient(directUri, {
       connectTimeoutMS: 15000,
       serverSelectionTimeoutMS: 15000,
       socketTimeoutMS: 20000,
-      maxPoolSize: 5,
-      minPoolSize: 1,
-      retryWrites: true,
-      directConnection: false
+      retryWrites: true
     });
     console.log('[MongoDB] 调用 client.connect() ...');
     await mongoClient.connect();
     console.log('[MongoDB] client.connect() 完成,耗时 ' + (Date.now() - t0) + 'ms');
-    // 关键: mongodb driver 在 connect 后会立即发起 replica set 探测
-    // 直接用 listDatabases 触发完整的 topology 协商
-    console.log('[MongoDB] 触发 listDatabases 完成 topology 协商...');
-    const adminDb = mongoClient.db('admin');
-    const dbs = await adminDb.admin().listDatabases({ maxTimeMS: 10000 });
-    console.log('[MongoDB] 协商完成,找到 ' + dbs.databases.length + ' 个数据库');
     mongoDb = mongoClient.db(DB_NAME);
     await mongoDb.collection(COLLECTION_NAME).findOne({ _id: 'main' }, { maxTimeMS: 8000 });
     useMongo = true;
