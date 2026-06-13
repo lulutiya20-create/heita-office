@@ -720,7 +720,7 @@ body{
 //   3. 纯离线模式 → localStorage only
 const DB_KEY = 'heita_office_v2';
 // 可配置的 API 服务器地址（留空则使用同源 /api/data）
-const API_SERVER_URL = '';  // Render 已挂, 默认不用
+const API_SERVER_URL = '';  // Render 已挂, GitHub Pages 静态场景下用 JSONBin 即可, 留空跳过 /api/data 探测
 // JSONBin.io 配置 (云端 JSON 存储, 免费 10K 请求/月)
 // 在 localStorage 中存: JSONBIN_BIN_ID + JSONBIN_MASTER_KEY
 // 所有设备共享同一对值即可同步
@@ -783,40 +783,20 @@ async function safeFetchJson(url, opts, retries) {
   }
 }
 
-// 初始化 API 端点（自动检测可用性 — 直接用 /api/data 检测，支持冷启动重试）
+// 初始化 API 端点（GitHub Pages 静态场景：禁用 /api/data 探测，避免连接 Render 失败产生噪音）
 async function initApiEndpoint() {
-  // 候选端点列表
+  // 候选端点列表 - GitHub Pages 场景下为空,完全跳过
   const candidates = [];
   if (API_SERVER_URL) {
     candidates.push(API_SERVER_URL);
-  } else {
-    // 同源（部署服务器）
-    candidates.push('/api/data');
-    // 本地开发服务器
-    candidates.push('http://localhost:3000/api/data');
   }
+  // 已废弃: 不再探测 /api/data 和 localhost (Render 5GB 流量耗尽, 7月1日才恢复)
+  // 也不再探测 localhost:3000 (本地 node server.js)
 
-  for (const url of candidates) {
-    // 如果已有 /api/data 后缀直接用，否则追加
-    const dataUrl = url.endsWith('/api/data') ? url : url.replace(/\/$/, '') + '/api/data';
-    try {
-      const result = await safeFetchJson(dataUrl, { signal: AbortSignal.timeout(8000) }, 3);
-      if (result && result.success) {
-        API_DATA = dataUrl;
-        cloudEnabled = true;
-        lastCloudFingerprint = result.fingerprint || '';
-        console.log('[同步] ✅ 云服务器已连接:', API_DATA, '指纹:', lastCloudFingerprint.substring(0,8));
-        return true;
-      }
-    } catch(e) {
-      console.log('[同步] 尝试连接失败:', dataUrl.substring(0, 40), e.message);
-    }
-  }
-
-  // 所有端点都不可用
+  // 静默返回 false,所有云端同步走 JSONBin
   API_DATA = '/api/data';
   cloudEnabled = false;
-  console.log('[同步] ⚠ 未检测到云服务器，使用离线模式');
+  console.log('[同步] ℹ️ 静态部署模式,云同步由 JSONBin 提供');
   return false;
 }
 
@@ -1057,40 +1037,45 @@ async function loadAppAsync() {
     } catch (e) { console.warn('[JSONBin] 读 localStorage 失败:', e); }
   }
 
-  // 1. 尝试从云端加载（重试 8 次，足够覆盖 Render 冷启动 + MongoDB Atlas 唤醒）
-  try {
-    const result = await safeFetchJson(API_DATA, { signal: AbortSignal.timeout(12000) }, 8);
-    if (result) {
-      // ✅ 情况 A：云端有完整数据 → 直接采用云端
-      if (result.success && result.data && result.data.members) {
-        lastCloudFingerprint = result.fingerprint || '';
-        const cloudData = cleanCloudMeta(result.data);
-        const cloudCount = (cloudData && cloudData.members) ? cloudData.members.length : 0;
-        if (cloudCount > 0) {
-          const d = { ...DEFAULTS, ...cloudData,
-            members: (cloudData.members||[]).map(m=>({avatar:'',...m})),
-            events: cloudData.events||DEFAULTS.events,
-            mentors: cloudData.mentors||DEFAULTS.mentors,
-            messages: cloudData.messages||DEFAULTS.messages,
-            carouselImages: cloudData.carouselImages||DEFAULTS.carouselImages
-          };
-          saveLocal(d);
-          // 如果 JSONBin 已配置, 顺便同步过去
-          if (jsonbinBinId && jsonbinMasterKey) {
-            pushToJsonbin(d).then(ok => {
-              if (ok) console.log('[JSONBin 同步] 自动同步云端到 JSONBin 成功');
-            });
+  // 1. 尝试从云端加载（仅当 cloudEnabled=true, 即检测到后端时）
+  //    GitHub Pages 静态场景: cloudEnabled=false, 直接跳过
+  if (cloudEnabled) {
+    try {
+      const result = await safeFetchJson(API_DATA, { signal: AbortSignal.timeout(12000) }, 8);
+      if (result) {
+        // ✅ 情况 A：云端有完整数据 → 直接采用云端
+        if (result.success && result.data && result.data.members) {
+          lastCloudFingerprint = result.fingerprint || '';
+          const cloudData = cleanCloudMeta(result.data);
+          const cloudCount = (cloudData && cloudData.members) ? cloudData.members.length : 0;
+          if (cloudCount > 0) {
+            const d = { ...DEFAULTS, ...cloudData,
+              members: (cloudData.members||[]).map(m=>({avatar:'',...m})),
+              events: cloudData.events||DEFAULTS.events,
+              mentors: cloudData.mentors||DEFAULTS.mentors,
+              messages: cloudData.messages||DEFAULTS.messages,
+              carouselImages: cloudData.carouselImages||DEFAULTS.carouselImages
+            };
+            saveLocal(d);
+            // 如果 JSONBin 已配置, 顺便同步过去
+            if (jsonbinBinId && jsonbinMasterKey) {
+              pushToJsonbin(d).then(ok => {
+                if (ok) console.log('[JSONBin 同步] 自动同步云端到 JSONBin 成功');
+              });
+            }
+            updateSyncStatus('synced');
+            console.log('[同步] ✅ 已从云端获取 ' + cloudCount + ' 名成员');
+            return d;
           }
-          updateSyncStatus('synced');
-          console.log('[同步] ✅ 已从云端获取 ' + cloudCount + ' 名成员');
-          return d;
+          // 云端有 data 但 members 为空（极少见）→ 继续回退
+          console.warn('[同步] ⚠️ 云端 data 存在但无成员，尝试回退');
         }
-        // 云端有 data 但 members 为空（极少见）→ 继续回退
-        console.warn('[同步] ⚠️ 云端 data 存在但无成员，尝试回退');
       }
+    } catch(e) {
+      console.log('[同步] 云端加载失败:', e.message);
     }
-  } catch(e) {
-    console.log('[同步] 云端加载失败:', e.message);
+  } else {
+    console.log('[同步] 静态部署模式,跳过 /api/data 探测');
   }
 
   // 2. 云端暂时不可用 → 回退到 localStorage（不主动上传，避免覆盖云端）
@@ -1452,10 +1437,11 @@ function startPolling() {
       } catch (e) { /* 静默 */ }
       return;
     }
-    // 2) 回退到 /api/data 轮询
-    try {
-      const result = await safeFetchJson(API_DATA, { signal: AbortSignal.timeout(8000) }, 2);
-      if (!result || !result.success || !result.data) return;
+    // 2) 回退到 /api/data 轮询 (GitHub Pages 静态场景跳过)
+    if (cloudEnabled) {
+      try {
+        const result = await safeFetchJson(API_DATA, { signal: AbortSignal.timeout(8000) }, 2);
+        if (!result || !result.success || !result.data) return;
       // 比较指纹，只在真的有变化时才更新
       if (result.fingerprint && result.fingerprint !== lastCloudFingerprint) {
         if (!result.data.members || result.data.members.length === 0) return; // 无效数据
@@ -1479,7 +1465,10 @@ function startPolling() {
           console.log('[轮询] ✅ 数据已自动更新, 新指纹:', result.fingerprint.substring(0,8));
         }
       }
-    } catch(e) { /* 静默失败 */ }
+      } catch(e) { /* 静默失败 */ }
+    } else {
+      console.log('[轮询] 静态部署模式,跳过 /api/data 探测');
+    }
   }, POLL_INTERVAL);
 }
 
