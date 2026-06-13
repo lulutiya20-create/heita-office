@@ -320,13 +320,17 @@ async function writeData(data) {
         await mongoDb.collection(COLLECTION_NAME).updateOne(
           { _id: 'main' },
           { $set: { data, _fingerprint: fingerprint, _updatedAt: now }, $setOnInsert: { _id: 'main' } },
-          { upsert: true, maxTimeMS: 12000 }
+          { upsert: true, maxTimeMS: 15000 }
         );
         mongoOk = true;
         console.log('[MongoDB] 写入成功, attempt=' + attempt + ', 用时 ' + (Date.now()-t0) + 'ms');
         break;
       } catch (e) {
-        console.error('[MongoDB] 写入失败 attempt=' + attempt + ':', e.message);
+        const errMsg = e.name + ': ' + e.message;
+        console.error('[MongoDB] 写入失败 attempt=' + attempt + ':', errMsg);
+        // 记录到 debug log 供调试
+        mongoDebugLog.push({ ok: false, time: new Date().toISOString(), ms: Date.now() - t0, error: '[write] ' + errMsg, op: 'updateOne' });
+        if (mongoDebugLog.length > 10) mongoDebugLog = mongoDebugLog.slice(-10);
         useMongo = false;
         mongoDb = null;
         if (mongoClient) {
