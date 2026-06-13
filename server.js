@@ -15,7 +15,8 @@ try {
 }
 
 // ===================== MongoDB 配置 =====================
-const MONGODB_URI = process.env.MONGODB_URI || '';
+// 设 DISABLE_MONGODB=1 可以强制只用本地文件 (临时降级, 例如 Atlas 服务异常时)
+const MONGODB_URI = (process.env.DISABLE_MONGODB === '1' ? '' : (process.env.MONGODB_URI || ''));
 const DB_NAME = 'heita_office';
 const COLLECTION_NAME = 'appdata';
 
