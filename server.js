@@ -542,8 +542,10 @@ async function startServer() {
   await tryConnectMongo();
   startMongoReconnectLoop();
 
-  app.listen(PORT, () => {
-    console.log('黑塔办事处服务器已启动: http://localhost:' + PORT);
+  // HuggingFace Spaces 默认 7860, Render/Koyeb 用 3000 或 8000
+  const HOST = process.env.HOST || '0.0.0.0';
+  app.listen(PORT, HOST, () => {
+    console.log('黑塔办事处服务器已启动: http://' + HOST + ':' + PORT);
     console.log('存储模式: ' + (useMongo ? 'MongoDB Atlas' : '本地文件 (会主动重连 Atlas)'));
     if (MONGODB_URI) {
       console.log('MongoDB 重连循环已启动 (每 30 秒尝试一次)');
