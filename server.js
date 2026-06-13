@@ -32,16 +32,48 @@ app.use((req, res, next) => {
 
 // ===================== 数据读写层 =====================
 
-// 从 MongoDB 读取数据
+// 从 MongoDB 读取数据（带超时保护）
 async function readFromMongo() {
   if (!useMongo || !mongoDb) return null;
   try {
-    const doc = await mongoDb.collection(COLLECTION_NAME).findOne({ _id: 'main' });
+    const doc = await mongoDb.collection(COLLECTION_NAME).findOne(
+      { _id: 'main' },
+      { maxTimeMS: 5000 }  // 5 秒超时，防止 MongoDB Atlas M0 长时间挂起
+    );
     return doc ? doc.data : null;
   } catch (e) {
     console.error('[MongoDB] 读取失败:', e.message);
     return null;
   }
+}
+
+// 带超时的 Promise 包装器
+function withTimeout(promise, ms, fallback) {
+  return Promise.race([
+    promise,
+    new Promise((resolve) => setTimeout(() => {
+      console.log('[超时] 操作超时 (' + ms + 'ms)，使用回退方案');
+      resolve(fallback);
+    }, ms))
+  ]);
+}
+
+// 统一读取数据（MongoDB 超时则回退本地文件）
+async function readData() {
+  if (useMongo) {
+    // MongoDB 查询最多等待 8 秒，超时回退本地文件
+    const d = await withTimeout(readFromMongo(), 8000, null);
+    if (d) return d;
+    console.log('[数据] MongoDB 无数据或超时，尝试从本地文件恢复...');
+    const local = readFromFile();
+    if (local) {
+      // 异步尝试恢复到 MongoDB（不阻塞）
+      writeToMongo(local).catch(() => {});
+      console.log('[数据] ✅ 已从本地文件恢复数据');
+    }
+    return local;
+  }
+  return readFromFile();
 }
 
 // 写入 MongoDB
@@ -95,16 +127,29 @@ function writeToFile(data) {
   }
 }
 
-// 统一读取数据
+// 带超时的 Promise 包装器
+function withTimeout(promise, ms, fallback) {
+  return Promise.race([
+    promise,
+    new Promise((resolve) => setTimeout(() => {
+      console.log('[超时] 操作超时 (' + ms + 'ms)，使用回退方案');
+      resolve(fallback);
+    }, ms))
+  ]);
+}
+
+// 统一读取数据（MongoDB 超时回退本地文件）
 async function readData() {
   if (useMongo) {
-    const d = await readFromMongo();
+    // MongoDB 查询最多等待 8 秒，超时回退本地文件
+    const d = await withTimeout(readFromMongo(), 8000, null);
     if (d) return d;
-    console.log('[数据] MongoDB 无数据，尝试从本地文件恢复...');
+    console.log('[数据] MongoDB 无数据或超时，尝试从本地文件恢复...');
     const local = readFromFile();
     if (local) {
-      await writeToMongo(local);
-      console.log('[数据] ✅ 已从本地文件恢复到 MongoDB');
+      // 异步尝试恢复到 MongoDB（不阻塞）
+      writeToMongo(local).catch(() => {});
+      console.log('[数据] ✅ 已从本地文件恢复数据');
     }
     return local;
   }
@@ -203,13 +248,19 @@ async function startServer() {
   if (MONGODB_URI) {
     try {
       const { MongoClient } = require('mongodb');
-      mongoClient = new MongoClient(MONGODB_URI);
+      mongoClient = new MongoClient(MONGODB_URI, {
+        connectTimeoutMS: 10000,
+        serverSelectionTimeoutMS: 10000,
+        socketTimeoutMS: 15000,
+        maxPoolSize: 5,
+        minPoolSize: 1
+      });
       await mongoClient.connect();
       mongoDb = mongoClient.db(DB_NAME);
       useMongo = true;
       console.log('✅ MongoDB Atlas 连接成功！');
       // 测试写入
-      await mongoDb.collection(COLLECTION_NAME).findOne({ _id: 'main' });
+      await mongoDb.collection(COLLECTION_NAME).findOne({ _id: 'main' }, { maxTimeMS: 5000 });
     } catch (e) {
       console.error('❌ MongoDB 连接失败，使用本地文件模式:', e.message);
       useMongo = false;

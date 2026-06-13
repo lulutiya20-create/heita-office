@@ -6,7 +6,7 @@
 <meta name="cache-control" content="no-cache, no-store, must-revalidate">
 <meta name="pragma" content="no-cache">
 <meta name="expires" content="0">
-<title>黑塔办事处</title> <!-- v260613-coldstart-fix -->
+<title>黑塔办事处</title> <!-- v260613-rc4 -->
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -703,7 +703,7 @@ const POLL_INTERVAL = 5000;
 // 安全 fetch JSON：处理 Render 冷启动返回 HTML 的情况，自动重试
 // Render 免费版冷启动可能需要 30-60 秒，所以默认重试 10 次并递增等待时间
 async function safeFetchJson(url, opts, retries) {
-  retries = retries || 10;
+  retries = retries || 6;
   for (var attempt = 0; attempt < retries; attempt++) {
     try {
       var resp = await fetch(url, opts || { signal: AbortSignal.timeout(10000) });
@@ -720,7 +720,10 @@ async function safeFetchJson(url, opts, retries) {
       }
       return await resp.json();
     } catch(e) {
-      if (attempt < retries - 1 && (e.name === 'TimeoutError' || e.message.includes('timed out') || e.message.includes('冷启动') || e.message.includes('Failed to fetch') || e.message.includes('NetworkError'))) {
+      var isRetryable = e.name === 'TimeoutError' || e.name === 'AbortError'
+        || (e.message && (e.message.includes('timed out') || e.message.includes('冷启动')
+        || e.message.includes('Failed to fetch') || e.message.includes('NetworkError')));
+      if (attempt < retries - 1 && isRetryable) {
         var waitMs2 = Math.min(3000 + attempt * 1000, 8000);
         console.log('[同步] ⏳ 连接中 (' + (attempt+1) + '/' + retries + ')，' + (waitMs2/1000) + '秒后重试...');
         await new Promise(function(r){ setTimeout(r, waitMs2); });
