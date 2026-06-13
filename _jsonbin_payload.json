@@ -1,0 +1,577 @@
+{
+  "adminPassword": "admin123",
+  "carouselImages": [
+    {
+      "id": 1781279072020381,
+      "title": "轮播图 1",
+      "url": "https://picsum.photos/seed/heita-carousel-1781279072020381/1920/1080"
+    },
+    {
+      "id": 1781280820403306,
+      "title": "轮播图 2",
+      "url": "https://picsum.photos/seed/heita-carousel-1781280820403306/1920/1080"
+    },
+    {
+      "id": 1781283277796362,
+      "title": "轮播图 3",
+      "url": "https://picsum.photos/seed/heita-carousel-1781283277796362/1920/1080"
+    }
+  ],
+  "members": [
+    {
+      "avatar": "https://picsum.photos/seed/member-1781264631988060/200/200",
+      "id": 1781264631988060,
+      "name": "露露緹雅",
+      "role": "永青一页",
+      "info": "高难苦手，全职业精通（大概）",
+      "relations": [
+        {
+          "targetId": 1781265442775372,
+          "label": "导师→豆芽"
+        },
+        {
+          "targetId": 1781270850892094,
+          "label": "导师→豆芽"
+        }
+      ],
+      "password": "abc123",
+      "isAdmin": true
+    },
+    {
+      "avatar": "",
+      "id": 1781265442775372,
+      "name": "阿换",
+      "role": "瞬灭二页",
+      "info": "",
+      "relations": [],
+      "password": "abc123",
+      "isAdmin": true
+    },
+    {
+      "avatar": "https://picsum.photos/seed/member-1781270458888535/200/200",
+      "id": 1781270458888535,
+      "name": "千早铃",
+      "role": "瞬灭二页",
+      "info": "",
+      "relations": [
+        {
+          "targetId": 1781274831961022,
+          "label": "导师→豆芽"
+        },
+        {
+          "targetId": 1781270947924747,
+          "label": "导师→豆芽"
+        },
+        {
+          "targetId": 1781275036424644,
+          "label": "导师→豆芽"
+        },
+        {
+          "targetId": 1781270656571088,
+          "label": "导师→豆芽"
+        }
+      ],
+      "password": "abc123",
+      "isAdmin": true
+    },
+    {
+      "avatar": "https://picsum.photos/seed/member-1781270492991774/200/200",
+      "id": 1781270492991774,
+      "name": "洛格芙",
+      "role": "瞬灭二页",
+      "info": "休闲玩法高手",
+      "relations": [],
+      "password": "abc123",
+      "isAdmin": true
+    },
+    {
+      "avatar": "https://picsum.photos/seed/member-1781270509527252/200/200",
+      "id": 1781270509527252,
+      "name": "阿薰",
+      "role": "瞬灭二页",
+      "info": "贤者学者基础/高难部分，不了解游戏背景/剧情",
+      "relations": [
+        {
+          "targetId": 1781270721550646,
+          "label": "导师→豆芽"
+        },
+        {
+          "targetId": 1781270730688350,
+          "label": "导师→豆芽"
+        }
+      ],
+      "password": "abc123",
+      "isAdmin": true
+    },
+    {
+      "avatar": "https://picsum.photos/seed/member-1781270533704364/200/200",
+      "id": 1781270533704364,
+      "name": "环绪",
+      "role": "瞬灭二页",
+      "info": "",
+      "relations": [
+        {
+          "targetId": 1781275162565912,
+          "label": "导师→豆芽"
+        },
+        {
+          "targetId": 1781270509527252,
+          "label": "导师→豆芽"
+        }
+      ],
+      "password": "abc123",
+      "isAdmin": true
+    },
+    {
+      "avatar": "",
+      "id": 1781270625683341,
+      "name": "笨白菜",
+      "role": "不朽四页",
+      "info": "",
+      "relations": [
+        {
+          "targetId": 1781270635985147,
+          "label": "导师→豆芽"
+        }
+      ],
+      "password": "abc123",
+      "isAdmin": true
+    },
+    {
+      "avatar": "",
+      "id": 1781270635985147,
+      "name": "超级大白菜",
+      "role": "不朽四页",
+      "info": "",
+      "relations": [],
+      "password": "abc123",
+      "isAdmin": false
+    },
+    {
+      "avatar": "",
+      "id": 1781270656571088,
+      "name": "喵喵喵喵喵",
+      "role": "不朽四页",
+      "info": "",
+      "relations": [],
+      "password": "abc123",
+      "isAdmin": false
+    },
+    {
+      "avatar": "",
+      "id": 1781270721550646,
+      "name": "Hetian",
+      "role": "未来八页",
+      "info": "",
+      "relations": [],
+      "password": "abc123",
+      "isAdmin": false
+    },
+    {
+      "avatar": "",
+      "id": 1781270730688350,
+      "name": "萧萧雨欣",
+      "role": "未来八页",
+      "info": "",
+      "relations": [],
+      "password": "abc123",
+      "isAdmin": false
+    },
+    {
+      "avatar": "",
+      "id": 1781270769406259,
+      "name": "浅睡三天",
+      "role": "不朽四页",
+      "info": "",
+      "relations": [],
+      "password": "abc123",
+      "isAdmin": false
+    },
+    {
+      "avatar": "",
+      "id": 1781270850892094,
+      "name": "胧夜",
+      "role": "不朽四页",
+      "info": "",
+      "relations": [
+        {
+          "targetId": 1781270863310571,
+          "label": "导师→豆芽"
+        }
+      ],
+      "password": "abc123",
+      "isAdmin": false
+    },
+    {
+      "avatar": "",
+      "id": 1781270863310571,
+      "name": "橙橙猫",
+      "role": "未来八页",
+      "info": "",
+      "relations": [],
+      "password": "abc123",
+      "isAdmin": false
+    },
+    {
+      "avatar": "",
+      "id": 1781270901648232,
+      "name": "把酒执剑",
+      "role": "未来八页",
+      "info": "",
+      "relations": [],
+      "password": "abc123",
+      "isAdmin": false
+    },
+    {
+      "avatar": "",
+      "id": 1781270947924747,
+      "name": "无敌太刀大王",
+      "role": "不朽四页",
+      "info": "",
+      "relations": [
+        {
+          "targetId": 1781274976229300,
+          "label": "导师→豆芽"
+        }
+      ],
+      "password": "abc123",
+      "isAdmin": false
+    },
+    {
+      "avatar": "",
+      "id": 1781274787606056,
+      "name": "密西西比",
+      "role": "未来八页",
+      "info": "",
+      "relations": [],
+      "password": "abc123",
+      "isAdmin": false
+    },
+    {
+      "avatar": "",
+      "id": 1781274831961022,
+      "name": "浮繁生若幻梦",
+      "role": "不朽四页",
+      "info": "",
+      "relations": [],
+      "password": "abc123",
+      "isAdmin": false
+    },
+    {
+      "avatar": "",
+      "id": 1781274941113450,
+      "name": "青釉小果",
+      "role": "瞬灭二页",
+      "info": "",
+      "relations": [],
+      "password": "abc123",
+      "isAdmin": false
+    },
+    {
+      "avatar": "",
+      "id": 1781274976229300,
+      "name": "切居登猫",
+      "role": "不朽四页",
+      "info": "",
+      "relations": [
+        {
+          "targetId": 1781274787606056,
+          "label": "导师→豆芽"
+        }
+      ],
+      "password": "abc123",
+      "isAdmin": false
+    },
+    {
+      "avatar": "",
+      "id": 1781274996408971,
+      "name": "马枪王小桃",
+      "role": "不朽四页",
+      "info": "",
+      "relations": [],
+      "password": "abc123",
+      "isAdmin": false
+    },
+    {
+      "avatar": "",
+      "id": 1781275019894468,
+      "name": "悠希",
+      "role": "不朽四页",
+      "info": "",
+      "relations": [],
+      "password": "abc123",
+      "isAdmin": false
+    },
+    {
+      "avatar": "",
+      "id": 1781275036424644,
+      "name": "春铃系花",
+      "role": "未来八页",
+      "info": "",
+      "relations": [],
+      "password": "abc123",
+      "isAdmin": false
+    },
+    {
+      "avatar": "",
+      "id": 1781275129298184,
+      "name": "阿婷",
+      "role": "未来八页",
+      "info": "",
+      "relations": [],
+      "password": "abc123",
+      "isAdmin": false
+    },
+    {
+      "avatar": "",
+      "id": 1781275162565912,
+      "name": "小米洋芋",
+      "role": "瞬灭二页",
+      "info": "",
+      "relations": [
+        {
+          "targetId": 1781270625683341,
+          "label": "导师→豆芽"
+        },
+        {
+          "targetId": 1781275198259204,
+          "label": "导师→豆芽"
+        }
+      ],
+      "password": "abc123",
+      "isAdmin": false
+    },
+    {
+      "avatar": "",
+      "id": 1781275198259204,
+      "name": "湫湫湫",
+      "role": "不朽四页",
+      "info": "",
+      "relations": [],
+      "password": "abc123",
+      "isAdmin": false
+    },
+    {
+      "avatar": "https://picsum.photos/seed/member-1781275479685253/200/200",
+      "id": 1781275479685253,
+      "name": "米修sama",
+      "role": "瞬灭二页",
+      "info": "",
+      "relations": [
+        {
+          "targetId": 1781270492991774,
+          "label": "导师→豆芽"
+        },
+        {
+          "targetId": 1781270458888535,
+          "label": "导师→豆芽"
+        },
+        {
+          "targetId": 1781270533704364,
+          "label": "导师→豆芽"
+        },
+        {
+          "targetId": 1781274941113450,
+          "label": "导师→豆芽"
+        }
+      ],
+      "password": "abc123",
+      "isAdmin": false
+    }
+  ],
+  "events": [],
+  "mentors": [
+    {
+      "id": 1781265450013799,
+      "memberId": 1781264631988060,
+      "specialty": "高难",
+      "extraInfo": "啥都会一点，全职业有logs蓝色+水平",
+      "image": "https://picsum.photos/seed/mentor-1781265450013799/1080/1920"
+    },
+    {
+      "id": 1781265455223816,
+      "memberId": 1781265442775372,
+      "specialty": "",
+      "extraInfo": "",
+      "image": "https://picsum.photos/seed/mentor-1781265455223816/1080/1920"
+    },
+    {
+      "id": 1781270458888621,
+      "memberId": 1781270458888535,
+      "specialty": "",
+      "extraInfo": "",
+      "image": "https://picsum.photos/seed/mentor-1781270458888621/1080/1920"
+    },
+    {
+      "id": 1781270492991933,
+      "memberId": 1781270492991774,
+      "specialty": "摄影",
+      "extraInfo": "只喜欢拍照/装修等休闲玩法，无法提供任何职业进阶技巧",
+      "image": "https://picsum.photos/seed/mentor-1781270492991933/1080/1920"
+    },
+    {
+      "id": 1781270533705380,
+      "memberId": 1781270533704364,
+      "specialty": "",
+      "extraInfo": "",
+      "image": "https://picsum.photos/seed/mentor-1781270533705380/1080/1920"
+    },
+    {
+      "id": 1781270625683380,
+      "memberId": 1781270625683341,
+      "specialty": "",
+      "extraInfo": "",
+      "image": "https://picsum.photos/seed/mentor-1781270625683380/1080/1920"
+    },
+    {
+      "id": 1781270635985279,
+      "memberId": 1781270635985147,
+      "specialty": "",
+      "extraInfo": "",
+      "image": "https://picsum.photos/seed/mentor-1781270635985279/1080/1920"
+    },
+    {
+      "id": 1781274941114665,
+      "memberId": 1781274941113450,
+      "specialty": "",
+      "extraInfo": "",
+      "image": "https://picsum.photos/seed/mentor-1781274941114665/1080/1920"
+    },
+    {
+      "id": 1781275479686473,
+      "memberId": 1781275479685253,
+      "specialty": "",
+      "extraInfo": "",
+      "image": "https://picsum.photos/seed/mentor-1781275479686473/1080/1920"
+    },
+    {
+      "id": 1781275795519039,
+      "memberId": 1781270509527252,
+      "specialty": "",
+      "extraInfo": "贤者，学者高难相关",
+      "image": "https://picsum.photos/seed/mentor-1781275795519039/1080/1920"
+    }
+  ],
+  "messages": [
+    {
+      "id": 1781268829652735,
+      "name": "露露緹雅",
+      "content": "test",
+      "time": "2026-06-12 20:53"
+    },
+    {
+      "id": 1781268844280532,
+      "name": "露露緹雅",
+      "content": "test成功",
+      "time": "2026-06-12 20:54"
+    },
+    {
+      "id": 1781311830735884,
+      "name": "Hetian",
+      "content": "熬夜万岁（（（（（大家不要像我一样熬夜）",
+      "time": "2026-06-13 08:50"
+    }
+  ],
+  "likes": {
+    "1781275795519039": 1
+  },
+  "likeLog": [
+    {
+      "mentorId": 1781275795519039,
+      "memberId": 1781270721550646,
+      "date": "2026-06-13",
+      "ts": 1781311729627
+    }
+  ],
+  "treeNodePositions": {
+    "1781265442775372": {
+      "x": 206,
+      "y": 571
+    },
+    "1781270492991774": {
+      "x": 403.33331298828125,
+      "y": 413
+    },
+    "1781264631988060": {
+      "x": 237,
+      "y": 219
+    },
+    "1781275479685253": {
+      "x": 556.3333129882812,
+      "y": 211.66665649414062
+    },
+    "1781274831961022": {
+      "x": 522,
+      "y": 585
+    },
+    "1781270533704364": {
+      "x": 885,
+      "y": 416
+    },
+    "1781270458888535": {
+      "x": 572,
+      "y": 430
+    },
+    "1781275162565912": {
+      "x": 825,
+      "y": 567
+    },
+    "1781270509527252": {
+      "x": 1047,
+      "y": 573
+    },
+    "1781270625683341": {
+      "x": 820,
+      "y": 726
+    },
+    "1781270635985147": {
+      "x": 843,
+      "y": 848
+    },
+    "1781270721550646": {
+      "x": 972,
+      "y": 670
+    },
+    "1781270730688350": {
+      "x": 1180,
+      "y": 655
+    },
+    "1781270947924747": {
+      "x": 369,
+      "y": 567
+    },
+    "1781274976229300": {
+      "x": 352,
+      "y": 690
+    },
+    "1781274787606056": {
+      "x": 343,
+      "y": 831
+    },
+    "1781275036424644": {
+      "x": 679,
+      "y": 574
+    },
+    "1781275198259204": {
+      "x": 650,
+      "y": 723
+    },
+    "1781274941113450": {
+      "x": 1180,
+      "y": 423
+    },
+    "1781270850892094": {
+      "x": 29,
+      "y": 543
+    },
+    "1781270863310571": {
+      "x": 36,
+      "y": 673
+    },
+    "1781270656571088": {
+      "x": 742,
+      "y": 469
+    }
+  },
+  "_lastLocalModified": "2026-06-13T10:52:26.215Z"
+}

@@ -432,10 +432,12 @@ body{
       <strong>首次使用</strong>：去 <a href="https://jsonbin.io/" target="_blank" style="color:var(--gold)">jsonbin.io</a> 邮箱注册 → 创建一个 Bin → 复制 Bin ID 和 Master Key 粘贴到下面。
     </p>
     <div style="display:flex;flex-direction:column;gap:10px;margin:14px 0">
-      <label style="font-size:12px;color:var(--muted)">Bin ID</label>
-      <input type="text" id="jsonbinBinInput" placeholder="例如 65a1234abcd5678ef9012345" style="padding:8px 10px;background:var(--card2);border:1px solid var(--bdr);color:var(--text);border-radius:6px">
-      <label style="font-size:12px;color:var(--muted)">Master Key</label>
-      <input type="password" id="jsonbinKeyInput" placeholder="$2b$10$..." style="padding:8px 10px;background:var(--card2);border:1px solid var(--bdr);color:var(--text);border-radius:6px">
+      <label style="font-size:12px;color:var(--muted)">Bin ID <span style="opacity:.5">(默认已填)</span></label>
+      <input type="text" id="jsonbinBinInput" placeholder="例如 6a2d8016f5f4af5e29ec2a66" style="padding:8px 10px;background:var(--card2);border:1px solid var(--bdr);color:var(--text);border-radius:6px">
+      <label style="font-size:12px;color:var(--muted)">Access Key <span style="opacity:.5">(只读，已预填默认)</span></label>
+      <input type="text" id="jsonbinReadKeyInput" placeholder="$2a$10$... 只读 key" style="padding:8px 10px;background:var(--card2);border:1px solid var(--bdr);color:var(--text);border-radius:6px">
+      <label style="font-size:12px;color:var(--muted)">Master Key <span style="opacity:.5">(仅管理员写入用,可不填)</span></label>
+      <input type="password" id="jsonbinKeyInput" placeholder="$2b$10$... 留空则只能读不能写" style="padding:8px 10px;background:var(--card2);border:1px solid var(--bdr);color:var(--text);border-radius:6px">
       <label style="font-size:12px;color:var(--muted)">轮询间隔（秒，最小 60）</label>
       <input type="number" id="jsonbinPollInput" placeholder="300" value="300" min="60" style="padding:8px 10px;background:var(--card2);border:1px solid var(--bdr);color:var(--text);border-radius:6px">
     </div>
@@ -723,8 +725,13 @@ const API_SERVER_URL = '';  // Render 已挂, 默认不用
 // 在 localStorage 中存: JSONBIN_BIN_ID + JSONBIN_MASTER_KEY
 // 所有设备共享同一对值即可同步
 const JSONBIN_API = 'https://api.jsonbin.io/v3/b';
-let jsonbinBinId = '';        // 从 localStorage 读取
-let jsonbinMasterKey = '';    // 从 localStorage 读取
+// 默认配置: Bin ID 和只读 Access Key 硬编码 (Access Key 只能 GET，安全性 OK)
+// Master Key 不硬编码,需要管理员在 UI 里输入 (写入操作才用)
+const JSONBIN_DEFAULT_BIN = '6a2d8016f5f4af5e29ec2a66';
+const JSONBIN_DEFAULT_READ_KEY = '$2a$10$Htgjeu92rse90o7hAgF4V.G7dneKS6l6ylY8xOF92YOqzRb/COAp2';
+let jsonbinBinId = JSONBIN_DEFAULT_BIN;       // 默认从硬编码开始
+let jsonbinReadKey = JSONBIN_DEFAULT_READ_KEY; // 只读 Key (GET 用)
+let jsonbinMasterKey = '';                      // Master Key 仅写入用 (用户输入后存 localStorage)
 // 自动检测可用的 API 端点
 let API_DATA = '';
 let cloudEnabled = false;
@@ -822,32 +829,37 @@ async function initApiEndpoint() {
 
 function loadJsonbinConfig() {
   try {
-    jsonbinBinId = localStorage.getItem('jsonbin_bin_id') || '';
+    // 优先用 localStorage (用户可能覆盖)；否则用硬编码默认
+    jsonbinBinId = localStorage.getItem('jsonbin_bin_id') || JSONBIN_DEFAULT_BIN;
+    jsonbinReadKey = localStorage.getItem('jsonbin_read_key') || JSONBIN_DEFAULT_READ_KEY;
     jsonbinMasterKey = localStorage.getItem('jsonbin_master_key') || '';
   } catch (e) {
-    jsonbinBinId = '';
+    jsonbinBinId = JSONBIN_DEFAULT_BIN;
+    jsonbinReadKey = JSONBIN_DEFAULT_READ_KEY;
     jsonbinMasterKey = '';
   }
-  return jsonbinBinId && jsonbinMasterKey;
+  return jsonbinBinId && jsonbinReadKey;  // 只需要 Bin + Read Key 就能 GET
 }
 
-function saveJsonbinConfig(binId, masterKey) {
+function saveJsonbinConfig(binId, readKey, masterKey) {
   jsonbinBinId = binId;
-  jsonbinMasterKey = masterKey;
+  jsonbinReadKey = readKey || JSONBIN_DEFAULT_READ_KEY;
+  jsonbinMasterKey = masterKey || '';
   try {
     localStorage.setItem('jsonbin_bin_id', binId);
-    localStorage.setItem('jsonbin_master_key', masterKey);
+    if (readKey) localStorage.setItem('jsonbin_read_key', readKey);
+    if (masterKey) localStorage.setItem('jsonbin_master_key', masterKey);
   } catch (e) {
     console.warn('[JSONBin] localStorage 写入失败:', e);
   }
 }
 
 async function jsonbinRead() {
-  if (!jsonbinBinId || !jsonbinMasterKey) return null;
+  if (!jsonbinBinId || !jsonbinReadKey) return null;
   try {
     const url = JSONBIN_API + '/' + jsonbinBinId + '/latest';
     const resp = await fetch(url, {
-      headers: { 'X-Master-Key': jsonbinMasterKey },
+      headers: { 'X-Access-Key': jsonbinReadKey },
       signal: AbortSignal.timeout(15000)
     });
     if (!resp.ok) {
@@ -902,7 +914,7 @@ async function tryJsonbin() {
   if (jsonbinChecked) return cloudEnabled;
   jsonbinChecked = true;
   if (!loadJsonbinConfig()) {
-    console.log('[JSONBin] 未配置 Bin ID/Master Key,跳过');
+    console.log('[JSONBin] 未配置 Bin ID/Read Key,跳过');
     return false;
   }
   const data = await jsonbinRead();
@@ -1486,16 +1498,18 @@ function showJsonbinConfig() {
   m.style.display = 'flex';
   // 预填已存值
   const binEl = document.getElementById('jsonbinBinInput');
+  const readEl = document.getElementById('jsonbinReadKeyInput');
   const keyEl = document.getElementById('jsonbinKeyInput');
   const pollEl = document.getElementById('jsonbinPollInput');
-  if (binEl) binEl.value = localStorage.getItem('jsonbin_bin_id') || '';
-  if (keyEl) keyEl.value = localStorage.getItem('jsonbin_master_key') || '';
+  if (binEl) binEl.value = jsonbinBinId || JSONBIN_DEFAULT_BIN;
+  if (readEl) readEl.value = jsonbinReadKey || JSONBIN_DEFAULT_READ_KEY;
+  if (keyEl) keyEl.value = jsonbinMasterKey || '';
   if (pollEl) {
     const cur = localStorage.getItem('jsonbin_poll_interval');
     pollEl.value = cur ? Math.max(60, parseInt(cur)/1000) : 300;
   }
-  setJsonbinStatus(jsonbinBinId && jsonbinMasterKey
-    ? '✅ 已配置,当前使用 JSONBin 同步' : '⚠️ 未配置');
+  setJsonbinStatus(jsonbinBinId && jsonbinReadKey
+    ? '✅ 已配置 (Bin + Read Key 就够读, Master Key 可选)' : '⚠️ 未配置');
 }
 
 function closeJsonbinConfig() {
@@ -1511,14 +1525,11 @@ function setJsonbinStatus(text, color) {
 }
 
 function saveJsonbinFromUI() {
-  const binId = (document.getElementById('jsonbinBinInput').value || '').trim();
+  const binId = (document.getElementById('jsonbinBinInput').value || '').trim() || JSONBIN_DEFAULT_BIN;
+  const readKey = (document.getElementById('jsonbinReadKeyInput').value || '').trim() || JSONBIN_DEFAULT_READ_KEY;
   const masterKey = (document.getElementById('jsonbinKeyInput').value || '').trim();
   const pollSec = Math.max(60, parseInt(document.getElementById('jsonbinPollInput').value || '300', 10));
-  if (!binId || !masterKey) {
-    setJsonbinStatus('❌ Bin ID 和 Master Key 都必须填', '#e74c3c');
-    return;
-  }
-  saveJsonbinConfig(binId, masterKey);
+  saveJsonbinConfig(binId, readKey, masterKey);
   localStorage.setItem('jsonbin_poll_interval', String(pollSec * 1000));
   setJsonbinStatus('✅ 已保存！正在拉取云端数据...', 'var(--gold)');
   // 重新尝试同步
@@ -1536,20 +1547,20 @@ function saveJsonbinFromUI() {
 }
 
 async function testJsonbin() {
-  const binId = (document.getElementById('jsonbinBinInput').value || '').trim();
-  const masterKey = (document.getElementById('jsonbinKeyInput').value || '').trim();
-  if (!binId || !masterKey) {
-    setJsonbinStatus('❌ 请先填写 Bin ID 和 Master Key', '#e74c3c');
+  const binId = (document.getElementById('jsonbinBinInput').value || '').trim() || JSONBIN_DEFAULT_BIN;
+  const readKey = (document.getElementById('jsonbinReadKeyInput').value || '').trim() || JSONBIN_DEFAULT_READ_KEY;
+  if (!binId || !readKey) {
+    setJsonbinStatus('❌ 请先填写 Bin ID 和 Access Key', '#e74c3c');
     return;
   }
   setJsonbinStatus('🔌 测试中...', 'var(--gold)');
   const savedBin = jsonbinBinId;
-  const savedKey = jsonbinMasterKey;
+  const savedRead = jsonbinReadKey;
   jsonbinBinId = binId;
-  jsonbinMasterKey = masterKey;
+  jsonbinReadKey = readKey;
   const data = await jsonbinRead();
   jsonbinBinId = savedBin;
-  jsonbinMasterKey = savedKey;
+  jsonbinReadKey = savedRead;
   if (data !== null) {
     setJsonbinStatus('✅ 连接成功! 成员数: ' + (data.members||[]).length, '#27ae60');
   } else {
