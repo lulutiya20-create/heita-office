@@ -1062,6 +1062,9 @@ async function loadAppAsync() {
               pushToJsonbin(d).then(ok => {
                 if (ok) console.log('[JSONBin 同步] 自动同步云端到 JSONBin 成功');
               });
+            } else if (jsonbinBinId && jsonbinReadKey) {
+              // 没填 Master Key 也要至少 GET 一次 (确保有最新数据)
+              console.log('[JSONBin 同步] 缺 Master Key,只读模式');
             }
             updateSyncStatus('synced');
             console.log('[同步] ✅ 已从云端获取 ' + cloudCount + ' 名成员');
@@ -1208,9 +1211,15 @@ async function pushToCloud(data, force = false) {
     console.warn('[JSONBin] 推送失败,继续尝试 /api/data');
   }
 
+  // 静态部署模式: cloudEnabled 永远 false, 不会再走 /api/data
   if (!cloudEnabled) {
     syncPending = false;
-    updateSyncStatus('synced');
+    if (jsonbinBinId && !jsonbinMasterKey) {
+      updateSyncStatus('error');
+      console.warn('[同步] ⚠️ 缺 Master Key,无法写入 JSONBin。请在 JSONBin 配置里填 Master Key');
+    } else {
+      updateSyncStatus('synced');
+    }
     return;
   }
 
