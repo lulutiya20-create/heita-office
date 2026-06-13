@@ -214,6 +214,66 @@ async function writeData(data) {
   return { fingerprint, updatedAt: now, mongo: mongoOk, file: fileOk };
 }
 
+// ===================== 调试：查看 Render 出口 IP =====================
+app.get('/api/myip', async (req, res) => {
+  // 试多个 IP 查询服务,看 Render 服务器对外的 IP
+  const results = {};
+  const https = require('https');
+  function fetchIp(name, url, host) {
+    return new Promise((resolve) => {
+      const opt = { hostname: host, port: 443, path: url, method: 'GET', timeout: 10000 };
+      const r = https.request(opt, (response) => {
+        let d = '';
+        response.on('data', c => d += c);
+        response.on('end', () => {
+          try { results[name] = JSON.parse(d); }
+          catch(e) { results[name] = d.substring(0, 100); }
+          resolve();
+        });
+      });
+      r.on('timeout', () => { results[name] = 'TIMEOUT'; r.destroy(); resolve(); });
+      r.on('error', e => { results[name] = e.code; resolve(); });
+      r.end();
+    });
+  }
+  await Promise.all([
+    fetchIp('ipify', '/', 'api.ipify.org'),
+    fetchIp('ifconfig', '/all.json', 'ifconfig.co')
+  ]);
+  res.json({
+    ips: results,
+    mongodb_uri_hostname: (() => {
+      try {
+        const u = new URL(MONGODB_URI);
+        return u.hostname;
+      } catch (e) {
+        return MONGODB_URI.split('@').pop().split('?')[0];
+      }
+    })(),
+    mongo_connected: useMongo,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// 解析 MongoDB SRV 记录看实际 IP
+app.get('/api/atlas-ips', async (req, res) => {
+  const dns = require('dns');
+  if (!MONGODB_URI) {
+    return res.json({ error: 'MONGODB_URI 未配置' });
+  }
+  let hostname;
+  try {
+    const u = new URL(MONGODB_URI);
+    hostname = u.hostname;
+  } catch (e) {
+    hostname = MONGODB_URI.split('@').pop().split('/')[0].split('?')[0];
+  }
+  res.json({
+    mongodb_uri: MONGODB_URI.replace(/:[^:@]+@/, ':***@'),
+    parsed_hostname: hostname
+  });
+});
+
 // ===================== API 路由 =====================
 
 app.get('/api/data', async (req, res) => {
