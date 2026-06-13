@@ -1,0 +1,62 @@
+// ===================== Koyeb 部署配置 =====================
+// 用途: 一键部署 Node.js + MongoDB Atlas 到 Koyeb
+// 用法: 复制此文件内容到 Koyeb 控制台 "Service Creation" 页
+//       或用 Koyeb CLI: koyeb service deploy koyeb.yaml
+
+name: heita-office
+type: web
+regions:
+  - fra  # Frankfurt 离中国大陆较近
+  # - sin  # Singapore 备选
+  # - was  # Washington DC
+
+# 端口配置: Koyeb 会自动分配 PORT 环境变量
+ports:
+  - port: 8000
+    protocol: http
+
+# 环境变量: 必须在 Koyeb Dashboard 配置
+# (不要把密码提交到 git, 用环境变量注入)
+env:
+  # ---- 必须配置的变量 ----
+  - key: MONGODB_URI
+    # 从 MongoDB Atlas Connect → Drivers → SRV 复制
+    # 格式: mongodb+srv://<user>:<pass>@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
+    # 密码里的特殊字符需要 URL 编码 (@ → %40, # → %23, 等)
+    scope: service
+    secret: true   # 标记为敏感信息
+  - key: DISABLE_MONGODB
+    value: ""
+    scope: service
+  # ---- 性能调优 (可选) ----
+  - key: NODE_ENV
+    value: production
+    scope: service
+  - key: POLL_INTERVAL_HINT
+    value: "60"
+    scope: service
+  # ---- MongoDB 数据库名 (与 Render 一致) ----
+  # 已硬编码在 server.js (DB_NAME = 'heita_office')
+
+# 健康检查: 1分钟超时, Koyeb 自动 ping
+healthchecks:
+  - type: http
+    path: /api/health
+    port: 8000
+    grace_period: 30s      # 启动后 30s 才检查
+    interval: 30s
+    timeout: 5s
+    max_unhealthy_count: 3
+
+# 部署策略
+deployment:
+  strategy: rolling
+  max_unavailable: 0
+
+# 实例规格 (Koyeb free: nano, 256MB)
+instance_type: nano
+
+# 自动扩缩 (免费层固定 1 个实例, 不用 scale)
+scaling:
+  min: 1
+  max: 1
