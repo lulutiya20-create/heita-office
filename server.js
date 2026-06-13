@@ -510,12 +510,27 @@ app.post('/api/sync-to-atlas', async (req, res) => {
   const ok = await tryConnectMongo();
   if (ok) {
     const local = readFromFile();
+    let writeOk = false;
     if (local) {
       // 等待后台写入完成,确保数据真的到 Atlas
-      await writeToMongoAsync(local);
+      // 用 ping 检测连接是否真活着,如果 ping 通才写
+      try {
+        if (mongoDb) {
+          await mongoDb.admin().ping();
+        }
+        await writeToMongoAsync(local);
+        // 写后再 ping 一次确认连接没掉
+        if (mongoDb) {
+          await mongoDb.admin().ping();
+          writeOk = true;
+        }
+      } catch (e) {
+        console.error('[sync-to-atlas] 写入失败:', e.message);
+        writeOk = false;
+      }
     }
     const fingerprint = local ? crypto.createHash('md5').update(JSON.stringify(local)).digest('hex') : '';
-    res.json({ success: true, message: '已同步到 Atlas', mongo: true, fingerprint });
+    res.json({ success: writeOk, message: writeOk ? '已同步到 Atlas' : '同步到 Atlas 失败', mongo: true, fingerprint });
   } else {
     res.status(500).json({ success: false, message: 'Atlas 连接失败,请检查 IP 白名单' });
   }
