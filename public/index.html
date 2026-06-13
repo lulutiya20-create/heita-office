@@ -1007,19 +1007,19 @@ function pushToCloud(data, force = false) {
   // 清理本地元数据，发送纯净数据
   const cleanData = cleanCloudMeta(data);
 
-  fetch(API_DATA, {
+  safeFetchJson(API_DATA, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ data: cleanData, fingerprint: fp, force: force ? true : undefined })
-  })
-  .then(r => r.json())
+    body: JSON.stringify({ data: cleanData, fingerprint: fp, force: force ? true : undefined }),
+    signal: AbortSignal.timeout(8000)
+  }, 2)
   .then(result => {
     if (result.success) {
       lastCloudFingerprint = result.fingerprint || '';
       updateSyncStatus('synced');
       syncPending = false;
     } else if (result.conflict) {
-      // 🔥 冲突检测：另一个设备已经修改了数据，需要智能合并
+      // 冲突检测：另一个设备已经修改了数据，需要智能合并
       console.warn('[同步] ⚠ 检测到数据冲突（另一设备已修改），正在合并...');
       resolveConflict(data);
     } else {
@@ -1038,9 +1038,7 @@ function pushToCloud(data, force = false) {
 // 智能冲突解决：拉取最新数据 → 合并本地修改 → 重新推送
 async function resolveConflict(localData) {
   try {
-    const resp = await fetch(API_DATA);
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const result = await resp.json();
+    const result = await safeFetchJson(API_DATA, { signal: AbortSignal.timeout(8000) }, 3);
     if (!result.success || !result.data) throw new Error('无效响应');
 
     const serverData = cleanCloudMeta(result.data);
@@ -1048,12 +1046,12 @@ async function resolveConflict(localData) {
     const mergedClean = cleanCloudMeta(merged);
 
     // 用新的指纹强制推送（避免服务端重置后无限冲突循环）
-    const pushResp = await fetch(API_DATA, {
+    const pushResult = await safeFetchJson(API_DATA, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data: mergedClean, fingerprint: result.fingerprint || '', force: true })
-    });
-    const pushResult = await pushResp.json();
+      body: JSON.stringify({ data: mergedClean, fingerprint: result.fingerprint || '', force: true }),
+      signal: AbortSignal.timeout(8000)
+    }, 2);
 
     if (pushResult.success) {
       lastCloudFingerprint = pushResult.fingerprint || '';
@@ -1161,8 +1159,7 @@ function mergeData(server, local) {
 
 function forceCloudRefresh() {
   updateSyncStatus('syncing');
-  fetch(API_DATA)
-    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  safeFetchJson(API_DATA, { signal: AbortSignal.timeout(8000) }, 3)
     .then(result => {
       if (result.success && result.data && result.data.members) {
         lastCloudFingerprint = result.fingerprint || '';
@@ -1197,10 +1194,8 @@ function startPolling() {
   pollTimer = setInterval(async () => {
     if (syncPending) return;
     try {
-      const resp = await fetch(API_DATA);
-      if (!resp.ok) return;
-      const result = await resp.json();
-      if (!result.success || !result.data) return;
+      const result = await safeFetchJson(API_DATA, { signal: AbortSignal.timeout(8000) }, 2);
+      if (!result || !result.success || !result.data) return;
       // 比较指纹，只在真的有变化时才更新
       if (result.fingerprint && result.fingerprint !== lastCloudFingerprint) {
         if (!result.data.members || result.data.members.length === 0) return; // 无效数据
