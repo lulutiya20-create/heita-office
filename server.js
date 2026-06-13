@@ -2,6 +2,17 @@ const express = require('express');
 const path = require('path');
 const crypto = require('crypto');
 const fs = require('fs');
+const dns = require('dns');
+
+// 强制使用 Google/Cloudflare DNS（解决 Render 自带 DNS 解析 Atlas 失败的问题）
+// Render 的 DNS 解析不了 cluster0.xc6yvnr.mongodb.net 但能解析具体 shard 域名
+// 用 8.8.8.8 / 1.1.1.1 强制走公共 DNS
+try {
+  dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
+  console.log('[DNS] 已强制使用 8.8.8.8 / 1.1.1.1');
+} catch (e) {
+  console.log('[DNS] 设置失败,使用系统默认:', e.message);
+}
 
 // ===================== MongoDB 配置 =====================
 const MONGODB_URI = process.env.MONGODB_URI || '';
