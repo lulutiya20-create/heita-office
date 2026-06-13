@@ -92,25 +92,20 @@ async function tryConnectMongo() {
       mongoDb = null;
       useMongo = false;  // 关键: 关 client 时同步 useMongo
     }
-    // 用副本集名 + 多 host,让驱动自动选 primary (避免 "not primary" 错误)
-    // Atlas free cluster 的 replica set 名通常是 Cluster0-shard-0 (M0) 或类似
-    // 三个 shard host 都列在 URI 里,驱动会从 hello/ismaster 自动发现拓扑
-    // 不再用 directConnection=true (那会强制单节点, 命中 secondary 就写失败)
+    // 不指定 replicaSet, 不指定 directConnection — 走默认行为
+    // 命中 secondary 时 retryWrites=true 会自动 retry 到 primary
     let directUri = MONGODB_URI;
-    // 去掉 SRV 模式下可能没有的 ?directConnection= 参数
+    // 去掉任何 directConnection / replicaSet 参数
     directUri = directUri.replace(/[?&]directConnection=[^&]*/g, '');
-    // 强制加 replicaSet 参数
-    if (!/[?&]replicaSet=/.test(directUri)) {
-      directUri += (directUri.includes('?') ? '&' : '?') + 'replicaSet=Cluster0-shard-0';
-    }
+    directUri = directUri.replace(/[?&]replicaSet=[^&]*/g, '');
     console.log('[MongoDB] directUri=' + directUri.replace(/:[^:@]+@/, ':***@'));
     mongoClient = new MongoClient(directUri, {
       connectTimeoutMS: 15000,
-      serverSelectionTimeoutMS: 30000,  // 副本集发现需要更长时间
-      socketTimeoutMS: 45000,
+      serverSelectionTimeoutMS: 15000,
+      socketTimeoutMS: 30000,
       heartbeatFrequencyMS: 10000,
-      minPoolSize: 2,
-      maxPoolSize: 10,
+      minPoolSize: 1,
+      maxPoolSize: 5,
       waitQueueTimeoutMS: 5000,
       retryWrites: true
     });
