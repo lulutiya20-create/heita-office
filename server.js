@@ -120,7 +120,7 @@ async function tryConnectMongo() {
     console.error('❌ MongoDB 连接失败 (' + ms + 'ms):', errMsg);
     console.error('   错误码:', e.code, '| codeName:', e.codeName);
     console.error('   完整错误:', JSON.stringify({name: e.name, message: e.message, code: e.code, codeName: e.codeName, topology: e.topologyDescription && e.topologyDescription.servers}, null, 2).substring(0, 500));
-    mongoDebugLog.push({ ok: false, time: new Date().toISOString(), ms, error: errMsg, code: e.code, codeName: e.codeName, dns: dnsInfo, hostname });
+    mongoDebugLog.push({ ok: false, time: new Date().toISOString(), ms, error: errMsg, code: e.code, codeName: e.codeName, dns: dnsInfo, hostname: hostnames.join(',') });
     if (mongoDebugLog.length > 10) mongoDebugLog = mongoDebugLog.slice(-10);
     useMongo = false;
     // 强制关闭 client 释放连接
