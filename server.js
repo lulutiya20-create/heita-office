@@ -296,12 +296,24 @@ async function writeData(data) {
   fileOk = writeToFile(savedData);
 
   if (useMongo && mongoDb) {
-    // 2) Atlas 写入改为后台异步，不阻塞 PUT 响应
-    //    启动后台写入（不等它完成）— 让 writeToMongoAsync 自己管理超时
-    mongoOk = true;  // 乐观: 连接可用就标记 ok,后台失败不会回退 PUT 响应
-    writeToMongoAsync(data).catch((e) => {
-      console.error('[MongoDB] 异步写入异常:', e.message);
-    });
+    // 2) Atlas 写入: 同步等待 (最多 25s) - 这是单点写入,Atlas 延迟通常 < 5s
+    //    保证 PUT 返回时数据已在 Atlas
+    try {
+      const wp = mongoDb.collection(COLLECTION_NAME).updateOne(
+        { _id: 'main' },
+        { $set: { data, _fingerprint: fingerprint, _updatedAt: now }, $setOnInsert: { _id: 'main' } },
+        { upsert: true, maxTimeMS: 25000 }
+      );
+      await Promise.race([
+        wp,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Atlas 写入超时 25s')), 25000))
+      ]);
+      mongoOk = true;
+      console.log('[MongoDB] 同步写入成功');
+    } catch (e) {
+      console.error('[MongoDB] 同步写入失败,本地文件已保存:', e.message);
+      // mongoOk 保持 false,等下次重连
+    }
   }
 
   if (!mongoOk && MONGODB_URI && !mongoRetrying) {
