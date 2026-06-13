@@ -265,12 +265,18 @@ function withTimeout(promise, ms, fallback) {
 }
 
 async function readData() {
-  if (useMongo) {
-    const d = await withTimeout(readFromMongo(), 10000, null);
-    if (d && d.members) {
-      return d;
+  if (useMongo && mongoDb) {
+    try {
+      const d = await withTimeout(readFromMongo(), 6000, null);
+      if (d && d.members) {
+        return d;
+      }
+      console.log('[数据] Atlas 无数据,回退本地');
+    } catch (e) {
+      console.error('[数据] Atlas 读失败,回退本地:', e.message);
+      useMongo = false;
+      mongoDb = null;
     }
-    console.log('[数据] Atlas 无数据或超时,回退本地');
   }
   if (!useMongo && MONGODB_URI && !mongoRetrying) {
     tryConnectMongo().catch(() => {});
