@@ -84,10 +84,13 @@ async function tryConnectMongo() {
     console.log('[MongoDB] 尝试连接 Atlas... hostnames=' + hostnames.length);
     console.log('[MongoDB] ' + dnsInfo);
     const { MongoClient } = require('mongodb');
+    // 关键修复: 关旧 client 时, 先把所有 state 一起清空
+    // 否则会留下 useMongo=true 但 mongoClient=null 的不一致状态
     if (mongoClient) {
       try { await mongoClient.close(); } catch (e) {}
       mongoClient = null;
       mongoDb = null;
+      useMongo = false;  // 关键: 关 client 时同步 useMongo
     }
     // 用副本集名 + 多 host,让驱动自动选 primary (避免 "not primary" 错误)
     // Atlas free cluster 的 replica set 名通常是 Cluster0-shard-0 (M0) 或类似
