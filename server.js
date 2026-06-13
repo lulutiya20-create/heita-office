@@ -100,10 +100,12 @@ async function tryConnectMongo() {
     console.log('[MongoDB] 调用 client.connect() ...');
     await mongoClient.connect();
     console.log('[MongoDB] client.connect() 完成,耗时 ' + (Date.now() - t0) + 'ms');
-    // 重要: client.connect() 返回不等于真正连上,需要等 ready
-    console.log('[MongoDB] 等待 topology ready...');
-    await mongoClient.db('admin').command({ ping: 1 }, { maxTimeMS: 8000 });
-    console.log('[MongoDB] ping 成功!');
+    // 关键: mongodb driver 在 connect 后会立即发起 replica set 探测
+    // 直接用 listDatabases 触发完整的 topology 协商
+    console.log('[MongoDB] 触发 listDatabases 完成 topology 协商...');
+    const adminDb = mongoClient.db('admin');
+    const dbs = await adminDb.admin().listDatabases({ maxTimeMS: 10000 });
+    console.log('[MongoDB] 协商完成,找到 ' + dbs.databases.length + ' 个数据库');
     mongoDb = mongoClient.db(DB_NAME);
     await mongoDb.collection(COLLECTION_NAME).findOne({ _id: 'main' }, { maxTimeMS: 8000 });
     useMongo = true;
