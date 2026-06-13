@@ -54,26 +54,28 @@ async function tryConnectMongo() {
     return false;
   }
   const t0 = Date.now();
-  // 先 DNS 解析看是否能解析出来
-  let hostname = '';
+  // 用正则从 URI 提取 hostname (因为 mongodb:// 多个 host:port 不是标准 URL 格式)
+  let hostnames = [];
   try {
-    const u = new URL(MONGODB_URI);
-    hostname = u.hostname;
+    const afterAt = MONGODB_URI.split('@').pop();
+    const beforeQuery = afterAt.split('?')[0];
+    const beforeSlash = beforeQuery.split('/')[0];
+    hostnames = beforeSlash.split(',');
   } catch (e) {
-    hostname = MONGODB_URI.split('@').pop().split('/')[0].split('?')[0];
+    console.log('[MongoDB] URI 解析失败:', e.message);
   }
   const dns = require('dns');
   let dnsInfo = '';
   try {
-    const dnsRes = await new Promise((resolve, reject) => {
-      dns.lookup(hostname, { all: true }, (err, addrs) => err ? reject(err) : resolve(addrs));
-    });
-    dnsInfo = 'DNS OK: ' + dnsRes.map(a => a.address).join(',');
+    const checks = await Promise.all(hostnames.map(h => new Promise((resolve) => {
+      dns.lookup(h.split(':')[0], (err, addr) => resolve(h + '->' + (err ? err.code : addr)));
+    })));
+    dnsInfo = 'DNS: ' + checks.join(', ');
   } catch (e) {
     dnsInfo = 'DNS FAIL: ' + e.code + ' ' + e.message;
   }
   try {
-    console.log('[MongoDB] 尝试连接 Atlas... URI hostname=' + hostname);
+    console.log('[MongoDB] 尝试连接 Atlas... hostnames=' + hostnames.length);
     console.log('[MongoDB] ' + dnsInfo);
     const { MongoClient } = require('mongodb');
     if (mongoClient) {
