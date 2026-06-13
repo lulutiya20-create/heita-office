@@ -1651,6 +1651,11 @@ function exportData() {
 function forcePushToCloud(){
   if(!currentUser||currentUser.type==='normal'){toast('需要管理员权限');return;}
   if(!cloudEnabled){toast('云服务器未连接');return;}
+  if(!jsonbinMasterKey && (!jsonbinBinId || !jsonbinReadKey)){
+    toast('⚠️ 缺少 Master Key,无法写入云端。请先在"☁️ JSONBin 配置"里填入 Master Key');
+    showJsonbinConfig();
+    return;
+  }
   if(!confirm('☁️ 强制同步到云端\n\n将用当前本地数据覆盖云端所有数据。\n确定继续？'))return;
   toast('正在强制同步到云端...');
   pushToCloud(app, true);
