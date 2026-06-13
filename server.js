@@ -393,6 +393,13 @@ app.get('/api/mongo-debug', (req, res) => {
         return u.username;
       } catch (e) { return '?'; }
     })(),
+    mongodb_uri_length: MONGODB_URI.length,
+    mongodb_uri_password_length: (() => {
+      try {
+        const u = new URL(MONGODB_URI);
+        return u.password ? u.password.length : 0;
+      } catch (e) { return 0; }
+    })(),
     recent_attempts: mongoDebugLog,
     timestamp: new Date().toISOString()
   });
