@@ -198,7 +198,7 @@ async function readFromMongo() {
     return doc ? doc.data : null;
   } catch (e) {
     console.error('[MongoDB] 读取失败:', e.message);
-    useMongo = false;
+    // 不重置 useMongo, 写入路径会自己处理
     return null;
   }
 }
@@ -275,8 +275,6 @@ async function readData() {
       console.log('[数据] Atlas 无数据,回退本地');
     } catch (e) {
       console.error('[数据] Atlas 读失败,回退本地:', e.message);
-      useMongo = false;
-      mongoDb = null;
     }
   }
   if (!useMongo && MONGODB_URI && !mongoRetrying) {
