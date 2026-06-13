@@ -111,12 +111,22 @@ async function tryConnectMongo() {
       connectTimeoutMS: 15000,
       serverSelectionTimeoutMS: 15000,
       socketTimeoutMS: 20000,
-      retryWrites: true
+      // 关键修复: 保持心跳保活,避免 Atlas M0 空闲断开连接
+      heartbeatFrequencyMS: 10000,
+      minPoolSize: 2,
+      maxPoolSize: 10,
+      waitQueueTimeoutMS: 5000,
+      retryWrites: true,
+      // directConnection URI 模式下 disable 掉 SRV poller
+      directConnection: true
     });
     console.log('[MongoDB] 调用 client.connect() ...');
     await mongoClient.connect();
     console.log('[MongoDB] client.connect() 完成,耗时 ' + (Date.now() - t0) + 'ms');
     mongoDb = mongoClient.db(DB_NAME);
+    // ping admin 强制等待 topology ready,避免 next op 时 topology closed
+    await mongoDb.admin().ping();
+    console.log('[MongoDB] admin.ping() OK');
     await mongoDb.collection(COLLECTION_NAME).findOne({ _id: 'main' }, { maxTimeMS: 8000 });
     useMongo = true;
     console.log('✅ MongoDB Atlas 连接成功！');
@@ -279,7 +289,7 @@ async function writeData(data) {
   // 1) 本地文件立即写入（快，永远成功）
   fileOk = writeToFile(savedData);
 
-  if (useMongo) {
+  if (useMongo && mongoDb) {
     // 2) Atlas 写入改为后台异步，不阻塞 PUT 响应
     //    返回前给一个"kick-off"短超时（仅检测连接是否还活着）
     try {
