@@ -89,11 +89,23 @@ async function tryConnectMongo() {
       mongoDb = null;
     }
     // 使用 directConnection 模式 - 只连第一个 shard,避免 replicaSet 协商卡住
+    // 注意: query string 里加 directConnection=true 要带引号
     const firstHost = hostnames[0];
-    const directUri = MONGODB_URI.replace(
-      /@(ac-q5xfbdw-shard-00-[0-9]+\.xc6yvnr\.mongodb\.net:[0-9]+,)*(ac-q5xfbdw-shard-00-[0-9]+\.xc6yvnr\.mongodb\.net:[0-9]+)\/?/,
-      '@' + firstHost + '/?directConnection=true'
-    );
+    let directUri = MONGODB_URI;
+    if (firstHost) {
+      directUri = MONGODB_URI.replace(
+        /@(ac-q5xfbdw-shard-00-[0-9]+\.xc6yvnr\.mongodb\.net:[0-9]+,)*(ac-q5xfbdw-shard-00-[0-9]+\.xc6yvnr\.mongodb\.net:[0-9]+)\/?/,
+        '@' + firstHost + '/'
+      );
+      // 在 query string 里加 directConnection=true (用字符串值)
+      if (directUri.includes('?')) {
+        if (!directUri.includes('directConnection=')) {
+          directUri += '&directConnection=true';
+        }
+      } else {
+        directUri += '?directConnection=true';
+      }
+    }
     console.log('[MongoDB] directUri=' + directUri.replace(/:[^:@]+@/, ':***@'));
     mongoClient = new MongoClient(directUri, {
       connectTimeoutMS: 15000,
