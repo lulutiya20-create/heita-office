@@ -385,12 +385,22 @@ app.get('/api/atlas-ips', async (req, res) => {
 // ===================== API 路由 =====================
 
 app.get('/api/data', async (req, res) => {
-  const data = await readData();
-  if (data) {
-    const fingerprint = crypto.createHash('md5').update(JSON.stringify(data)).digest('hex');
-    res.json({ success: true, data, fingerprint, updatedAt: data._updatedAt || null, storage: useMongo ? 'mongodb' : 'file' });
-  } else {
-    res.json({ success: true, data: null, fingerprint: '', storage: useMongo ? 'mongodb' : 'file', message: '云端暂无数据' });
+  try {
+    const data = await withTimeout(readData(), 8000, null);
+    if (data) {
+      const fingerprint = crypto.createHash('md5').update(JSON.stringify(data)).digest('hex');
+      res.json({ success: true, data, fingerprint, updatedAt: data._updatedAt || null, storage: useMongo ? 'mongodb' : 'file' });
+    } else {
+      res.json({ success: true, data: null, fingerprint: '', storage: useMongo ? 'mongodb' : 'file', message: '云端暂无数据' });
+    }
+  } catch (e) {
+    console.error('[GET] 超时/异常,返回本地文件:', e.message);
+    const data = readFromFile();
+    if (data) {
+      res.json({ success: true, data, fingerprint: data._fingerprint || '', updatedAt: data._updatedAt || null, storage: 'file-fallback' });
+    } else {
+      res.status(500).json({ success: false, message: '读取失败' });
+    }
   }
 });
 
