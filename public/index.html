@@ -400,6 +400,7 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
     <span></span><span></span><span></span>
   </button>
   <div class="header-actions">
+    <span style="font-size:12px;padding:3px 10px;border-radius:12px;cursor:pointer;font-weight:600" id="quotaBadge" title="本月 JSONBin 额度使用情况" onclick="showSyncMenu()">📊 --/10000</span>
     <span style="font-size:14px;cursor:pointer" id="syncBadge" title="云端同步状态" onclick="showSyncMenu()">☁</span>
     <button class="btn btn-sync btn-sm" onclick="showSyncMenu()" title="数据同步">📤 同步</button>
     <!-- 未登录状态 -->
@@ -456,8 +457,9 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
     <div style="background:rgba(77,126,255,.08);border:1px solid var(--crystal3);border-radius:6px;padding:10px;font-size:11px;color:var(--muted);line-height:1.6;margin:8px 0">
       <strong style="color:var(--crystal2)">💡 关于请求额度</strong><br>
       · 自动同步：30 分钟一次（节省额度）<br>
-      · 手动拉取云端：<strong>每次都消耗 1 次请求</strong>，日常无需频繁操作<br>
-      · 免费层：10,000 次/月（30 分钟间隔 ≈ 1,440 次/设备/月）
+      · 手动拉取云端 / 同步到云端：<strong>每次都消耗 1 次请求</strong>，日常无需频繁操作<br>
+      · 免费层：10,000 次/月<br>
+      · <strong>当前本月已用</strong>：<span id="quotaCurrentReadout" style="color:var(--gold)">--</span>
     </div>
     <div id="jsonbinStatus" style="font-size:12px;color:var(--muted);min-height:18px"></div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap">
@@ -853,6 +855,59 @@ let cloudChecked = false;
 let syncPending = false;
 let lastCloudFingerprint = '';
 let jsonbinChecked = false;
+
+// JSONBin 额度统计 (本月已用 GET/PUT 次数)
+const JSONBIN_MONTHLY_LIMIT = 10000;  // 免费层 10K/月
+const QUOTA_KEY = 'jsonbin_quota_v1';
+function loadQuota() {
+  try {
+    const raw = localStorage.getItem(QUOTA_KEY);
+    if (!raw) return { month: currentMonthKey(), read: 0, write: 0, lastReset: Date.now() };
+    const q = JSON.parse(raw);
+    // 跨月自动重置
+    if (q.month !== currentMonthKey()) {
+      return { month: currentMonthKey(), read: 0, write: 0, lastReset: Date.now() };
+    }
+    return q;
+  } catch (e) {
+    return { month: currentMonthKey(), read: 0, write: 0, lastReset: Date.now() };
+  }
+}
+function saveQuota(q) {
+  try { localStorage.setItem(QUOTA_KEY, JSON.stringify(q)); } catch(e) {}
+}
+function currentMonthKey() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+function quotaUsed() {
+  const q = loadQuota();
+  return q.read + q.write;
+}
+function quotaRemaining() {
+  return Math.max(0, JSONBIN_MONTHLY_LIMIT - quotaUsed());
+}
+function quotaPct() {
+  return Math.min(100, (quotaUsed() / JSONBIN_MONTHLY_LIMIT) * 100);
+}
+function incQuotaRead() {
+  const q = loadQuota();
+  q.read++;
+  saveQuota(q);
+  return q;
+}
+function incQuotaWrite() {
+  const q = loadQuota();
+  q.write++;
+  saveQuota(q);
+  return q;
+}
+function quotaSummary() {
+  const q = loadQuota();
+  const used = q.read + q.write;
+  const remain = Math.max(0, JSONBIN_MONTHLY_LIMIT - used);
+  return `剩余 ${remain.toLocaleString()}/${JSONBIN_MONTHLY_LIMIT.toLocaleString()} (读 ${q.read} / 写 ${q.write})`;
+}
 let pollTimer = null;
 // 轮询间隔固定 1800 秒 (30 分钟) - 节省 JSONBin 免费额度 (10K 请求/月)
 // 1800s × 24h × 30d = 1440 次/设备/月 (理论值)
@@ -964,6 +1019,8 @@ async function jsonbinRead() {
       return null;
     }
     const json = await resp.json();
+    incQuotaRead();  // 每次成功 GET 消耗 1 次
+    refreshQuotaBadge();
     // jsonbin 返回: { record: <user data>, metadata: {...} }
     return json.record || null;
   } catch (e) {
@@ -989,6 +1046,8 @@ async function jsonbinWrite(data) {
       console.warn('[JSONBin] PUT 失败:', resp.status);
       return false;
     }
+    incQuotaWrite();  // 每次成功 PUT 消耗 1 次
+    refreshQuotaBadge();
     return true;
   } catch (e) {
     console.warn('[JSONBin] PUT 异常:', e.message);
@@ -1010,6 +1069,8 @@ function jsonbinFingerprint(data) {
 async function tryJsonbin() {
   if (jsonbinChecked) return cloudEnabled;
   jsonbinChecked = true;
+  // 刷新 Header 角标 (即使读失败也要显示本地统计的额度)
+  refreshQuotaBadge();
   if (!loadJsonbinConfig()) {
     console.log('[JSONBin] 未配置 Bin ID/Read Key,跳过');
     return false;
@@ -1288,6 +1349,7 @@ const DEFAULTS = {
 };
 
 let app = loadApp();
+refreshQuotaBadge();  // 页面加载时立即刷新 Header 额度角标
 // 数据迁移：为旧成员添加 password/isAdmin 字段
 let migrated=false;
 if(app.members){app.members.forEach(m=>{if(typeof m.password==='undefined'){m.password='abc123';migrated=true;}if(typeof m.isAdmin==='undefined'){m.isAdmin=false;migrated=true;}});}
@@ -1470,6 +1532,7 @@ async function loadAppAsync() {
     });
   }
   updateSyncStatus('synced');
+  refreshQuotaBadge();
   return d;
 }
 
@@ -1559,6 +1622,8 @@ async function pushToCloud(data, force = false) {
       updateSyncStatus('synced');
       syncPending = false;
       console.log('[JSONBin 同步] 推送成功');
+      // 写入后只在状态条提示, 不打扰 (推送频繁会刷屏)
+      updateSyncStatusWithQuota('synced', `已同步 · ${quotaSummary()}`);
       return;
     }
     console.warn('[JSONBin] 推送失败,继续尝试 /api/data');
@@ -1755,7 +1820,7 @@ async function forceCloudRefresh() {
         updateSyncStatus('synced');
         refreshAll();
         if (currentPage === '/') navigate('/'); else navigate(currentPage);
-        toast('✅ 已从 JSONBin 拉取最新数据 (' + (app.members||[]).length + ' 名成员)');
+        toast(`✅ 已拉取 ${app.members.length} 成员 · ${quotaSummary()}`);
         return;
       } else {
         updateSyncStatus('error');
@@ -1894,6 +1959,14 @@ function showJsonbinConfig() {
   if (keyEl) keyEl.value = jsonbinMasterKey || '';
   setJsonbinStatus(jsonbinMasterKey
     ? '✅ 已配置 Master Key - 具备写入权限' : '⚠️ 未配置 Master Key - 只能读不能写');
+  // 刷新本月额度显示
+  const readout = document.getElementById('quotaCurrentReadout');
+  if (readout) {
+    const q = loadQuota();
+    const used = q.read + q.write;
+    const remain = Math.max(0, JSONBIN_MONTHLY_LIMIT - used);
+    readout.textContent = `${used} 次（读 ${q.read} / 写 ${q.write}）· 剩余 ${remain.toLocaleString()}/${JSONBIN_MONTHLY_LIMIT.toLocaleString()}`;
+  }
 }
 
 function closeJsonbinConfig() {
@@ -2295,18 +2368,21 @@ async function uploadMemberAvatar() {
 
 let syncStatusTimer = null;
 function updateSyncStatus(status) {
+  updateSyncStatusWithQuota(status, null);
+}
+function updateSyncStatusWithQuota(status, customText) {
   const badge = document.getElementById('syncBadge');
   if (!badge) return;
   if (status === 'syncing') {
     badge.textContent = '⟳ 同步中';
     badge.style.color = 'var(--gold)';
   } else if (status === 'synced') {
-    badge.textContent = '☁ 已同步';
+    badge.textContent = customText || '☁ 已同步';
     badge.style.color = '#27ae60';
     if (syncStatusTimer) clearTimeout(syncStatusTimer);
     syncStatusTimer = setTimeout(() => { badge.textContent = '☁'; badge.style.color = 'var(--gold)'; }, 3000);
   } else if (status === 'error') {
-    badge.textContent = '⚠ 连接失败';
+    badge.textContent = customText || '⚠ 连接失败';
     badge.style.color = 'var(--red2)';
     if (syncStatusTimer) clearTimeout(syncStatusTimer);
     syncStatusTimer = setTimeout(() => { badge.textContent = '☁'; badge.style.color = 'var(--gold)'; }, 5000);
@@ -2314,6 +2390,29 @@ function updateSyncStatus(status) {
     badge.textContent = '💻 离线模式';
     badge.style.color = '#8888aa';
     badge.title = '未连接云服务器，数据仅保存在本设备';
+  }
+  // 同步刷新额度角标
+  refreshQuotaBadge();
+}
+
+// 持续显示在 Header 右侧的额度角标 (绿色/黄/红)
+function refreshQuotaBadge() {
+  const el = document.getElementById('quotaBadge');
+  if (!el) return;
+  const remain = quotaRemaining();
+  const used = quotaUsed();
+  const pct = quotaPct();
+  el.textContent = `📊 ${remain.toLocaleString()}/${JSONBIN_MONTHLY_LIMIT.toLocaleString()}`;
+  el.title = `本月已用 ${used} 次 (读/写) · 剩余 ${remain.toLocaleString()} 次 (${(100-pct).toFixed(1)}%)`;
+  if (pct >= 90) {
+    el.style.color = 'var(--red2)';
+    el.style.background = 'rgba(231,76,60,.12)';
+  } else if (pct >= 70) {
+    el.style.color = 'var(--gold)';
+    el.style.background = 'rgba(212,167,116,.12)';
+  } else {
+    el.style.color = 'var(--crystal2)';
+    el.style.background = 'rgba(77,126,255,.12)';
   }
 }
 
