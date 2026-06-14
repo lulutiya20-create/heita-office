@@ -1112,9 +1112,10 @@ async function githubUploadImage(file, path, commitMsg) {
   const result = await resp.json();
   // download_url 是 raw.githubusercontent.com (国内访问较慢)
   // 改用 jsDelivr CDN: 国内访问快, 全球有 CDN 加速
-  const jsDelivrUrl = result.content.download_url
-    .replace('https://raw.githubusercontent.com/', 'https://cdn.jsdelivr.net/gh/')
-    .replace(/\/(main|master)\//, '/@');
+  const jsDelivrUrl = result.content.download_url.replace(
+    /^https:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\//,
+    'https://cdn.jsdelivr.net/gh/$1/$2@$3/'
+  );
   return {
     url: jsDelivrUrl,                          // 优先用 jsDelivr (国内快)
     rawUrl: result.content.download_url,       // 保留 raw URL 备份
@@ -1322,9 +1323,12 @@ function toFastCdn(url) {
   if (!url || typeof url !== 'string') return url;
   if (url.startsWith('data:')) return url;  // base64 内嵌不处理
   if (url.includes('raw.githubusercontent.com/')) {
-    return url
-      .replace('https://raw.githubusercontent.com/', 'https://cdn.jsdelivr.net/gh/')
-      .replace(/\/(main|master)\//, '/@');
+    // raw.githubusercontent.com/<user>/<repo>/<branch>/<path>
+    // cdn.jsdelivr.net/gh/<user>/<repo>@<branch>/<path>
+    return url.replace(
+      /^https:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\//,
+      'https://cdn.jsdelivr.net/gh/$1/$2@$3/'
+    );
   }
   return url;
 }
