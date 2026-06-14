@@ -453,6 +453,12 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
       <label style="font-size:12px;color:var(--muted)">Master Key <span style="opacity:.5">(仅管理员写入用)</span></label>
       <input type="password" id="jsonbinKeyInput" placeholder="$2b$10$... 留空则只能读不能写" style="padding:8px 10px;background:var(--card2);border:1px solid var(--bdr);color:var(--text);border-radius:6px">
     </div>
+    <div style="background:rgba(77,126,255,.08);border:1px solid var(--crystal3);border-radius:6px;padding:10px;font-size:11px;color:var(--muted);line-height:1.6;margin:8px 0">
+      <strong style="color:var(--crystal2)">💡 关于请求额度</strong><br>
+      · 自动同步：30 分钟一次（节省额度）<br>
+      · 手动拉取云端：<strong>每次都消耗 1 次请求</strong>，日常无需频繁操作<br>
+      · 免费层：10,000 次/月（30 分钟间隔 ≈ 1,440 次/设备/月）
+    </div>
     <div id="jsonbinStatus" style="font-size:12px;color:var(--muted);min-height:18px"></div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap">
       <button class="btn" onclick="testJsonbin()" style="background:var(--card2);color:var(--text)">🔌 测试连接</button>
@@ -466,16 +472,18 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
 <!-- 图片管理弹窗 (GitHub 图床) -->
 <div id="imageManagerModal" class="overlay" style="display:none">
   <div class="modal" style="max-width:880px;width:92vw;padding:24px;max-height:90vh;overflow:auto">
-    <h3 style="margin:0 0 12px;color:var(--gold)">🖼️ 图片管理 (GitHub 图床)</h3>
+    <h3 style="margin:0 0 8px;color:var(--gold)">🖼️ 图片管理</h3>
     <p style="font-size:12px;color:var(--muted);line-height:1.6;margin:0 0 12px">
-      上传图片到 GitHub 仓库，URL 永久有效。<br>
-      <strong>🔒 重要</strong>：图片以<strong>原始分辨率</strong>上传（4K 上传后仍是 4K），网页用 CSS 缩放显示。<br>
-      <strong>Token</strong>：只对 <code>heita-office-images</code> 仓库有写权限，不会污染代码仓库。
+      上传图片到 GitHub 仓库 <code>heita-office-images</code>，URL 永久有效。<br>
+      图片以<strong>原始分辨率</strong>上传（4K 上传后仍是 4K），网页用 CSS 缩放显示。
     </p>
-    <div style="display:flex;flex-direction:column;gap:10px;margin:8px 0 12px">
-      <label style="font-size:12px;color:var(--muted)">GitHub Token (Personal Access Token)</label>
-      <input type="password" id="ghTokenInput" placeholder="github_pat_11..." style="padding:8px 10px;background:var(--card2);border:1px solid var(--bdr);color:var(--text);border-radius:6px;font-family:monospace;font-size:12px">
-      <div style="display:flex;gap:6px;align-items:center">
+    <div style="background:linear-gradient(180deg,var(--card) 0%,var(--bg2) 100%);border:1px solid var(--bdr);border-radius:8px;padding:14px;margin:8px 0 14px">
+      <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">
+        🔐 GitHub Token (图片导入权限)
+        <span style="opacity:.6"> · 只对 heita-office-images 仓库有写权限</span>
+      </label>
+      <input type="password" id="ghTokenInput" placeholder="github_pat_11..." style="padding:8px 10px;background:var(--card2);border:1px solid var(--bdr);color:var(--text);border-radius:6px;font-family:monospace;font-size:12px;width:100%;box-sizing:border-box">
+      <div style="display:flex;gap:6px;align-items:center;margin-top:8px;flex-wrap:wrap">
         <button class="btn btn-sm" onclick="testGithubToken()" style="background:var(--card2);color:var(--text)">🔌 测试 Token</button>
         <span id="ghTestResult" style="font-size:12px;color:var(--muted)"></span>
       </div>
@@ -846,15 +854,16 @@ let syncPending = false;
 let lastCloudFingerprint = '';
 let jsonbinChecked = false;
 let pollTimer = null;
-// 轮询间隔固定 600 秒 (10 分钟) - 节省 JSONBin 免费额度 (10K 请求/月)
-// 600s × 30 天 × 24 小时 = 43200 次/月 (略超), 实际单设备不可能 24h 在线 → 实际 ~5K/月
+// 轮询间隔固定 1800 秒 (30 分钟) - 节省 JSONBin 免费额度 (10K 请求/月)
+// 1800s × 24h × 30d = 1440 次/设备/月 (理论值)
+// 10 设备同时在线: 14400 次/月 (略超), 实际远低于理论值
 // 管理员也可通过 URL 参数 ?poll=N 临时覆盖
 const POLL_INTERVAL = (() => {
   try {
     const params = new URLSearchParams(window.location.search);
-    const v = parseInt(params.get('poll') || '600', 10);
-    return Math.max(15000, Math.min(600000, isNaN(v) ? 600000 : v * 1000));
-  } catch (e) { return 600000; }
+    const v = parseInt(params.get('poll') || '1800', 10);
+    return Math.max(15000, Math.min(3600000, isNaN(v) ? 1800000 : v * 1000));
+  } catch (e) { return 1800000; }
 })();
 
 // 安全 fetch JSON：处理 Render 冷启动返回 HTML 的情况，自动重试
@@ -1903,8 +1912,8 @@ function saveJsonbinFromUI() {
   const masterKey = (document.getElementById('jsonbinKeyInput').value || '').trim();
   // Bin/Read Key 永远用硬编码默认, 不让用户改
   saveJsonbinConfig(JSONBIN_DEFAULT_BIN, JSONBIN_DEFAULT_READ_KEY, masterKey);
-  // 轮询间隔固定 600 秒, 不让用户改
-  const POLL_MS = 600 * 1000;
+  // 轮询间隔固定 1800 秒 (30 分钟), 不让用户改
+  const POLL_MS = 1800 * 1000;
   localStorage.setItem('jsonbin_poll_interval', String(POLL_MS));
   setJsonbinStatus('✅ 已保存！正在拉取云端数据...', 'var(--gold)');
   // 重新尝试同步
