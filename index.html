@@ -438,7 +438,7 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
   <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importData(event)">
   <span style="font-size:10px;color:var(--muted)">数据自动保存到本地 · 有云服务器时自动实时同步 · 多设备共享</span>
   <button class="btn btn-sync btn-sm" onclick="forcePushToCloud()" title="立即将本地数据强制推送到云端（覆盖云端）" style="background:var(--gold);color:var(--bg);font-weight:600">☁️ 强制同步到云端</button>
-  <button class="btn btn-sync btn-sm" onclick="showImageManager()" title="通过 GitHub 仓库管理轮播图/导师图/成员头像">🖼️ 图片管理</button>
+  <button class="btn btn-sync btn-sm" onclick="showImageManager()" title="配置 GitHub Token 获得图片上传权限 (图片管理已集成到 ⚙ 管理面板)">🔐 图片导入</button>
   </span>
 </div>
 
@@ -471,86 +471,33 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
   </div>
 </div>
 
-<!-- 图片管理弹窗 (GitHub 图床) -->
+<!-- 图片管理弹窗 (GitHub Token 配置) -->
 <div id="imageManagerModal" class="overlay" style="display:none">
-  <div class="modal" style="max-width:880px;width:92vw;padding:24px;max-height:90vh;overflow:auto">
-    <h3 style="margin:0 0 8px;color:var(--gold)">🖼️ 图片管理</h3>
+  <div class="modal" style="max-width:480px;padding:24px">
+    <h3 style="margin:0 0 8px;color:var(--gold)">🔐 图片导入权限</h3>
     <p style="font-size:12px;color:var(--muted);line-height:1.6;margin:0 0 12px">
-      上传图片到 GitHub 仓库 <code>heita-office-images</code>，URL 永久有效。<br>
-      图片以<strong>原始分辨率</strong>上传（4K 上传后仍是 4K），网页用 CSS 缩放显示。
+      配置 <strong>GitHub Token</strong> 后，可在管理面板上传图片到 <code>heita-office-images</code> 仓库，URL 永久有效。<br>
+      图片以<strong>原始分辨率</strong>上传（4K 上传后仍是 4K）。
     </p>
-    <div style="background:linear-gradient(180deg,var(--card) 0%,var(--bg2) 100%);border:1px solid var(--bdr);border-radius:8px;padding:14px;margin:8px 0 14px">
+
+    <div style="background:rgba(77,126,255,.08);border:1px solid var(--crystal3);border-radius:8px;padding:12px;margin:0 0 12px">
+      <p style="font-size:12px;color:var(--muted);margin:0 0 6px;line-height:1.6">
+        <strong style="color:var(--crystal2)">📍 上传图片请到管理面板</strong><br>
+        · 轮播图 → <strong>⚙ 管理 → 🎠 轮播图</strong><br>
+        · 成员头像 → <strong>⚙ 管理 → 👥 成员</strong><br>
+        · 事件图片 → <strong>⚙ 管理 → 📅 事件</strong><br>
+        · 导师图 → <strong>⚙ 管理 → 🧑‍🏫 导师</strong>
+      </p>
+    </div>
+
+    <div style="background:linear-gradient(180deg,var(--card) 0%,var(--bg2) 100%);border:1px solid var(--bdr);border-radius:8px;padding:14px">
       <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">
-        🔐 GitHub Token (图片导入权限)
-        <span style="opacity:.6"> · 只对 heita-office-images 仓库有写权限</span>
+        🔐 GitHub Token <span style="opacity:.6">· 只对 heita-office-images 仓库有写权限</span>
       </label>
       <input type="password" id="ghTokenInput" placeholder="github_pat_11..." style="padding:8px 10px;background:var(--card2);border:1px solid var(--bdr);color:var(--text);border-radius:6px;font-family:monospace;font-size:12px;width:100%;box-sizing:border-box">
       <div style="display:flex;gap:6px;align-items:center;margin-top:8px;flex-wrap:wrap">
         <button class="btn btn-sm" onclick="testGithubToken()" style="background:var(--card2);color:var(--text)">🔌 测试 Token</button>
         <span id="ghTestResult" style="font-size:12px;color:var(--muted)"></span>
-      </div>
-    </div>
-
-    <div style="display:flex;gap:6px;margin:14px 0 12px;border-bottom:1px solid var(--bdr);padding-bottom:8px">
-      <button class="btn btn-sm" id="imgTabCarousel" onclick="switchImgTab('carousel')" style="background:var(--gold);color:var(--bg)">🎠 轮播图</button>
-      <button class="btn btn-sm" id="imgTabMentor" onclick="switchImgTab('mentor')" style="background:var(--card2);color:var(--text)">🧑‍🏫 导师图</button>
-      <button class="btn btn-sm" id="imgTabAvatar" onclick="switchImgTab('avatar')" style="background:var(--card2);color:var(--text)">👤 成员头像</button>
-    </div>
-
-    <!-- 轮播图标签 -->
-    <div id="imgPanelCarousel">
-      <h4 style="margin:8px 0;color:var(--gold)">当前轮播图 (<span id="carouselCount">0</span> 张)</h4>
-      <div id="carouselGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin:8px 0"></div>
-      <div style="border-top:1px solid var(--bdr);padding-top:12px;margin-top:12px">
-        <h4 style="margin:0 0 8px;color:var(--gold)">📤 上传新轮播图</h4>
-        <p style="font-size:11px;color:var(--muted);margin:0 0 6px">
-          上传后图片<strong>保持原始分辨率</strong>。建议尺寸 1920×1080 或以上。
-        </p>
-        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-          <input type="file" id="carouselFileInput" accept="image/*" style="display:none" onchange="handleCarouselFileSelect(event)">
-          <button class="btn" onclick="document.getElementById('carouselFileInput').click()" style="background:var(--card2);color:var(--text)">📁 选择图片</button>
-          <input type="text" id="carouselTitleInput" placeholder="轮播图标题 (可选)" style="flex:1;min-width:180px;padding:6px 10px;background:var(--card2);border:1px solid var(--bdr);color:var(--text);border-radius:6px">
-          <button class="btn" id="carouselUploadBtn" onclick="uploadCarouselImage()" disabled style="background:var(--gold);color:var(--bg);font-weight:600;opacity:.4">📤 立即上传</button>
-        </div>
-        <div id="carouselUploadStatus" style="font-size:12px;color:var(--muted);margin-top:6px;min-height:18px"></div>
-      </div>
-    </div>
-
-    <!-- 导师图标签 -->
-    <div id="imgPanelMentor" style="display:none">
-      <h4 style="margin:8px 0;color:var(--gold)">当前导师图 (<span id="mentorCount">0</span> 个)</h4>
-      <div id="mentorGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin:8px 0"></div>
-      <div style="border-top:1px solid var(--bdr);padding-top:12px;margin-top:12px">
-        <h4 style="margin:0 0 8px;color:var(--gold)">📤 更换导师图</h4>
-        <p style="font-size:11px;color:var(--muted);margin:0 0 6px">
-          建议尺寸 1080×1920 (9:16 竖屏)。图片<strong>保持原始分辨率</strong>上传。
-        </p>
-        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-          <select id="mentorSelectInput" style="flex:1;min-width:180px;padding:6px 10px;background:var(--card2);border:1px solid var(--bdr);color:var(--text);border-radius:6px"></select>
-          <input type="file" id="mentorFileInput" accept="image/*" style="display:none" onchange="handleMentorFileSelect(event)">
-          <button class="btn" onclick="document.getElementById('mentorFileInput').click()" style="background:var(--card2);color:var(--text)">📁 选择图片</button>
-          <button class="btn" id="mentorUploadBtn" onclick="uploadMentorImage()" disabled style="background:var(--gold);color:var(--bg);font-weight:600;opacity:.4">📤 立即上传</button>
-        </div>
-        <div id="mentorUploadStatus" style="font-size:12px;color:var(--muted);margin-top:6px;min-height:18px"></div>
-      </div>
-    </div>
-
-    <!-- 成员头像标签 -->
-    <div id="imgPanelAvatar" style="display:none">
-      <h4 style="margin:8px 0;color:var(--gold)">当前成员头像 (<span id="avatarCount">0</span> 个)</h4>
-      <div id="avatarGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:8px 0"></div>
-      <div style="border-top:1px solid var(--bdr);padding-top:12px;margin-top:12px">
-        <h4 style="margin:0 0 8px;color:var(--gold)">📤 更换成员头像</h4>
-        <p style="font-size:11px;color:var(--muted);margin:0 0 6px">
-          建议正方形 (1:1)。图片<strong>保持原始分辨率</strong>上传。
-        </p>
-        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-          <select id="avatarSelectInput" style="flex:1;min-width:180px;padding:6px 10px;background:var(--card2);border:1px solid var(--bdr);color:var(--text);border-radius:6px"></select>
-          <input type="file" id="avatarFileInput" accept="image/*" style="display:none" onchange="handleAvatarFileSelect(event)">
-          <button class="btn" onclick="document.getElementById('avatarFileInput').click()" style="background:var(--card2);color:var(--text)">📁 选择图片</button>
-          <button class="btn" id="avatarUploadBtn" onclick="uploadMemberAvatar()" disabled style="background:var(--gold);color:var(--bg);font-weight:600;opacity:.4">📤 立即上传</button>
-        </div>
-        <div id="avatarUploadStatus" style="font-size:12px;color:var(--muted);margin-top:6px;min-height:18px"></div>
       </div>
     </div>
 
@@ -2057,11 +2004,9 @@ function showImageManager() {
   loadGithubToken();
   const t = document.getElementById('ghTokenInput');
   if (t) t.value = githubToken;
-  // 渲染各标签
-  renderCarouselGrid();
-  renderMentorGrid();
-  renderAvatarGrid();
-  switchImgTab(imgMgrTab);
+  // 重置测试结果
+  const r = document.getElementById('ghTestResult');
+  if (r) r.textContent = githubToken ? '✅ 已配置' : '⚠️ 未配置';
 }
 
 function closeImageManager() {
