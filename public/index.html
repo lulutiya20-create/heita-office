@@ -419,6 +419,7 @@ body{
   <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importData(event)">
   <span style="font-size:10px;color:var(--muted)">数据自动保存到本地 · 有云服务器时自动实时同步 · 多设备共享</span>
   <button class="btn btn-sync btn-sm" onclick="forcePushToCloud()" title="立即将本地数据强制推送到云端（覆盖云端）" style="background:var(--gold);color:var(--bg);font-weight:600">☁️ 强制同步到云端</button>
+  <button class="btn btn-sync btn-sm" onclick="showImageManager()" title="通过 GitHub 仓库管理轮播图/导师图/成员头像">🖼️ 图片管理</button>
   </span>
 </div>
 
@@ -447,6 +448,93 @@ body{
       <button class="btn" onclick="clearJsonbinConfig()" style="background:var(--card2);color:#e74c3c">🗑 清除配置</button>
       <button class="btn" onclick="closeJsonbinConfig()" style="background:var(--card2);color:var(--text)">取消</button>
       <button class="btn" onclick="saveJsonbinFromUI()" style="background:var(--gold);color:var(--bg);font-weight:600">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 图片管理弹窗 (GitHub 图床) -->
+<div id="imageManagerModal" class="overlay" style="display:none">
+  <div class="modal" style="max-width:880px;width:92vw;padding:24px;max-height:90vh;overflow:auto">
+    <h3 style="margin:0 0 12px;color:var(--gold)">🖼️ 图片管理 (GitHub 图床)</h3>
+    <p style="font-size:12px;color:var(--muted);line-height:1.6;margin:0 0 12px">
+      上传图片到 GitHub 仓库，URL 永久有效。<br>
+      <strong>🔒 重要</strong>：图片以<strong>原始分辨率</strong>上传（4K 上传后仍是 4K），网页用 CSS 缩放显示。<br>
+      <strong>Token</strong>：只对 <code>heita-office-images</code> 仓库有写权限，不会污染代码仓库。
+    </p>
+    <div style="display:flex;flex-direction:column;gap:10px;margin:8px 0 12px">
+      <label style="font-size:12px;color:var(--muted)">GitHub Token (Personal Access Token)</label>
+      <input type="password" id="ghTokenInput" placeholder="github_pat_11..." style="padding:8px 10px;background:var(--card2);border:1px solid var(--bdr);color:var(--text);border-radius:6px;font-family:monospace;font-size:12px">
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="btn btn-sm" onclick="testGithubToken()" style="background:var(--card2);color:var(--text)">🔌 测试 Token</button>
+        <span id="ghTestResult" style="font-size:12px;color:var(--muted)"></span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:6px;margin:14px 0 12px;border-bottom:1px solid var(--bdr);padding-bottom:8px">
+      <button class="btn btn-sm" id="imgTabCarousel" onclick="switchImgTab('carousel')" style="background:var(--gold);color:var(--bg)">🎠 轮播图</button>
+      <button class="btn btn-sm" id="imgTabMentor" onclick="switchImgTab('mentor')" style="background:var(--card2);color:var(--text)">🧑‍🏫 导师图</button>
+      <button class="btn btn-sm" id="imgTabAvatar" onclick="switchImgTab('avatar')" style="background:var(--card2);color:var(--text)">👤 成员头像</button>
+    </div>
+
+    <!-- 轮播图标签 -->
+    <div id="imgPanelCarousel">
+      <h4 style="margin:8px 0;color:var(--gold)">当前轮播图 (<span id="carouselCount">0</span> 张)</h4>
+      <div id="carouselGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin:8px 0"></div>
+      <div style="border-top:1px solid var(--bdr);padding-top:12px;margin-top:12px">
+        <h4 style="margin:0 0 8px;color:var(--gold)">📤 上传新轮播图</h4>
+        <p style="font-size:11px;color:var(--muted);margin:0 0 6px">
+          上传后图片<strong>保持原始分辨率</strong>。建议尺寸 1920×1080 或以上。
+        </p>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <input type="file" id="carouselFileInput" accept="image/*" style="display:none" onchange="handleCarouselFileSelect(event)">
+          <button class="btn" onclick="document.getElementById('carouselFileInput').click()" style="background:var(--card2);color:var(--text)">📁 选择图片</button>
+          <input type="text" id="carouselTitleInput" placeholder="轮播图标题 (可选)" style="flex:1;min-width:180px;padding:6px 10px;background:var(--card2);border:1px solid var(--bdr);color:var(--text);border-radius:6px">
+          <button class="btn" id="carouselUploadBtn" onclick="uploadCarouselImage()" disabled style="background:var(--gold);color:var(--bg);font-weight:600;opacity:.4">📤 立即上传</button>
+        </div>
+        <div id="carouselUploadStatus" style="font-size:12px;color:var(--muted);margin-top:6px;min-height:18px"></div>
+      </div>
+    </div>
+
+    <!-- 导师图标签 -->
+    <div id="imgPanelMentor" style="display:none">
+      <h4 style="margin:8px 0;color:var(--gold)">当前导师图 (<span id="mentorCount">0</span> 个)</h4>
+      <div id="mentorGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin:8px 0"></div>
+      <div style="border-top:1px solid var(--bdr);padding-top:12px;margin-top:12px">
+        <h4 style="margin:0 0 8px;color:var(--gold)">📤 更换导师图</h4>
+        <p style="font-size:11px;color:var(--muted);margin:0 0 6px">
+          建议尺寸 1080×1920 (9:16 竖屏)。图片<strong>保持原始分辨率</strong>上传。
+        </p>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <select id="mentorSelectInput" style="flex:1;min-width:180px;padding:6px 10px;background:var(--card2);border:1px solid var(--bdr);color:var(--text);border-radius:6px"></select>
+          <input type="file" id="mentorFileInput" accept="image/*" style="display:none" onchange="handleMentorFileSelect(event)">
+          <button class="btn" onclick="document.getElementById('mentorFileInput').click()" style="background:var(--card2);color:var(--text)">📁 选择图片</button>
+          <button class="btn" id="mentorUploadBtn" onclick="uploadMentorImage()" disabled style="background:var(--gold);color:var(--bg);font-weight:600;opacity:.4">📤 立即上传</button>
+        </div>
+        <div id="mentorUploadStatus" style="font-size:12px;color:var(--muted);margin-top:6px;min-height:18px"></div>
+      </div>
+    </div>
+
+    <!-- 成员头像标签 -->
+    <div id="imgPanelAvatar" style="display:none">
+      <h4 style="margin:8px 0;color:var(--gold)">当前成员头像 (<span id="avatarCount">0</span> 个)</h4>
+      <div id="avatarGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:8px 0"></div>
+      <div style="border-top:1px solid var(--bdr);padding-top:12px;margin-top:12px">
+        <h4 style="margin:0 0 8px;color:var(--gold)">📤 更换成员头像</h4>
+        <p style="font-size:11px;color:var(--muted);margin:0 0 6px">
+          建议正方形 (1:1)。图片<strong>保持原始分辨率</strong>上传。
+        </p>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <select id="avatarSelectInput" style="flex:1;min-width:180px;padding:6px 10px;background:var(--card2);border:1px solid var(--bdr);color:var(--text);border-radius:6px"></select>
+          <input type="file" id="avatarFileInput" accept="image/*" style="display:none" onchange="handleAvatarFileSelect(event)">
+          <button class="btn" onclick="document.getElementById('avatarFileInput').click()" style="background:var(--card2);color:var(--text)">📁 选择图片</button>
+          <button class="btn" id="avatarUploadBtn" onclick="uploadMemberAvatar()" disabled style="background:var(--gold);color:var(--bg);font-weight:600;opacity:.4">📤 立即上传</button>
+        </div>
+        <div id="avatarUploadStatus" style="font-size:12px;color:var(--muted);margin-top:6px;min-height:18px"></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:18px;border-top:1px solid var(--bdr);padding-top:12px">
+      <button class="btn" onclick="closeImageManager()" style="background:var(--card2);color:var(--text)">关闭</button>
     </div>
   </div>
 </div>
@@ -914,6 +1002,187 @@ async function tryJsonbin() {
 async function pushToJsonbin(data) {
   return await jsonbinWrite(data);
 }
+
+// ===================== GitHub 图床层 =====================
+// 仓库: lulutiya20-create/heita-office-images (专用图片仓库, 与代码仓库隔离)
+// Token 存在 localStorage, 仅对 heita-office-images 仓库有写权限
+const GH_REPO = 'heita-office-images';
+const GH_BRANCH = 'main';
+let githubToken = '';  // 从 localStorage 读取
+
+function loadGithubToken() {
+  try {
+    githubToken = localStorage.getItem('github_image_token') || '';
+  } catch (e) { githubToken = ''; }
+  return githubToken;
+}
+
+function saveGithubToken(token) {
+  githubToken = token;
+  try { localStorage.setItem('github_image_token', token); } catch (e) {}
+}
+
+function clearGithubToken() {
+  githubToken = '';
+  try { localStorage.removeItem('github_image_token'); } catch (e) {}
+}
+
+// 1. 读取 File 对象 → 返回 {b64, originalSize, filename}
+//    注意: 保持原始二进制, 不压缩, 不缩放
+async function fileToBase64Raw(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      // dataUrl 格式: data:image/jpeg;base64,/9j/4AAQ...
+      const idx = dataUrl.indexOf(',');
+      const b64 = dataUrl.substring(idx + 1);
+      resolve({ b64, dataUrl, size: file.size, name: file.name });
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+// 2. 上传图片到 GitHub 仓库指定路径
+//    path: e.g. "carousel/abc123.jpg" or "mentors/1781265450013799.jpg"
+async function githubUploadImage(file, path, commitMsg) {
+  if (!loadGithubToken()) {
+    throw new Error('未设置 GitHub Token, 请在图片管理弹窗里输入');
+  }
+  const { b64, size, name } = await fileToBase64Raw(file);
+
+  // 检查同名文件是否已存在 (需要 sha 才能 update)
+  let existingSha = null;
+  try {
+    const checkResp = await fetch(
+      `https://api.github.com/repos/lulutiya20-create/${GH_REPO}/contents/${path}`,
+      {
+        headers: {
+          'Authorization': 'Bearer ' + githubToken,
+          'Accept': 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28'
+        }
+      }
+    );
+    if (checkResp.ok) {
+      const j = await checkResp.json();
+      existingSha = j.sha;
+    }
+  } catch (e) { /* 新文件, 不需要 sha */ }
+
+  const body = {
+    message: commitMsg || ('upload: ' + path),
+    content: b64,
+    branch: GH_BRANCH
+  };
+  if (existingSha) body.sha = existingSha;
+
+  const resp = await fetch(
+    `https://api.github.com/repos/lulutiya20-create/${GH_REPO}/contents/${path}`,
+    {
+      method: 'PUT',
+      headers: {
+        'Authorization': 'Bearer ' + githubToken,
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    }
+  );
+
+  if (!resp.ok) {
+    const err = await resp.json();
+    throw new Error('GitHub 上传失败: ' + (err.message || resp.status));
+  }
+  const result = await resp.json();
+  return {
+    url: result.content.download_url,           // raw.githubusercontent.com 永久 URL
+    path: result.content.path,                  // 仓库内路径
+    sha: result.content.sha,
+    size: size,
+    name: name
+  };
+}
+
+// 3. 删除 GitHub 仓库里的文件
+async function githubDeleteFile(path, sha) {
+  if (!loadGithubToken()) throw new Error('未设置 GitHub Token');
+  const resp = await fetch(
+    `https://api.github.com/repos/lulutiya20-create/${GH_REPO}/contents/${path}`,
+    {
+      method: 'DELETE',
+      headers: {
+        'Authorization': 'Bearer ' + githubToken,
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: 'delete: ' + path,
+        sha: sha,
+        branch: GH_BRANCH
+      })
+    }
+  );
+  if (!resp.ok) {
+    const err = await resp.json();
+    throw new Error('GitHub 删除失败: ' + (err.message || resp.status));
+  }
+  return true;
+}
+
+// 4. 列出 GitHub 仓库某路径下的所有文件
+async function githubListFiles(path) {
+  if (!loadGithubToken()) throw new Error('未设置 GitHub Token');
+  const resp = await fetch(
+    `https://api.github.com/repos/lulutiya20-create/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`,
+    {
+      headers: {
+        'Authorization': 'Bearer ' + githubToken,
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28'
+      }
+    }
+  );
+  if (resp.status === 404) return [];
+  if (!resp.ok) {
+    const err = await resp.json();
+    throw new Error('GitHub 列表失败: ' + (err.message || resp.status));
+  }
+  const arr = await resp.json();
+  if (!Array.isArray(arr)) return [];
+  return arr.map(f => ({
+    name: f.name,
+    path: f.path,
+    sha: f.sha,
+    size: f.size,
+    url: f.download_url
+  }));
+}
+
+// 5. 测试 Token 是否有效
+async function githubTestToken() {
+  if (!loadGithubToken()) throw new Error('Token 为空');
+  const resp = await fetch(
+    `https://api.github.com/repos/lulutiya20-create/${GH_REPO}`,
+    {
+      headers: {
+        'Authorization': 'Bearer ' + githubToken,
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28'
+      }
+    }
+  );
+  if (!resp.ok) {
+    const err = await resp.json();
+    throw new Error('Token 无效: ' + (err.message || resp.status));
+  }
+  const j = await resp.json();
+  return { name: j.full_name, private: j.private };
+}
+
 
 const DEFAULTS = {
   adminPassword:'admin123',
@@ -1577,6 +1846,332 @@ function clearJsonbinConfig() {
   cloudEnabled = false;
   setJsonbinStatus('已清除,降级为本地模式', 'var(--muted)');
   setTimeout(() => location.reload(), 800);
+}
+
+// ===================== 图片管理 UI 控制器 =====================
+let imgMgrTab = 'carousel';
+let carouselSelectedFile = null;
+let mentorSelectedFile = null;
+let avatarSelectedFile = null;
+
+function showImageManager() {
+  if (!currentUser || currentUser.type === 'normal') {
+    toast('需要管理员权限'); return;
+  }
+  const m = document.getElementById('imageManagerModal');
+  if (!m) return;
+  m.style.display = 'flex';
+  // 预填 token
+  loadGithubToken();
+  const t = document.getElementById('ghTokenInput');
+  if (t) t.value = githubToken;
+  // 渲染各标签
+  renderCarouselGrid();
+  renderMentorGrid();
+  renderAvatarGrid();
+  switchImgTab(imgMgrTab);
+}
+
+function closeImageManager() {
+  const m = document.getElementById('imageManagerModal');
+  if (m) m.style.display = 'none';
+}
+
+function switchImgTab(tab) {
+  imgMgrTab = tab;
+  // 按钮样式
+  ['carousel', 'mentor', 'avatar'].forEach(t => {
+    const btn = document.getElementById('imgTab' + t.charAt(0).toUpperCase() + t.slice(1));
+    if (btn) {
+      btn.style.background = (t === tab) ? 'var(--gold)' : 'var(--card2)';
+      btn.style.color = (t === tab) ? 'var(--bg)' : 'var(--text)';
+    }
+  });
+  // 面板显隐
+  document.getElementById('imgPanelCarousel').style.display = (tab === 'carousel') ? 'block' : 'none';
+  document.getElementById('imgPanelMentor').style.display = (tab === 'mentor') ? 'block' : 'none';
+  document.getElementById('imgPanelAvatar').style.display = (tab === 'avatar') ? 'block' : 'none';
+}
+
+async function testGithubToken() {
+  const t = document.getElementById('ghTokenInput').value.trim();
+  const out = document.getElementById('ghTestResult');
+  if (!t) { out.textContent = '❌ 请先输入 Token'; out.style.color = '#e74c3c'; return; }
+  out.textContent = '🔌 测试中...'; out.style.color = 'var(--muted)';
+  saveGithubToken(t);
+  try {
+    const info = await githubTestToken();
+    out.innerHTML = `✅ 有效! 仓库 <strong>${info.name}</strong> (${info.private ? 'Private' : 'Public'})`;
+    out.style.color = '#27ae60';
+  } catch (e) {
+    out.textContent = '❌ ' + e.message;
+    out.style.color = '#e74c3c';
+  }
+}
+
+// ============== 轮播图 ==============
+function renderCarouselGrid() {
+  const grid = document.getElementById('carouselGrid');
+  const count = document.getElementById('carouselCount');
+  if (!grid) return;
+  if (!app.carouselImages || app.carouselImages.length === 0) {
+    grid.innerHTML = '<p style="color:var(--muted);font-size:12px">暂无轮播图</p>';
+    count.textContent = '0';
+    return;
+  }
+  count.textContent = app.carouselImages.length;
+  grid.innerHTML = app.carouselImages.map((c, i) => {
+    const safeUrl = (c.url || '').replace(/"/g, '&quot;');
+    const safeTitle = (c.title || '轮播图 ' + (i + 1)).replace(/</g, '&lt;');
+    return `
+      <div style="background:var(--card2);border:1px solid var(--bdr);border-radius:6px;padding:6px;text-align:center">
+        <img src="${safeUrl}" loading="lazy" style="width:100%;height:90px;object-fit:cover;border-radius:4px;background:#000" onerror="this.style.opacity=.3">
+        <div style="font-size:11px;color:var(--text);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${safeTitle}">${safeTitle}</div>
+        <div style="display:flex;gap:4px;margin-top:6px">
+          <button class="btn btn-sm" onclick="replaceCarouselFromUrl(${i})" style="flex:1;background:var(--card2);color:var(--text);font-size:10px;padding:3px">🔗 改 URL</button>
+          <button class="btn btn-sm" onclick="deleteCarouselImage(${i})" style="flex:1;background:var(--card2);color:#e74c3c;font-size:10px;padding:3px">🗑️ 删</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function handleCarouselFileSelect(event) {
+  const f = event.target.files[0];
+  if (!f) return;
+  carouselSelectedFile = f;
+  const btn = document.getElementById('carouselUploadBtn');
+  if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+  document.getElementById('carouselUploadStatus').textContent =
+    `✅ 已选: ${f.name} (${(f.size / 1024).toFixed(1)} KB) - 将以原始分辨率上传`;
+}
+
+async function uploadCarouselImage() {
+  if (!currentUser || currentUser.type === 'normal') { toast('需要管理员'); return; }
+  if (!carouselSelectedFile) { toast('请先选择文件'); return; }
+  if (!loadGithubToken()) { toast('请先填写 GitHub Token'); return; }
+  const status = document.getElementById('carouselUploadStatus');
+  const title = document.getElementById('carouselTitleInput').value.trim() || '轮播图';
+
+  status.textContent = '🚀 正在上传到 GitHub... (保留原始分辨率)';
+  status.style.color = 'var(--gold)';
+
+  try {
+    const ts = Date.now();
+    const ext = carouselSelectedFile.name.split('.').pop() || 'jpg';
+    const path = `carousel/${ts}.${ext}`;
+    const result = await githubUploadImage(carouselSelectedFile, path, `upload carousel: ${title}`);
+
+    // 添加到 app
+    if (!app.carouselImages) app.carouselImages = [];
+    app.carouselImages.push({
+      id: ts,
+      title: title,
+      url: result.url
+    });
+    saveLocal(app);
+    renderCarouselGrid();
+
+    status.innerHTML = `✅ 上传成功! <a href="${result.url}" target="_blank" style="color:var(--gold)">查看原图 (${(result.size / 1024).toFixed(1)} KB)</a>`;
+    status.style.color = '#27ae60';
+    toast('✅ 轮播图已添加');
+
+    // 自动同步到 JSONBin
+    pushToCloud(app, true);
+
+    // 清空
+    carouselSelectedFile = null;
+    document.getElementById('carouselFileInput').value = '';
+    document.getElementById('carouselTitleInput').value = '';
+    const btn = document.getElementById('carouselUploadBtn');
+    if (btn) { btn.disabled = true; btn.style.opacity = '.4'; }
+  } catch (e) {
+    status.textContent = '❌ ' + e.message;
+    status.style.color = '#e74c3c';
+  }
+}
+
+function replaceCarouselFromUrl(i) {
+  const url = prompt('输入新图片 URL (推荐先用 GitHub 图床上传):', app.carouselImages[i].url || '');
+  if (!url) return;
+  app.carouselImages[i].url = url;
+  saveLocal(app);
+  renderCarouselGrid();
+  pushToCloud(app, true);
+  toast('✅ 轮播图 URL 已更新');
+}
+
+function deleteCarouselImage(i) {
+  if (!confirm('确认删除这张轮播图?\n(只删数据记录, GitHub 上的文件需要手动去仓库删除)')) return;
+  app.carouselImages.splice(i, 1);
+  saveLocal(app);
+  renderCarouselGrid();
+  pushToCloud(app, true);
+  toast('🗑️ 已删除');
+}
+
+// ============== 导师图 ==============
+function renderMentorGrid() {
+  const grid = document.getElementById('mentorGrid');
+  const count = document.getElementById('mentorCount');
+  if (!grid) return;
+  if (!app.mentors || app.mentors.length === 0) {
+    grid.innerHTML = '<p style="color:var(--muted);font-size:12px">暂无导师</p>';
+    count.textContent = '0';
+    return;
+  }
+  count.textContent = app.mentors.length;
+  // 同时填充下拉
+  const sel = document.getElementById('mentorSelectInput');
+  if (sel) {
+    sel.innerHTML = '<option value="">-- 选择要更换图片的导师 --</option>' +
+      app.mentors.map(m => `<option value="${m.id}">${m.specialty || '导师'} (ID: ${m.id})</option>`).join('');
+  }
+  grid.innerHTML = app.mentors.map(m => {
+    const safeUrl = (m.image || '').replace(/"/g, '&quot;');
+    return `
+      <div style="background:var(--card2);border:1px solid var(--bdr);border-radius:6px;padding:6px;text-align:center">
+        <img src="${safeUrl}" loading="lazy" style="width:100%;height:120px;object-fit:cover;border-radius:4px;background:#000" onerror="this.style.opacity=.3">
+        <div style="font-size:11px;color:var(--text);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${m.specialty || ''}">${m.specialty || '导师'} (${m.id})</div>
+        <button class="btn btn-sm" onclick="quickReplaceMentor(${m.id})" style="width:100%;margin-top:6px;background:var(--gold);color:var(--bg);font-size:10px;padding:3px">📤 选中新导师后点这里上传</button>
+      </div>
+    `;
+  }).join('');
+}
+
+function handleMentorFileSelect(event) {
+  const f = event.target.files[0];
+  if (!f) return;
+  mentorSelectedFile = f;
+  const btn = document.getElementById('mentorUploadBtn');
+  if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+  document.getElementById('mentorUploadStatus').textContent =
+    `✅ 已选: ${f.name} (${(f.size / 1024).toFixed(1)} KB) - 将以原始分辨率上传`;
+}
+
+function quickReplaceMentor(id) {
+  document.getElementById('mentorSelectInput').value = id;
+  document.getElementById('mentorFileInput').click();
+}
+
+async function uploadMentorImage() {
+  if (!currentUser || currentUser.type === 'normal') { toast('需要管理员'); return; }
+  if (!mentorSelectedFile) { toast('请先选择文件'); return; }
+  if (!loadGithubToken()) { toast('请先填写 GitHub Token'); return; }
+  const status = document.getElementById('mentorUploadStatus');
+  const mentorId = document.getElementById('mentorSelectInput').value;
+  if (!mentorId) { toast('请先选择要更换的导师'); return; }
+  const mentor = app.mentors.find(m => m.id == mentorId);
+  if (!mentor) { toast('未找到该导师'); return; }
+
+  status.textContent = '🚀 正在上传到 GitHub... (保留原始分辨率)';
+  status.style.color = 'var(--gold)';
+
+  try {
+    const ext = mentorSelectedFile.name.split('.').pop() || 'jpg';
+    const path = `mentors/${mentorId}.${ext}`;
+    const result = await githubUploadImage(mentorSelectedFile, path, `update mentor ${mentorId} image`);
+
+    mentor.image = result.url;
+    saveLocal(app);
+    renderMentorGrid();
+
+    status.innerHTML = `✅ 导师图已更新! <a href="${result.url}" target="_blank" style="color:var(--gold)">查看原图 (${(result.size / 1024).toFixed(1)} KB)</a>`;
+    status.style.color = '#27ae60';
+    toast('✅ 导师图已更新');
+
+    pushToCloud(app, true);
+
+    mentorSelectedFile = null;
+    document.getElementById('mentorFileInput').value = '';
+    const btn = document.getElementById('mentorUploadBtn');
+    if (btn) { btn.disabled = true; btn.style.opacity = '.4'; }
+  } catch (e) {
+    status.textContent = '❌ ' + e.message;
+    status.style.color = '#e74c3c';
+  }
+}
+
+// ============== 成员头像 ==============
+function renderAvatarGrid() {
+  const grid = document.getElementById('avatarGrid');
+  const count = document.getElementById('avatarCount');
+  if (!grid) return;
+  if (!app.members || app.members.length === 0) {
+    grid.innerHTML = '<p style="color:var(--muted);font-size:12px">暂无成员</p>';
+    count.textContent = '0';
+    return;
+  }
+  count.textContent = app.members.length;
+  const sel = document.getElementById('avatarSelectInput');
+  if (sel) {
+    sel.innerHTML = '<option value="">-- 选择要更换头像的成员 --</option>' +
+      app.members.map(m => `<option value="${m.id}">${m.name} (${m.role || '成员'})</option>`).join('');
+  }
+  grid.innerHTML = app.members.map(m => {
+    const safeUrl = (m.avatar || '').replace(/"/g, '&quot;');
+    const safeName = (m.name || '').replace(/</g, '&lt;');
+    return `
+      <div style="background:var(--card2);border:1px solid var(--bdr);border-radius:6px;padding:6px;text-align:center">
+        <img src="${safeUrl}" loading="lazy" style="width:80px;height:80px;object-fit:cover;border-radius:50%;background:#000;margin:0 auto;display:block" onerror="this.style.opacity=.3">
+        <div style="font-size:11px;color:var(--text);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${safeName}">${safeName}</div>
+        <button class="btn btn-sm" onclick="quickReplaceAvatar(${m.id})" style="width:100%;margin-top:4px;background:var(--gold);color:var(--bg);font-size:10px;padding:3px">📤 选中后上传</button>
+      </div>
+    `;
+  }).join('');
+}
+
+function handleAvatarFileSelect(event) {
+  const f = event.target.files[0];
+  if (!f) return;
+  avatarSelectedFile = f;
+  const btn = document.getElementById('avatarUploadBtn');
+  if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+  document.getElementById('avatarUploadStatus').textContent =
+    `✅ 已选: ${f.name} (${(f.size / 1024).toFixed(1)} KB) - 将以原始分辨率上传`;
+}
+
+function quickReplaceAvatar(id) {
+  document.getElementById('avatarSelectInput').value = id;
+  document.getElementById('avatarFileInput').click();
+}
+
+async function uploadMemberAvatar() {
+  if (!currentUser || currentUser.type === 'normal') { toast('需要管理员'); return; }
+  if (!avatarSelectedFile) { toast('请先选择文件'); return; }
+  if (!loadGithubToken()) { toast('请先填写 GitHub Token'); return; }
+  const status = document.getElementById('avatarUploadStatus');
+  const memberId = document.getElementById('avatarSelectInput').value;
+  if (!memberId) { toast('请先选择要更换头像的成员'); return; }
+  const member = app.members.find(m => m.id == memberId);
+  if (!member) { toast('未找到该成员'); return; }
+
+  status.textContent = '🚀 正在上传到 GitHub... (保留原始分辨率)';
+  status.style.color = 'var(--gold)';
+
+  try {
+    const ext = avatarSelectedFile.name.split('.').pop() || 'jpg';
+    const path = `avatars/${memberId}.${ext}`;
+    const result = await githubUploadImage(avatarSelectedFile, path, `update member ${memberId} avatar`);
+
+    member.avatar = result.url;
+    saveLocal(app);
+    renderAvatarGrid();
+
+    status.innerHTML = `✅ 头像已更新! <a href="${result.url}" target="_blank" style="color:var(--gold)">查看原图 (${(result.size / 1024).toFixed(1)} KB)</a>`;
+    status.style.color = '#27ae60';
+    toast('✅ 头像已更新');
+
+    pushToCloud(app, true);
+
+    avatarSelectedFile = null;
+    document.getElementById('avatarFileInput').value = '';
+    const btn = document.getElementById('avatarUploadBtn');
+    if (btn) { btn.disabled = true; btn.style.opacity = '.4'; }
+  } catch (e) {
+    status.textContent = '❌ ' + e.message;
+    status.style.color = '#e74c3c';
+  }
 }
 
 let syncStatusTimer = null;

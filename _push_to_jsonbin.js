@@ -7,7 +7,7 @@ const path = require('path');
 const MASTER_KEY = '$2a$10$tglai8xzGNfmL54lxCvTN.Uq6EkKAypHwzDVrhRR2FD23DpQKT0a6';
 const READ_KEY   = '$2a$10$Htgjeu92rse90o7hAgF4V.G7dneKS6l6ylY8xOF92YOqzRb/COAp2';
 const BIN_ID     = '6a2d8016f5f4af5e29ec2a66';
-const BACKUP     = 'C:\\Users\\Administrator\\WorkBuddy\\2026-06-12-18-25-30\\_jsonbin_payload.json';
+const BACKUP     = 'C:\\Users\\Administrator\\WorkBuddy\\2026-06-12-18-25-30\\_jsonbin_payload_v2.json';
 
 (async () => {
   console.log('==== JSONBin 数据推送 ====');
