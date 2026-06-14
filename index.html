@@ -994,6 +994,8 @@ async function tryJsonbin() {
   }
   const data = await jsonbinRead();
   if (data && data.members) {
+    // 数据规范化: 修复历史数据 memberId 是字符串的 bug
+    normalizeDataTypes(data);
     // 接管同步: 把云端数据存到 localStorage
     try {
       localStorage.setItem(DB_KEY, JSON.stringify(data));
@@ -1285,6 +1287,21 @@ function cleanCloudMeta(d) {
   return c;
 }
 
+// 数据类型规范化: 防止 JSONBin 拉下来时 ID 字段被序列化成字符串
+// (=== 严格比较在导师 memberId 匹配时会失败 → 显示"未知")
+function normalizeDataTypes(d) {
+  if (!d) return d;
+  if (d.mentors && Array.isArray(d.mentors)) {
+    d.mentors.forEach(mt => {
+      if (typeof mt.memberId === 'string' && mt.memberId !== '') {
+        const n = parseInt(mt.memberId, 10);
+        if (!isNaN(n)) mt.memberId = n;
+      }
+    });
+  }
+  return d;
+}
+
 // 异步加载：优先从云端获取，回退本地，最后用默认值
 async function loadAppAsync() {
   // 0. 优先尝试 JSONBin 同步（GitHub Pages + 静态托管场景）
@@ -1441,7 +1458,7 @@ function loadApp() {
       else navigate(currentPage);
     }
   });
-  return d;
+  return normalizeDataTypes(d);
 }
 
 function saveApp(data) {
@@ -3166,9 +3183,9 @@ function admDelMsg(id){app.messages=app.messages.filter(m=>m.id!==id);saveApp(ap
 
 function refreshAdminPanel() {
   document.getElementById('adm-carousel-list').innerHTML=app.carouselImages.length?app.carouselImages.map(i=>`<div class="admin-item"><div class="it"><strong>${esc(i.title)}</strong><span>${esc(i.url.substring(0,40))}...</span></div><div class="ia"><button class="btn btn-del btn-sm" onclick="admDelCarousel(${i.id})">删除</button></div></div>`).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
-  document.getElementById('adm-m-list').innerHTML=app.members.length?app.members.map(m=>`<div class="admin-item"><div class="it"><strong>${esc(m.name)}</strong><span>${esc(m.role||'')}${app.mentors.find(mt=>mt.memberId===m.id)?' · 🎓导师':''}</span></div><div class="ia"><button class="btn btn-ok btn-sm" onclick="editAdminMember(${m.id})" title="编辑成员">✏️</button><button class="btn btn-del btn-sm" onclick="admDelMember(${m.id})">删除</button></div></div>`).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
+  document.getElementById('adm-m-list').innerHTML=app.members.length?app.members.map(m=>`<div class="admin-item"><div class="it"><strong>${esc(m.name)}</strong><span>${esc(m.role||'')}${app.mentors.find(mt=>mt.memberId==m.id)?' · 🎓导师':''}</span></div><div class="ia"><button class="btn btn-ok btn-sm" onclick="editAdminMember(${m.id})" title="编辑成员">✏️</button><button class="btn btn-del btn-sm" onclick="admDelMember(${m.id})">删除</button></div></div>`).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
   document.getElementById('adm-e-list').innerHTML=app.events.length?app.events.map(e=>`<div class="admin-item"><div class="it"><strong>${esc(e.title)}</strong><span>${esc(e.date)}</span></div><div class="ia"><button class="btn btn-del btn-sm" onclick="admDelEvent(${e.id})">删除</button></div></div>`).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
-  document.getElementById('adm-mt-list').innerHTML=app.mentors.length?app.mentors.map(mt=>{const m=app.members.find(x=>x.id===mt.memberId);return `<div class="admin-item"><div class="it"><strong>${m?esc(m.name):'未知'}</strong><span>${esc(mt.specialty||'')}</span></div><div class="ia"><button class="btn btn-ok btn-sm" onclick="editAdminMentor(${mt.id})" title="编辑导师">✏️</button><button class="btn btn-del btn-sm" onclick="admDelMentor(${mt.id})">取消</button></div></div>`}).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
+  document.getElementById('adm-mt-list').innerHTML=app.mentors.length?app.mentors.map(mt=>{const m=app.members.find(x=>x.id==mt.memberId);return `<div class="admin-item"><div class="it"><strong>${m?esc(m.name):'未知'}</strong><span>${esc(mt.specialty||'')}</span></div><div class="ia"><button class="btn btn-ok btn-sm" onclick="editAdminMentor(${mt.id})" title="编辑导师">✏️</button><button class="btn btn-del btn-sm" onclick="admDelMentor(${mt.id})">取消</button></div></div>`}).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
   updateMentorSelect();
   document.getElementById('adm-msg-list').innerHTML=app.messages.length?[...app.messages].reverse().map(m=>`<div class="admin-item"><div class="it"><strong>${esc(m.name)}</strong><span>${esc(m.content.substring(0,30))}... · ${esc(m.time)}</span></div><div class="ia"><button class="btn btn-del btn-sm" onclick="admDelMsg(${m.id})">删除</button></div></div>`).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
   // 角色权限列表（仅超级管理员可操作，但所有管理员可见）
