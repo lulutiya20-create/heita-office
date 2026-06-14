@@ -3031,48 +3031,93 @@ function updateMentorSelect(){
   }
 }
 
-function admAddMentor(){
-  const mid=parseInt(document.getElementById('adm-mt-member').value);
-  const spec = document.getElementById('adm-mt-specialty').value.trim();
-  const extra = document.getElementById('adm-mt-extra').value.trim();
+// 导师添加/编辑 (GitHub 图床版, 修复 memberId 丢失 bug)
+async function admAddMentor(){
+  const memberId = document.getElementById('adm-mt-member').value;
+  const sp = document.getElementById('adm-mt-specialty').value.trim();
+  const xt = document.getElementById('adm-mt-extra').value.trim();
 
-  if(editingAdminMentorId){
-    // 编辑模式
+  if (!memberId && !editingAdminMentorId) { toast('请选择成员'); return; }
+
+  // ===== 编辑模式 =====
+  if (editingAdminMentorId) {
     const mt = app.mentors.find(x => x.id === editingAdminMentorId);
     if (!mt) { toast('导师不存在'); return; }
-    if (mid && mid !== mt.memberId && app.mentors.find(mt2 => mt2.memberId === mid)) { toast('该成员已是导师'); return; }
-    if (mid) mt.memberId = mid;
-    mt.specialty = spec;
-    mt.extraInfo = extra;
-    if (pendingMentorImg) mt.image = pendingMentorImg;
+    // 成员改换了, 要查重
+    if (memberId && parseInt(memberId) !== mt.memberId) {
+      if (app.mentors.find(mt2 => mt2.memberId == memberId && mt2.id !== editingAdminMentorId)) {
+        toast('该成员已是导师'); return;
+      }
+      mt.memberId = parseInt(memberId);
+    }
+    // memberId 为空时保留原值, 不覆盖
+    if (sp) mt.specialty = sp;
+    if (xt) mt.extraInfo = xt;
+
+    if (pendingMentorFile) {
+      setAdmGhStatus('adm-mt-gh-status', '🚀 正在上传到 GitHub (保留原始分辨率)...', 'var(--gold)');
+      try {
+        const ext = (pendingMentorFile.name.split('.').pop() || 'jpg').toLowerCase();
+        const safeExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext) ? ext : 'jpg';
+        const path = 'mentors/' + mt.id + '.' + safeExt;
+        const result = await githubUploadImage(pendingMentorFile, path, 'update mentor ' + mt.id);
+        mt.image = result.url;
+        setAdmGhStatus('adm-mt-gh-status', '✅ 上传成功: ' + result.url.substring(0, 60) + '...', '#27ae60');
+      } catch (e) {
+        setAdmGhStatus('adm-mt-gh-status', '❌ ' + e.message, '#e74c3c');
+        return;
+      }
+    }
+
     saveApp(app);
+    pushToCloud(app, true);
     cancelEditMentor();
     renderMentors(); renderMembers(); renderFamilyTree(); refreshAdminPanel();
     toast('✅ 导师信息已更新');
     return;
   }
 
-  // 添加模式
-  if(!mid){toast('请选择成员');return;}
-  if(app.mentors.find(mt=>mt.memberId===mid)){toast('该成员已是导师');return;}
-  const addMentor=(imgData)=>{
-    app.mentors.push({
-      id:genNextId(),memberId:mid,
-      specialty:spec,
-      extraInfo:extra,
-      image:imgData||''
-    });
-    saveApp(app);
-    document.getElementById('adm-mt-specialty').value='';
-    document.getElementById('adm-mt-extra').value='';
-    document.getElementById('adm-mt-image').value='';
-    document.getElementById('mentorFileHint').textContent='';
-    pendingMentorImg='';
-    renderMentors();renderMembers();renderFamilyTree();refreshAdminPanel();
-    toast('已设置');
+  // ===== 添加模式 =====
+  if (!memberId) { toast('请选择成员'); return; }
+  if (app.mentors.find(mt => mt.memberId == memberId)) { toast('该成员已是导师'); return; }
+
+  // 先生成 id, 再上传图 (用 id 命名, 后续编辑会自动覆盖)
+  const newMentorId = genNextId();
+  const newMentor = {
+    id: newMentorId,
+    memberId: parseInt(memberId),
+    specialty: sp,
+    extraInfo: xt,
+    image: ''
   };
-  if(pendingMentorImg){addMentor(pendingMentorImg);}
-  else{addMentor('');}
+
+  if (pendingMentorFile) {
+    setAdmGhStatus('adm-mt-gh-status', '🚀 正在上传到 GitHub (保留原始分辨率)...', 'var(--gold)');
+    try {
+      const ext = (pendingMentorFile.name.split('.').pop() || 'jpg').toLowerCase();
+      const safeExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext) ? ext : 'jpg';
+      const path = 'mentors/' + newMentorId + '.' + safeExt;
+      const result = await githubUploadImage(pendingMentorFile, path, 'new mentor ' + newMentorId);
+      newMentor.image = result.url;
+      setAdmGhStatus('adm-mt-gh-status', '✅ 上传成功: ' + result.url.substring(0, 60) + '...', '#27ae60');
+    } catch (e) {
+      setAdmGhStatus('adm-mt-gh-status', '❌ ' + e.message, '#e74c3c');
+      // 仍允许添加, 但无图
+    }
+  }
+
+  app.mentors.push(newMentor);
+  saveApp(app);
+  pushToCloud(app, true);
+
+  document.getElementById('adm-mt-member').value = '';
+  document.getElementById('adm-mt-specialty').value = '';
+  document.getElementById('adm-mt-extra').value = '';
+  pendingMentorFile = null;
+  document.getElementById('mentorFileHint').textContent = '';
+  document.getElementById('adm-mt-image').value = '';
+  renderMentors(); renderMembers(); renderFamilyTree(); refreshAdminPanel();
+  toast('✅ 导师已设置并同步');
 }
 function admDelMentor(id){if(!confirm('确定取消？'))return;app.mentors=app.mentors.filter(m=>m.id!==id);if(editingAdminMentorId===id)cancelEditMentor();saveApp(app);renderMentors();renderMembers();renderFamilyTree();refreshAdminPanel();toast('已取消');}
 function editAdminMentor(id){
@@ -3322,50 +3367,6 @@ async function admAddEvent(){
   document.getElementById('eventFileHint').textContent = '';
   document.getElementById('adm-e-file').value = '';
   renderEvents(); refreshAdminPanel(); toast('✅ 事件已添加并同步');
-}
-
-// Overwrite admAddMentor to upload via GitHub
-async function admAddMentor(){
-  const memberId = document.getElementById('adm-mt-member').value;
-  if (!memberId) { toast('请选择成员'); return; }
-  const member = app.members.find(m => m.id == memberId);
-  if (!member) { toast('成员不存在'); return; }
-  const sp = document.getElementById('adm-mt-specialty').value.trim();
-  const xt = document.getElementById('adm-mt-extra').value.trim();
-
-  let img = '';
-  if (pendingMentorFile) {
-    setAdmGhStatus('adm-mt-gh-status', '🚀 正在上传到 GitHub (保留原始分辨率)...', 'var(--gold)');
-    try {
-      // 用 member.id 命名, 以后再编辑自动覆盖
-      const ext = (pendingMentorFile.name.split('.').pop() || 'jpg').toLowerCase();
-      const safeExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext) ? ext : 'jpg';
-      const path = 'mentors/' + memberId + '.' + safeExt;
-      const result = await githubUploadImage(pendingMentorFile, path, 'update mentor ' + memberId + ' image');
-      img = result.url;
-      setAdmGhStatus('adm-mt-gh-status', '✅ 上传成功: ' + img.substring(0, 60) + '...', '#27ae60');
-    } catch (e) {
-      setAdmGhStatus('adm-mt-gh-status', '❌ ' + e.message, '#e74c3c');
-      return;
-    }
-  } else {
-    // 沿用已有图, 如果有的话
-    const existing = app.mentors.find(mt => mt.memberId == memberId);
-    img = (existing && existing.image) || '';
-  }
-
-  // 移除已有, 再加新的
-  app.mentors = app.mentors.filter(mt => mt.memberId != memberId);
-  app.mentors.push({ id: genNextId(), memberId: memberId, specialty: sp, extraInfo: xt, image: img });
-  saveApp(app);
-  pushToCloud(app, true);
-
-  document.getElementById('adm-mt-specialty').value = '';
-  document.getElementById('adm-mt-extra').value = '';
-  pendingMentorFile = null;
-  document.getElementById('mentorFileHint').textContent = '';
-  document.getElementById('adm-mt-image').value = '';
-  renderMentors(); refreshAdminPanel(); toast('✅ 导师已设置并同步');
 }
 
 // ===================== Family Tree (黑塔族谱) =====================
