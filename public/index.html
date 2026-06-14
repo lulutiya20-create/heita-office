@@ -395,7 +395,7 @@ body{
     <!-- 已登录状态 -->
     <div id="loggedInArea" class="hidden" style="display:flex;align-items:center;gap:6px">
       <span id="adminBadge" class="hidden"></span>
-      <span id="userBadge" class="hidden" style="cursor:pointer" title="点击打开个人中心"></span>
+      <span id="userBadge" class="hidden"></span>
       <span id="versionTag" style="font-size:10px;color:#888;margin-left:4px">v?</span>
       <button class="btn btn-gold btn-sm hidden" id="btnAdminPanel" onclick="openAdminPanel()">⚙️ 管理</button>
       <button class="btn btn-del btn-sm hidden" id="btnAdminToggle">退出</button>
@@ -1206,6 +1206,8 @@ async function githubTestToken() {
 
 const DEFAULTS = {
   adminPassword:'admin123',
+  // 默认头像: FF14 Moogle (莫古) — jsDelivr CDN 加速
+  defaultAvatar: 'https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/avatars/default-avatar.png',
   carouselImages:[
     {id:1,title:'黑塔办事处全景',url:'https://picsum.photos/seed/heita1/1200/480'},
     {id:2,title:'团队合影',url:'https://picsum.photos/seed/heita2/1200/480'},
@@ -1313,7 +1315,16 @@ function normalizeDataTypes(d) {
   // 把旧的 raw.githubusercontent.com URL 升级为 jsDelivr CDN (国内访问快 5-10 倍)
   if (d.carouselImages) d.carouselImages.forEach(c => { if (c.url) c.url = toFastCdn(c.url); });
   if (d.mentors) d.mentors.forEach(mt => { if (mt.image) mt.image = toFastCdn(mt.image); });
-  if (d.members) d.members.forEach(m => { if (m.avatar) m.avatar = toFastCdn(m.avatar); });
+  if (d.members) d.members.forEach(m => {
+    if (m.avatar) m.avatar = toFastCdn(m.avatar);
+    // 补默认头像 (空字符串 / 已删除的 picsum URL)
+    if (!m.avatar || m.avatar.startsWith('data:') === false && m.avatar.includes('picsum.photos/seed/member-')) {
+      // picsum 占位图替换为默认莫古
+      m.avatar = 'https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/avatars/default-avatar.png';
+    } else if (!m.avatar) {
+      m.avatar = 'https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/avatars/default-avatar.png';
+    }
+  });
   if (d.events) d.events.forEach(e => { if (e.image) e.image = toFastCdn(e.image); });
   return d;
 }
@@ -2453,9 +2464,11 @@ function renderMembers() {
   if(!app.members.length){g.innerHTML='<div class="empty"><div class="ic">👥</div><p>暂无成员</p></div>';return;}
   g.innerHTML=app.members.map(m=>{
     const im=app.mentors.find(mt=>mt.memberId===m.id);
-    const avatarHtml=m.avatar?`<div class="av" style="overflow:hidden;padding:0"><img src="${esc(m.avatar)}" style="width:100%;height:100%;object-fit:cover" alt=""></div>`:`<div class="av">${m.name.charAt(0)}</div>`;
-    return `<div class="member-card" onclick="showMemberDetail(${m.id})" style="cursor:pointer">
-      ${avatarHtml}<h4>${esc(m.name)}</h4>
+    const avatarSrc = m.avatar || DEFAULTS.defaultAvatar;
+    const avatarHtml=`<div class="av" style="overflow:hidden;padding:0"><img src="${esc(avatarSrc)}" style="width:100%;height:100%;object-fit:cover" alt="" onerror="this.onerror=null;this.src='${esc(DEFAULTS.defaultAvatar)}'"></div>`;
+    const isSelf = currentUser && currentUser.memberId === m.id;
+    return `<div class="member-card" onclick="showMemberDetail(${m.id})" style="cursor:pointer;${isSelf?'border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)':''}">
+      ${avatarHtml}<h4>${esc(m.name)}${isSelf?'<span style="font-size:10px;color:var(--gold);margin-left:4px">●</span>':''}</h4>
       <div class="rl">${esc(m.role||'成员')}</div>
       <div class="inf">${esc((m.info||'').substring(0,60))}${(m.info||'').length>60?'...':''}</div>
     </div>`;
@@ -2465,17 +2478,47 @@ function renderMembers() {
 function showMemberDetail(id) {
   const m=app.members.find(x=>x.id===id);if(!m)return;
   const im=app.mentors.find(mt=>mt.memberId===m.id);
-  const avatarDisp=m.avatar?`<div class="ma-lg" style="overflow:hidden;padding:0"><img src="${esc(m.avatar)}" style="width:100%;height:100%;object-fit:cover" alt=""></div>`:`<div class="ma-lg">${m.name.charAt(0)}</div>`;
+  const isSelf = currentUser && currentUser.memberId === m.id;
+  const avatarSrc = m.avatar || DEFAULTS.defaultAvatar;
+  const avatarDisp=`<div class="ma-lg" style="overflow:hidden;padding:0"><img src="${esc(avatarSrc)}" style="width:100%;height:100%;object-fit:cover" alt=""></div>`;
+  // 自己: 简介可编辑 + 改密码; 别人: 只读
+  const infoBox = isSelf
+    ? `<textarea id="selfInfoEdit" style="width:100%;min-height:80px;background:var(--bg);padding:14px;border-radius:var(--rs);color:var(--text);font-size:13px;line-height:1.8;border:1px solid var(--bdr);resize:vertical;font-family:inherit;box-sizing:border-box" placeholder="介绍一下自己...">${esc(m.info||'')}</textarea>
+       <div style="display:flex;gap:8px;margin-top:8px">
+         <button class="btn btn-ok btn-sm" onclick="saveSelfInfo(${m.id})" style="flex:1">💾 保存简介</button>
+         <button class="btn btn-outline btn-sm" onclick="cancelSelfInfo()" style="flex:1">取消</button>
+       </div>`
+    : `<div style="background:var(--bg);padding:14px;border-radius:var(--rs);color:var(--text);font-size:13px;line-height:1.8;margin-bottom:14px">${esc(m.info||'暂无简介')}</div>`;
   document.getElementById('memberModalBody').innerHTML=`
     <div style="text-align:center">
       ${avatarDisp}
-      <h3 style="color:var(--gold2);margin-bottom:4px">${esc(m.name)}</h3>
+      <h3 style="color:var(--gold2);margin-bottom:4px">${esc(m.name)}${isSelf?'<span style="background:var(--gold);color:#1a1528;padding:2px 8px;border-radius:10px;font-size:10px;margin-left:6px">本人</span>':''}</h3>
       <div style="color:var(--red2);margin-bottom:12px">${esc(m.role||'成员')} ${m.isAdmin?'<span style="background:var(--gold);color:#1a1528;padding:2px 8px;border-radius:10px;font-size:10px;margin-left:4px">管理员</span>':''}</div>
-      <div style="background:var(--bg);padding:14px;border-radius:var(--rs);color:var(--text);font-size:13px;line-height:1.8;margin-bottom:14px">${esc(m.info||'暂无简介')}</div>
+      ${infoBox}
       ${im?`<div style="margin-top:14px"><h4 style="color:var(--gold2);margin-bottom:8px">导师信息</h4><div style="background:var(--bg);padding:14px;border-radius:var(--rs);font-size:13px;line-height:1.8;color:var(--text)">专长：${esc(im.specialty||'无')}<br><br>${esc(im.extraInfo||'暂无')}</div></div>`:''}
-      ${currentUser&&currentUser.memberId===m.id?`<button class="btn btn-outline btn-sm" onclick="changeMemberPwd()" style="margin-top:12px">🔑 修改密码</button>`:''}
+      ${isSelf?`<button class="btn btn-outline btn-sm" onclick="changeMemberPwd()" style="margin-top:12px">🔑 修改密码</button>`:''}
     </div>`;
   document.getElementById('memberModal').classList.remove('hidden');
+}
+
+// 保存自己的简介
+function saveSelfInfo(id) {
+  const m = app.members.find(x => x.id === id);
+  if (!m) return;
+  if (!currentUser || currentUser.memberId !== id) { toast('只能修改自己的简介'); return; }
+  const ta = document.getElementById('selfInfoEdit');
+  if (!ta) return;
+  m.info = ta.value.trim();
+  saveApp(app);
+  renderMembers();
+  renderFamilyTree();
+  toast('✅ 简介已保存');
+  // 重新渲染弹窗 (从编辑模式切回只读)
+  showMemberDetail(id);
+}
+
+function cancelSelfInfo() {
+  if (currentUser && currentUser.memberId) showMemberDetail(currentUser.memberId);
 }
 
 // Tree (with auto-layout: mentors at top, juniors at bottom)
@@ -2748,15 +2791,7 @@ function afterLoginSuccess(){
     badge.textContent = (m&&m.isAdmin) ? '⚡ 管理员' : '';
     badge.className = (m&&m.isAdmin) ? 'admin-badge' : 'hidden';
     userBadge.textContent = m?m.name:'成员'; userBadge.className='user-badge'; userBadge.classList.remove('hidden');
-    // 所有已登录成员点击姓名 → 打开个人中心（含管理员）
-    if(m){
-      userBadge.style.cursor = 'pointer';
-      userBadge.title = '点击打开个人中心';
-      userBadge.addEventListener('click', function(e){ e.stopPropagation(); openPersonalCenter(); });
-    } else {
-      userBadge.style.cursor = 'default';
-      userBadge.title = '';
-    }
+    // 移除个人中心入口: 用户需通过点击自己的成员卡片修改简介和密码
   }
 
   // Buttons
@@ -3002,7 +3037,7 @@ function admUpsertMember(){
       renderMembers(); renderFamilyTree(); renderMentors(); refreshAdminPanel();
       toast('✅ 成员信息已更新');
     } else {
-      const newMember = { id: genNextId(), ...memberData, relations: [], password:'abc123', isAdmin:false };
+      const newMember = { id: genNextId(), ...memberData, avatar: memberData.avatar || DEFAULTS.defaultAvatar, relations: [], password:'abc123', isAdmin:false };
       app.members.push(newMember);
       saveApp(app);
       pushToCloud(app, true);
