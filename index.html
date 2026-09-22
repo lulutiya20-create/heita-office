@@ -6,6 +6,10 @@
 <meta name="cache-control" content="no-cache, no-store, must-revalidate">
 <meta name="pragma" content="no-cache">
 <meta name="expires" content="0">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://fastly.jsdelivr.net" crossorigin>
+<link rel="dns-prefetch" href="https://gcore.jsdelivr.net">
+<link rel="preconnect" href="https://api.jsonbin.io" crossorigin>
 <title>黑塔办事处</title> <!-- v260613-mongo-reconnect -->
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -2496,11 +2500,44 @@ function renderNav() {
 }
 
 // Carousel
+// ===== CDN 容灾: 图片加载失败时自动切换镜像域名 (cdn -> fastly -> gcore) =====
+const CDN_HOSTS=['cdn.jsdelivr.net','fastly.jsdelivr.net','gcore.jsdelivr.net'];
+function cdnFallback(img){
+  try{
+    const url=img.getAttribute('src')||'';
+    let next=null;
+    // raw.githubusercontent 直链 -> 转回 jsDelivr CDN
+    let m=url.match(/^https:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\/(.+)$/);
+    if(m){ next='https://cdn.jsdelivr.net/gh/'+m[1]+'/'+m[2]+'@'+m[3]+'/'+m[4]; }
+    else{
+      m=url.match(/^https:\/\/([^/]+)\/(gh\/.+)$/);
+      if(m){
+        const i=CDN_HOSTS.indexOf(m[1]);
+        if(i>=0 && i<CDN_HOSTS.length-1) next='https://'+CDN_HOSTS[i+1]+'/'+m[2];
+      }
+    }
+    if(next){ img.src=next; return true; }
+  }catch(e){}
+  return false;
+}
+// Header logo 背景图容灾 (CSS 背景无法用 onerror, 用 JS 探测)
+(function(){
+  const logoPath='gh/lulutiya20-create/heita-office-images@main/logos/ff14-favicon-256.png';
+  let i=0;
+  const tryNext=function(){
+    if(i>=CDN_HOSTS.length) return;
+    const p=new Image();
+    p.onload=function(){ document.querySelectorAll('.header-logo .icon').forEach(el=>{ el.style.backgroundImage="url('https://"+CDN_HOSTS[i]+"/"+logoPath+"')"; }); };
+    p.onerror=function(){ i++; tryNext(); };
+    p.src='https://'+CDN_HOSTS[i]+'/'+logoPath;
+  };
+  tryNext();
+})();
 function renderCarousel() {
   const track = document.getElementById('carouselTrack'), dots = document.getElementById('carouselDots');
   const imgs = app.carouselImages;
   if(!imgs.length){track.innerHTML='<div class="carousel-empty" style="background:linear-gradient(180deg,#0a0e1a,#0d1830)"><div style="font-size:48px;margin-bottom:16px">🖼️</div><div style="font-size:18px;color:var(--gold2);margin-bottom:8px;font-family:\'JupiterPro\',sans-serif;letter-spacing:3px">欢迎来到黑塔办事处</div><div style="font-size:13px;color:var(--muted)">暂无轮播图片 &middot; 管理员可添加</div></div>';dots.innerHTML='';stopCarousel();return;}
-  track.innerHTML=imgs.map((img,i)=>`<div class="carousel-slide"><img src="${esc(img.url)}" alt="${esc(img.title||'')}" onerror="this.onerror=null;this.nextElementSibling.style.display='flex'"><div style="display:none;position:absolute;inset:0;background:linear-gradient(135deg,#1a1a2e,#2a1a3e);align-items:center;justify-content:center;font-size:40px;z-index:1">🖼️</div>${img.title?`<div class="ol"></div><div class="cap"><h3>${esc(img.title)}</h3></div>`:''}</div>`).join('');
+  track.innerHTML=imgs.map((img,i)=>`<div class="carousel-slide"><img src="${esc(img.url)}" alt="${esc(img.title||'')}" loading="${i===0?'eager':'lazy'}" decoding="async" fetchpriority="${i===0?'high':'low'}" onerror="cdnFallback(this)||(this.onerror=null,this.nextElementSibling&&(this.nextElementSibling.style.display='flex'))"><div style="display:none;position:absolute;inset:0;background:linear-gradient(135deg,#1a1a2e,#2a1a3e);align-items:center;justify-content:center;font-size:40px;z-index:1">🖼️</div>${img.title?`<div class="ol"></div><div class="cap"><h3>${esc(img.title)}</h3></div>`:''}</div>`).join('');
   dots.innerHTML=imgs.map((_,i)=>`<span class="carousel-dot${i===currentSlide?' active':''}" onclick="goToSlide(${i})"></span>`).join('');
   if(currentSlide>=imgs.length)currentSlide=0;
   updateCarouselPos();startCarousel();
@@ -2535,7 +2572,7 @@ function showMemberDetail(id) {
   const im=app.mentors.find(mt=>mt.memberId===m.id);
   const isSelf = currentUser && currentUser.memberId === m.id;
   const avatarSrc = m.avatar || DEFAULTS.defaultAvatar;
-  const avatarDisp=`<div class="ma-lg" style="overflow:hidden;padding:0"><img src="${esc(avatarSrc)}" style="width:100%;height:100%;object-fit:cover" alt=""></div>`;
+  const avatarDisp=`<div class="ma-lg" style="overflow:hidden;padding:0"><img src="${esc(avatarSrc)}" decoding="async" style="width:100%;height:100%;object-fit:cover" alt="" onerror="cdnFallback(this)"></div>`;
   // 自己: 简介可编辑 + 改密码; 别人: 只读
   const infoBox = isSelf
     ? `<textarea id="selfInfoEdit" style="width:100%;min-height:80px;background:var(--bg);padding:14px;border-radius:var(--rs);color:var(--text);font-size:13px;line-height:1.8;border:1px solid var(--bdr);resize:vertical;font-family:inherit;box-sizing:border-box" placeholder="介绍一下自己...">${esc(m.info||'')}</textarea>
@@ -2611,7 +2648,7 @@ function removeRelation(targetId) {
 function renderEvents() {
   const g=document.getElementById('eventGrid'),events=[...app.events].sort((a,b)=>new Date(b.date)-new Date(a.date));
   if(!events.length){g.innerHTML='<div class="empty"><div class="ic">📅</div><p>暂无事件</p></div>';return;}
-  g.innerHTML=events.map(e=>`<div class="event-card">${e.image?`<img src="${esc(e.image)}" alt="${esc(e.title)}" onerror="this.style.display='none'">`:''}<div class="event-body"><h4>${esc(e.title)}</h4><div class="dt">📅 ${esc(e.date)}</div><div class="ds">${esc(e.description||'')}</div></div></div>`).join('');
+  g.innerHTML=events.map(e=>`<div class="event-card">${e.image?`<img src="${esc(e.image)}" alt="${esc(e.title)}" loading="lazy" decoding="async" onerror="cdnFallback(this)||(this.style.display='none')">`:''}<div class="event-body"><h4>${esc(e.title)}</h4><div class="dt">📅 ${esc(e.date)}</div><div class="ds">${esc(e.description||'')}</div></div></div>`).join('');
 }
 
 // Mentors
@@ -2622,7 +2659,7 @@ function renderMentors() {
   const total=app.mentors.length;
   track.innerHTML=app.mentors.map((mt,i)=>{
     const m=app.members.find(x=>x.id===mt.memberId);
-    const imgHtml=mt.image?`<img src="${esc(mt.image)}" alt="${m?esc(m.name):''}" loading="lazy" decoding="async">`:'';
+    const imgHtml=mt.image?`<img src="${esc(mt.image)}" alt="${m?esc(m.name):''}" loading="lazy" decoding="async" onerror="cdnFallback(this)">`:'';
     const totalLikes=(app.likes||{})[mt.id]||0;
     const hasLikedToday=currentUser&&currentUser.memberId?(app.likeLog||[]).filter(l=>l.mentorId===mt.id&&l.memberId===currentUser.memberId&&l.date===todayStr()).length>0:false;
     // 有照片：点赞按钮在角色名旁；无照片：点赞按钮在底部
@@ -3661,7 +3698,7 @@ function renderFamilyTree(){
     canvas.classList.add('has-dock');
     if(dockEmpty)dockEmpty.style.display='none';
     dockList.innerHTML=unrelated.map(m=>{
-      const avHtml=m.avatar?`<img src="${esc(m.avatar)}" alt="">`:`<span>${m.name.charAt(0)}</span>`;
+      const avHtml=m.avatar?`<img src="${esc(m.avatar)}" alt="" loading="lazy" decoding="async" onerror="cdnFallback(this)">`:`<span>${m.name.charAt(0)}</span>`;
       return `<div class="ft-dock-card" data-id="${m.id}" onmousedown="startFtDockDrag(event,${m.id})" ontouchstart="startFtDockDrag(event,${m.id})">
         <div class="dc-av">${avHtml}</div>
         <div class="dc-name">${esc(m.name)}</div>
