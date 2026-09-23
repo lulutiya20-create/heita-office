@@ -460,7 +460,7 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
   <span>设备ID: <strong class="device-id" id="deviceIdDisplay"></strong></span>
   <button class="btn btn-sync btn-sm" onclick="forceCloudRefresh()" title="从云端拉取最新数据">🔄 拉取云端</button>
   <button class="btn btn-sync btn-sm" onclick="exportData()">📥 导出备份</button>
-  <button class="btn btn-sync btn-sm" onclick="showJsonbinConfig()" title="管理员填写 Master Key 获得写入权限 (普通用户无需配置)">☁️ 云端授权</button>
+  <button class="btn btn-sync btn-sm" onclick="showJsonbinConfig()" title="云端同步配置 (Master Key 已内置, 全员自动具备写入权限)">☁️ 云端授权</button>
   <span id="adminSyncBtns" style="display:none;gap:10px;flex-wrap:wrap">
   <button class="btn btn-sync btn-sm" onclick="document.getElementById('importFileInput').click()">📤 导入备份</button>
   <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importData(event)">
@@ -470,17 +470,17 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
   </span>
 </div>
 
-<!-- JSONBin 配置弹窗 (管理员专用 - 仅输入 Master Key) -->
+<!-- JSONBin 配置弹窗 (Master Key 已内置, 仅高级情况需要修改) -->
 <div id="jsonbinModal" class="overlay" style="display:none">
   <div class="modal" style="max-width:460px;padding:24px">
-    <h3 style="margin:0 0 12px;color:var(--gold)">☁️ 管理员云端授权</h3>
+    <h3 style="margin:0 0 12px;color:var(--gold)">☁️ 云端同步配置</h3>
     <p style="font-size:13px;color:var(--muted);line-height:1.6">
-      普通成员无需任何配置，开箱即用。<br>
-      <strong>管理员</strong>请在此输入 <strong style="color:var(--gold)">Master Key</strong> 即可获得写入权限，把改动同步到云端让其他设备看见。
+      Master Key 已内置，<strong>所有登录成员发布留言、改密码、改资料都会自动同步到云端</strong>，无需任何配置。<br>
+      仅当云端更换 Key 时才需要在此填写新的 <strong style="color:var(--gold)">Master Key</strong>。
     </p>
     <div style="display:flex;flex-direction:column;gap:10px;margin:14px 0">
-      <label style="font-size:12px;color:var(--muted)">Master Key <span style="opacity:.5">(仅管理员写入用)</span></label>
-      <input type="password" id="jsonbinKeyInput" placeholder="$2b$10$... 留空则只能读不能写" style="padding:8px 10px;background:var(--card2);border:1px solid var(--bdr);color:var(--text);border-radius:6px">
+      <label style="font-size:12px;color:var(--muted)">Master Key <span style="opacity:.5">(已内置默认值, 一般无需修改)</span></label>
+      <input type="password" id="jsonbinKeyInput" placeholder="$2b$10$... 已内置默认 Key" style="padding:8px 10px;background:var(--card2);border:1px solid var(--bdr);color:var(--text);border-radius:6px">
     </div>
     <div style="background:rgba(77,126,255,.08);border:1px solid var(--crystal3);border-radius:6px;padding:10px;font-size:11px;color:var(--muted);line-height:1.6;margin:8px 0">
       <strong style="color:var(--crystal2)">💡 关于请求额度</strong><br>
@@ -820,13 +820,14 @@ const API_SERVER_URL = '';  // Render 已挂, GitHub Pages 静态场景下用 JS
 // 在 localStorage 中存: JSONBIN_BIN_ID + JSONBIN_MASTER_KEY
 // 所有设备共享同一对值即可同步
 const JSONBIN_API = 'https://api.jsonbin.io/v3/b';
-// 默认配置: Bin ID 和只读 Access Key 硬编码 (Access Key 只能 GET，安全性 OK)
-// Master Key 不硬编码,需要管理员在 UI 里输入 (写入操作才用)
+// 默认配置: Bin ID / 只读 Access Key / Master Key 全部硬编码 (所有成员开箱即同步)
+// ⚠️ Master Key 含写权限, 静态站点任何人可从源码提取 — 内部站点可接受, 如数据被乱改请去 jsonbin.io 换 Key
 const JSONBIN_DEFAULT_BIN = '6a2d8016f5f4af5e29ec2a66';
 const JSONBIN_DEFAULT_READ_KEY = '$2a$10$Htgjeu92rse90o7hAgF4V.G7dneKS6l6ylY8xOF92YOqzRb/COAp2';
+const JSONBIN_DEFAULT_MASTER_KEY = '$2a$10$tglai8xzGNfmL54lxCvTN.Uq6EkKAypHwzDVrhRR2FD23DpQKT0a6';
 let jsonbinBinId = JSONBIN_DEFAULT_BIN;       // 默认从硬编码开始
 let jsonbinReadKey = JSONBIN_DEFAULT_READ_KEY; // 只读 Key (GET 用)
-let jsonbinMasterKey = '';                      // Master Key 仅写入用 (用户输入后存 localStorage)
+let jsonbinMasterKey = JSONBIN_DEFAULT_MASTER_KEY; // 写 Key (PUT 用, localStorage 可覆盖)
 // 自动检测可用的 API 端点
 let API_DATA = '';
 let cloudEnabled = false;
@@ -954,20 +955,20 @@ async function initApiEndpoint() {
 // ===================== JSONBin.io 同步层 =====================
 // 免费云端 JSON 存储: https://jsonbin.io
 // 工作流程:
-//   1. 首次访问: 提示用户输入 Bin ID + Master Key (用户在 jsonbin.io 创建)
-//   2. 之后所有设备共享同一对值,自动 PUT/GET 同步
-//   3. Master Key 存在 localStorage (跨设备需要用户手动输入一次)
+//   1. Bin ID / 只读 Access Key / Master Key 均硬编码默认, 开箱即用 (localStorage 可覆盖)
+//   2. 所有设备自动 PUT/GET 同步, 留言/密码/资料改动自动上云
+//   3. Master Key 内置默认值 (localStorage 手动设置的优先)
 
 function loadJsonbinConfig() {
   try {
     // 优先用 localStorage (用户可能覆盖)；否则用硬编码默认
     jsonbinBinId = localStorage.getItem('jsonbin_bin_id') || JSONBIN_DEFAULT_BIN;
     jsonbinReadKey = localStorage.getItem('jsonbin_read_key') || JSONBIN_DEFAULT_READ_KEY;
-    jsonbinMasterKey = localStorage.getItem('jsonbin_master_key') || '';
+    jsonbinMasterKey = localStorage.getItem('jsonbin_master_key') || JSONBIN_DEFAULT_MASTER_KEY;
   } catch (e) {
     jsonbinBinId = JSONBIN_DEFAULT_BIN;
     jsonbinReadKey = JSONBIN_DEFAULT_READ_KEY;
-    jsonbinMasterKey = '';
+    jsonbinMasterKey = JSONBIN_DEFAULT_MASTER_KEY;
   }
   return jsonbinBinId && jsonbinReadKey;  // 只需要 Bin + Read Key 就能 GET
 }
