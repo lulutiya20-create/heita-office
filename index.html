@@ -3445,9 +3445,27 @@ function cancelEditMentor(){
 }
 function admDelMsg(id){app.messages=app.messages.filter(m=>m.id!==id);saveApp(app);renderMessages();refreshAdminPanel();toast('已删除');}
 
+// 管理员重置成员密码
+function admResetPwd(id){
+  if(!isAdmin){toast('需要管理员权限');return;}
+  const m=app.members.find(x=>x.id===id);
+  if(!m)return;
+  const np=prompt('为「'+m.name+'」设置新密码（4-20位，留空并确定则恢复默认 abc123）：');
+  if(np===null)return; // 用户取消
+  const v=np.trim();
+  if(v){
+    if(!/^[\x21-\x7e]{4,20}$/.test(v)){toast('密码需4-20位可见字符，不能含空格或中文');return;}
+    m.password=v;
+  }else{
+    m.password='abc123';
+  }
+  saveApp(app);pushToCloud(app,true);
+  toast('✅ '+m.name+' 的密码已'+(v?'更新':'重置为 abc123'));
+}
+
 function refreshAdminPanel() {
   document.getElementById('adm-carousel-list').innerHTML=app.carouselImages.length?app.carouselImages.map(i=>`<div class="admin-item"><div class="it"><strong>${esc(i.title)}</strong><span>${esc(i.url.substring(0,40))}...</span></div><div class="ia"><button class="btn btn-del btn-sm" onclick="admDelCarousel(${i.id})">删除</button></div></div>`).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
-  document.getElementById('adm-m-list').innerHTML=app.members.length?app.members.map(m=>`<div class="admin-item"><div class="it"><strong>${esc(m.name)}</strong><span>${esc(m.role||'')}${app.mentors.find(mt=>mt.memberId==m.id)?' · 🎓导师':''}</span></div><div class="ia"><button class="btn btn-ok btn-sm" onclick="editAdminMember(${m.id})" title="编辑成员">✏️</button><button class="btn btn-del btn-sm" onclick="admDelMember(${m.id})">删除</button></div></div>`).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
+  document.getElementById('adm-m-list').innerHTML=app.members.length?app.members.map(m=>`<div class="admin-item"><div class="it"><strong>${esc(m.name)}</strong><span>${esc(m.role||'')}${app.mentors.find(mt=>mt.memberId==m.id)?' · 🎓导师':''}</span></div><div class="ia"><button class="btn btn-ok btn-sm" onclick="editAdminMember(${m.id})" title="编辑成员">✏️</button><button class="btn btn-outline btn-sm" onclick="admResetPwd(${m.id})" title="重置密码">🔑</button><button class="btn btn-del btn-sm" onclick="admDelMember(${m.id})">删除</button></div></div>`).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
   document.getElementById('adm-e-list').innerHTML=app.events.length?app.events.map(e=>`<div class="admin-item"><div class="it"><strong>${esc(e.title)}</strong><span>${esc(e.date)}</span></div><div class="ia"><button class="btn btn-del btn-sm" onclick="admDelEvent(${e.id})">删除</button></div></div>`).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
   document.getElementById('adm-mt-list').innerHTML=app.mentors.length?app.mentors.map(mt=>{const m=app.members.find(x=>x.id==mt.memberId);return `<div class="admin-item"><div class="it"><strong>${m?esc(m.name):'未知'}</strong><span>${esc(mt.specialty||'')}</span></div><div class="ia"><button class="btn btn-ok btn-sm" onclick="editAdminMentor(${mt.id})" title="编辑导师">✏️</button><button class="btn btn-del btn-sm" onclick="admDelMentor(${mt.id})">取消</button></div></div>`}).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
   updateMentorSelect();
