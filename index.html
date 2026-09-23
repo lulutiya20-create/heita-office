@@ -279,6 +279,15 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
 .familytree-container{max-width:1200px;margin:0 auto;padding:20px}
 .familytree-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:16px}
 .ft-workspace{display:flex;gap:12px;align-items:stretch}
+/* 族谱页全屏布局: 覆盖除顶栏外的整个界面, 画布占满, 右侧dock放未关联成员 */
+#page-familytree.active{display:flex;flex-direction:column;height:calc(100vh - 56px);padding:0}
+#page-familytree .familytree-container{flex:1;display:flex;flex-direction:column;max-width:none;width:100%;min-height:0;padding:0 16px 14px}
+#page-familytree .page-header{padding:14px 0 6px;flex-shrink:0}
+#page-familytree .page-header h2{font-size:26px}
+#page-familytree .page-header p{margin-top:6px}
+#page-familytree .familytree-actions{flex-shrink:0;padding-bottom:10px}
+#page-familytree .ft-workspace{flex:1;min-height:0}
+#page-familytree .familytree-canvas{min-height:0;height:100%}
 .familytree-canvas{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);overflow:auto;position:relative;min-height:500px;touch-action:none;cursor:grab;flex:1;min-width:0}
 .ft-workspace.has-dock .familytree-canvas{border-radius:var(--r)}
 .familytree-canvas::-webkit-scrollbar{width:10px;height:10px}
@@ -3854,7 +3863,8 @@ function initFtDragEvents(){
 
 function startFtDrag(evt, id){
   if(!isAdmin||!ftAdminMode)return;
-  evt.preventDefault();evt.stopPropagation();
+  // 不 preventDefault: 避免触屏上 click/dblclick 被吞掉 (滚动已由 touch-action:none + touchmove 阻止)
+  evt.stopPropagation();
   const clientX=evt.touches?evt.touches[0].clientX:evt.clientX;
   const clientY=evt.touches?evt.touches[0].clientY:evt.clientY;
   const node=document.getElementById('ft-node-'+id);
@@ -3921,23 +3931,28 @@ function onFtDragEnd(evt){
   if(!ftDragging)return;
   // 取消未执行的动画帧，同步落位保证保存的坐标准确
   if(ftDragRaf){cancelAnimationFrame(ftDragRaf);ftDragRaf=0;}
-  if(ftDragging.curX!=null)applyFtDragFrame();
+  // 区分"真拖动"和"轻点": 移动 <4px 视为轻点, 不保存位置也不屏蔽后续 click
+  const moved = ftDragging.curX!=null &&
+    (Math.abs(ftDragging.curX-ftDragging.startX)>4 || Math.abs(ftDragging.curY-ftDragging.startY)>4);
+  if(moved)applyFtDragFrame();
   const node=document.getElementById('ft-node-'+ftDragging.id);
   if(node){
-    const transform=node.getAttribute('transform');
-    const match=transform.match(/translate\(([-\d.]+),([-\d.]+)\)/);
-    if(match){
-      const x=parseFloat(match[1]), y=parseFloat(match[2]);
-      // Save position
-      if(!app.treeNodePositions)app.treeNodePositions={};
-      app.treeNodePositions[ftDragging.id]={x,y};
-      saveApp(app);
+    if(moved){
+      const transform=node.getAttribute('transform');
+      const match=transform.match(/translate\(([-\d.]+),([-\d.]+)\)/);
+      if(match){
+        const x=parseFloat(match[1]), y=parseFloat(match[2]);
+        // Save position
+        if(!app.treeNodePositions)app.treeNodePositions={};
+        app.treeNodePositions[ftDragging.id]={x,y};
+        saveApp(app);
+      }
+      ftJustDraggedAt=Date.now();
     }
     node.classList.remove('dragging');
   }
   document.getElementById('ftCanvas').classList.remove('dragging-node');
   document.body.style.userSelect='';
-  ftJustDraggedAt=Date.now();
   ftDragging=null;
   document.removeEventListener('mousemove',onFtDragMove);
   document.removeEventListener('mouseup',onFtDragEnd);
@@ -4045,17 +4060,22 @@ function onFtDockDragEnd(evt){
   document.removeEventListener('touchend',onFtDockDragEnd);
 }
 
+let ftLastTap={id:null,t:0};
 function ftNodeClick(evt, id){
   // Don't open modal if was dragging (或拖动刚结束的短暂窗口内)
   if(ftDragging||Date.now()-ftJustDraggedAt<250)return;
-  // 管理员编辑模式需要双击才进入编辑，单击不做操作
-  // 非管理员单击查看成员详情
   if(isAdmin && ftAdminMode){
-    // 单击忽略（拖动时也不会触发），双击由 ondblclick 处理
+    // 编辑模式: 双击/双触打开关系编辑 (触屏没有可靠的 dblclick, 用双击检测兜底)
+    const now=Date.now();
+    if(ftLastTap.id===id && now-ftLastTap.t<400){
+      ftLastTap={id:null,t:0};
+      openRelationPanel(id);
+      return;
+    }
+    ftLastTap={id,t:now};
     return;
-  } else {
-    showMemberDetail(id);
   }
+  showMemberDetail(id);
 }
 
 function ftNodeDblClick(evt, id){
@@ -4089,7 +4109,7 @@ function resetTreePositions(){
 function toggleFtAdmin(){
   if(!ftAdminMode){
     // 进入管理模式：必须先登录管理员
-    if(!isAdmin){showAdminLogin();return;}
+    if(!isAdmin){showLoginModal();return;}
     ftAdminMode=true;
     const btn=document.getElementById('ftAdminBtn');
     const hint=document.getElementById('ftAdminHint');
