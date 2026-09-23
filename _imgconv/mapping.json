@@ -1,0 +1,100 @@
+[
+  {
+    "from": "https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/carousel/1781413740602.png",
+    "to": "https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/carousel/1781413740602.jpg",
+    "fromSize": 4308304,
+    "toSize": 599214,
+    "src": "repo"
+  },
+  {
+    "from": "https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/mentors/1781270458888621.png",
+    "to": "https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/mentors/1781270458888621.jpg",
+    "fromSize": 6522251,
+    "toSize": 1141807,
+    "src": "repo"
+  },
+  {
+    "from": "https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/mentors/1781270492991933.png",
+    "to": "https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/mentors/1781270492991933.jpg",
+    "fromSize": 642187,
+    "toSize": 89880,
+    "src": "repo"
+  },
+  {
+    "from": "https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/mentors/1781270533705380.png",
+    "to": "https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/mentors/1781270533705380.jpg",
+    "fromSize": 5990374,
+    "toSize": 784601,
+    "src": "repo"
+  },
+  {
+    "from": "https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/mentors/1781275479686473.png",
+    "to": "https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/mentors/1781275479686473.jpg",
+    "fromSize": 2329803,
+    "toSize": 361634,
+    "src": "repo"
+  },
+  {
+    "from": "https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/mentors/1781275795519039.png",
+    "to": "https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/mentors/1781275795519039.jpg",
+    "fromSize": 1151250,
+    "toSize": 171840,
+    "src": "repo"
+  },
+  {
+    "from": "https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/mentors/1781414165210765.png",
+    "to": "https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/mentors/1781414165210765.jpg",
+    "fromSize": 478604,
+    "toSize": 87863,
+    "src": "repo"
+  },
+  {
+    "from": "https://picsum.photos/seed/mentor-1781270625683380/1080/1920",
+    "to": "https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/mentors/mentor-1781270625683380.jpg",
+    "fromSize": 238690,
+    "toSize": 286812,
+    "src": "picsum"
+  },
+  {
+    "from": "https://picsum.photos/seed/mentor-1781270635985279/1080/1920",
+    "to": "https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/mentors/mentor-1781270635985279.jpg",
+    "fromSize": 54470,
+    "toSize": 62075,
+    "src": "picsum"
+  },
+  {
+    "from": "https://picsum.photos/seed/mentor-1781274941114665/1080/1920",
+    "to": "https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/mentors/mentor-1781274941114665.jpg",
+    "fromSize": 265637,
+    "toSize": 328476,
+    "src": "picsum"
+  },
+  {
+    "from": "https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/mentors/1781418206690904.png",
+    "to": "https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/mentors/1781418206690904.jpg",
+    "fromSize": 8300573,
+    "toSize": 891689,
+    "src": "repo-retry"
+  },
+  {
+    "from": "https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/carousel/1781413705600.png",
+    "to": "https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/carousel/1781413705600.jpg",
+    "fromSize": 15941799,
+    "toSize": 2665412,
+    "src": "repo-chunked"
+  },
+  {
+    "from": "https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/carousel/1781413728100.png",
+    "to": "https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/carousel/1781413728100.jpg",
+    "fromSize": 8456612,
+    "toSize": 1858376,
+    "src": "repo-chunked"
+  },
+  {
+    "from": "https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/events/1781435333629.png",
+    "to": "https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/events/1781435333629.jpg",
+    "fromSize": 15941799,
+    "toSize": 2665412,
+    "src": "repo-chunked"
+  }
+]

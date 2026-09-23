@@ -1146,8 +1146,15 @@ async function githubUploadImage(file, path, commitMsg) {
     /^https:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\//,
     'https://cdn.jsdelivr.net/gh/$1/$2@$3/'
   );
+  // 覆盖同名文件后, jsDelivr CDN 会缓存旧内容(最长12小时), 主动请求清除缓存
+  // (fire-and-forget, 不阻塞上传流程)
+  try {
+    fetch('https://purge.jsdelivr.net/gh/lulutiya20-create/' + GH_REPO + '@' + GH_BRANCH + '/' + path)
+      .catch(() => {});
+  } catch (e) {}
   return {
-    url: jsDelivrUrl,                          // 优先用 jsDelivr (国内快)
+    // 追加 ?v=时间戳 让浏览器丢弃本地缓存的旧图 (jsDelivr 会忽略该参数)
+    url: jsDelivrUrl + '?v=' + Date.now(),      // 优先用 jsDelivr (国内快)
     rawUrl: result.content.download_url,       // 保留 raw URL 备份
     path: result.content.path,
     sha: result.content.sha,
