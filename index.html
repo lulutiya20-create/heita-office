@@ -278,7 +278,9 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
 /* Family tree page */
 .familytree-container{max-width:1200px;margin:0 auto;padding:20px}
 .familytree-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:16px}
-.familytree-canvas{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);overflow:auto;position:relative;min-height:500px;touch-action:none;cursor:grab}
+.ft-workspace{display:flex;gap:12px;align-items:stretch}
+.familytree-canvas{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);overflow:auto;position:relative;min-height:500px;touch-action:none;cursor:grab;flex:1;min-width:0}
+.ft-workspace.has-dock .familytree-canvas{border-radius:var(--r)}
 .familytree-canvas::-webkit-scrollbar{width:10px;height:10px}
 .familytree-canvas::-webkit-scrollbar-track{background:rgba(0,0,0,.2);border-radius:5px}
 .familytree-canvas::-webkit-scrollbar-thumb{background:var(--gold);border-radius:5px}
@@ -300,12 +302,18 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
 .tree-resize-handle:hover{background:var(--gold)}
 
 /* Unrelated members dock */
-.ft-dock{position:absolute;right:10px;top:20px;width:150px;max-height:calc(100% - 40px);background:rgba(15,15,26,.92);border:1px solid var(--gold);border-radius:16px;display:flex;flex-direction:column;overflow-y:auto;z-index:10;padding:10px 6px;backdrop-filter:blur(8px);box-shadow:0 4px 24px rgba(0,0,0,.5)}
-.ft-dock-title{text-align:center;font-size:11px;color:var(--gold);margin-bottom:8px;font-weight:600;letter-spacing:1px}
+.ft-dock{position:relative;width:160px;flex-shrink:0;align-self:stretch;background:rgba(15,15,26,.92);border:1px solid var(--gold);border-radius:16px;display:flex;flex-direction:column;overflow-y:auto;z-index:10;padding:10px 6px;backdrop-filter:blur(8px);box-shadow:0 4px 24px rgba(0,0,0,.5)}
+#ftDockList{display:flex;flex-direction:column;gap:6px}
+.ft-dock-title{text-align:center;font-size:11px;color:var(--gold);margin-bottom:8px;font-weight:600;letter-spacing:1px;position:sticky;top:-10px;background:rgba(15,15,26,.95);padding:6px 0;z-index:1}
 .ft-dock-empty{text-align:center;color:var(--muted);font-size:10px;margin-top:20px;line-height:1.5}
-.ft-dock-card{background:var(--card);border:1px solid var(--bdr2);border-radius:12px;padding:8px;text-align:center;margin-bottom:6px;cursor:grab;transition:all .2s ease;user-select:none;-webkit-user-select:none}
-.ft-dock-card:hover{border-color:var(--gold);transform:translateX(-4px);box-shadow:-2px 0 12px rgba(212,167,116,.15)}
+.ft-dock-card{background:var(--card);border:1px solid var(--bdr2);border-radius:12px;padding:8px;text-align:center;margin-bottom:0;cursor:grab;transition:border-color .2s ease,box-shadow .2s ease;user-select:none;-webkit-user-select:none}
+.ft-dock-card:hover{border-color:var(--gold);box-shadow:0 0 12px rgba(212,167,116,.2)}
 .ft-dock-card:active{cursor:grabbing}
+.familytree-canvas.dock-over{border-color:var(--gold);box-shadow:0 0 0 2px rgba(212,167,116,.35),0 0 24px rgba(212,167,116,.15)}
+.ft-node{cursor:pointer}
+.ft-admin-mode .ft-node,.admin-mode .ft-node{cursor:grab}
+.ft-node.dragging{cursor:grabbing}
+.ft-node .ft-node-handle{pointer-events:none}
 .ft-dock-card .dc-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--bdr2),var(--card2));display:flex;align-items:center;justify-content:center;font-size:16px;margin:0 auto 4px;border:1.5px solid var(--bdr2);overflow:hidden}
 .ft-dock-card .dc-av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .ft-dock-card .dc-name{font-size:11px;color:var(--gold2);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -351,8 +359,13 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
   .sync-bar{padding:6px 10px;font-size:10px;gap:4px}
   .sync-bar .btn{font-size:10px;padding:3px 8px}
   .familytree-container{padding:10px}
+  .ft-workspace{flex-direction:column}
   .familytree-canvas{min-height:400px}
-  .ft-dock{position:absolute;right:6px;top:10px;width:110px;max-height:calc(100% - 20px);padding:6px 4px;border-radius:12px}
+  .ft-dock{width:100%;max-height:130px;flex-direction:row;align-items:center;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;padding:6px 8px;border-radius:12px;gap:8px}
+  .ft-dock-title{margin-bottom:0;flex-shrink:0;writing-mode:vertical-rl;letter-spacing:2px}
+  .ft-dock-empty{margin-top:0;flex-shrink:0}
+  #ftDockList{flex-direction:row;gap:6px}
+  .ft-dock-card{min-width:86px}
   .ft-dock-card .dc-av{width:28px;height:28px;font-size:13px}
   .ft-dock-card .dc-name{font-size:9px}
   .ft-dock-card .dc-role{font-size:8px}
@@ -550,10 +563,12 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
       <button class="btn btn-outline btn-sm hidden" id="ftAdminBtn" onclick="toggleFtAdmin()">🔐 管理员编辑</button>
       <span id="ftAdminHint" class="hidden" style="font-size:12px;color:var(--muted)">请先登录管理员</span>
     </div>
-    <div class="familytree-canvas" id="ftCanvas">
-      <svg id="ftSvg"></svg>
-      <div class="tree-empty" id="ftEmpty"><div class="ic">🌳</div><p>暂无成员数据</p></div>
-      <div class="ft-dock" id="ftDock" style="display:none"><div class="ft-dock-title">未关联成员</div><div class="ft-dock-empty" id="ftDockEmpty">拖入画布定位</div><div id="ftDockList"></div></div>
+    <div class="ft-workspace" id="ftWorkspace">
+      <div class="familytree-canvas" id="ftCanvas">
+        <svg id="ftSvg"></svg>
+        <div class="tree-empty" id="ftEmpty"><div class="ic">🌳</div><p>暂无成员数据</p></div>
+      </div>
+      <div class="ft-dock" id="ftDock" style="display:none"><div class="ft-dock-title">未关联成员</div><div class="ft-dock-empty" id="ftDockEmpty">拖入左侧画布定位</div><div id="ftDockList"></div></div>
     </div>
     <div class="familytree-tooltip" id="ftTooltip"></div>
   </div>
@@ -3702,7 +3717,7 @@ function renderFamilyTree(){
   const unrelated=app.members.filter(m=>(!m.relations||!m.relations.length)&&!allTgts.has(m.id)&&(!hasPositions||!app.treeNodePositions[m.id]));
   if(unrelated.length){
     dock.style.display='flex';
-    canvas.classList.add('has-dock');
+    document.getElementById('ftWorkspace').classList.add('has-dock');
     if(dockEmpty)dockEmpty.style.display='none';
     dockList.innerHTML=unrelated.map(m=>{
       const avHtml=m.avatar?`<img src="${esc(m.avatar)}" alt="" loading="lazy" decoding="async" onerror="cdnFallback(this)">`:`<span>${m.name.charAt(0)}</span>`;
@@ -3714,7 +3729,7 @@ function renderFamilyTree(){
     }).join('');
   }else{
     dock.style.display='none';
-    canvas.classList.remove('has-dock');
+    document.getElementById('ftWorkspace').classList.remove('has-dock');
   }
 }
 
@@ -3831,10 +3846,13 @@ function startFtDrag(evt, id){
   const match=transform.match(/translate\(([-\d.]+),([-\d.]+)\)/);
   const origX=match?parseFloat(match[1]):0;
   const origY=match?parseFloat(match[2]):0;
-  ftDragging={id,startX:clientX,startY:clientY,origX,origY};
+  // 预缓存与该节点相连的所有连线，拖动时不再做 DOM 查询
+  const svg=document.getElementById('ftSvg');
+  ftDragging={id,startX:clientX,startY:clientY,origX,origY,
+    lines:Array.from(svg.querySelectorAll(`line[data-from="${id}"],line[data-to="${id}"]`))};
   node.classList.add('dragging');
   document.getElementById('ftCanvas').classList.add('dragging-node');
-  // Move events
+  document.body.style.userSelect='none';
   if(evt.touches){
     document.addEventListener('touchmove',onFtDragMove,{passive:false});
     document.addEventListener('touchend',onFtDragEnd);
@@ -3844,22 +3862,28 @@ function startFtDrag(evt, id){
   }
 }
 
+let ftDragRaf=0;
 function onFtDragMove(evt){
   if(!ftDragging)return;
   evt.preventDefault();
-  const clientX=evt.touches?evt.touches[0].clientX:evt.clientX;
-  const clientY=evt.touches?evt.touches[0].clientY:evt.clientY;
-  const dx=clientX-ftDragging.startX, dy=clientY-ftDragging.startY;
-  const nx=ftDragging.origX+dx, ny=ftDragging.origY+dy;
-  const node=document.getElementById('ft-node-'+ftDragging.id);
+  ftDragging.curX=evt.touches?evt.touches[0].clientX:evt.clientX;
+  ftDragging.curY=evt.touches?evt.touches[0].clientY:evt.clientY;
+  // 用 rAF 合并高频 mousemove，一帧最多重绘一次
+  if(!ftDragRaf)ftDragRaf=requestAnimationFrame(applyFtDragFrame);
+}
+function applyFtDragFrame(){
+  ftDragRaf=0;
+  if(!ftDragging||ftDragging.curX==null)return;
+  const {id,curX,curY,startX,startY,origX,origY,lines}=ftDragging;
+  const dx=curX-startX, dy=curY-startY;
+  const nx=origX+dx, ny=origY+dy;
+  const node=document.getElementById('ft-node-'+id);
   if(node)node.setAttribute('transform',`translate(${nx},${ny})`);
-  // Update all lines connected to this node
-  const svg=document.getElementById('ftSvg');
+  // Update all lines connected to this node (cached at drag start)
   const nodeW=140, nodeH=70;
   const cx=nx+nodeW/2, cy=ny+nodeH/2;
-  const lines=svg.querySelectorAll(`line[data-from="${ftDragging.id}"],line[data-to="${ftDragging.id}"]`);
-  lines.forEach(line=>{
-    if(line.getAttribute('data-from')===String(ftDragging.id)){
+  (lines||[]).forEach(line=>{
+    if(line.getAttribute('data-from')===String(id)){
       line.setAttribute('x1', String(cx));
       line.setAttribute('y1', String(cy));
     }else{
@@ -3870,13 +3894,17 @@ function onFtDragMove(evt){
   // Update tooltip position
   const tooltip=document.getElementById('ftTooltip');
   if(tooltip.style.display==='block'){
-    tooltip.style.left=(clientX+14)+'px';
-    tooltip.style.top=(clientY-10)+'px';
+    tooltip.style.left=(curX+14)+'px';
+    tooltip.style.top=(curY-10)+'px';
   }
 }
 
+let ftJustDraggedAt=0; // 拖动结束后的短暂时间窗内忽略 click，防止误触打开详情
 function onFtDragEnd(evt){
   if(!ftDragging)return;
+  // 取消未执行的动画帧，同步落位保证保存的坐标准确
+  if(ftDragRaf){cancelAnimationFrame(ftDragRaf);ftDragRaf=0;}
+  if(ftDragging.curX!=null)applyFtDragFrame();
   const node=document.getElementById('ft-node-'+ftDragging.id);
   if(node){
     const transform=node.getAttribute('transform');
@@ -3891,6 +3919,8 @@ function onFtDragEnd(evt){
     node.classList.remove('dragging');
   }
   document.getElementById('ftCanvas').classList.remove('dragging-node');
+  document.body.style.userSelect='';
+  ftJustDraggedAt=Date.now();
   ftDragging=null;
   document.removeEventListener('mousemove',onFtDragMove);
   document.removeEventListener('mouseup',onFtDragEnd);
@@ -3932,7 +3962,7 @@ function startFtDockDrag(evt, id){
   const ghost=document.createElement('div');
   ghost.id='ftDockGhost';
   ghost.innerHTML=el.innerHTML;
-  ghost.style.cssText=`position:fixed;z-index:9999;left:${rect.x}px;top:${rect.y}px;width:${rect.width}px;padding:8px;background:var(--card);border:2px solid var(--gold);border-radius:12px;text-align:center;pointer-events:none;box-shadow:0 12px 40px rgba(212,167,.3);transform:scale(1.05)`;
+  ghost.style.cssText=`position:fixed;z-index:9999;left:${rect.x}px;top:${rect.y}px;width:${rect.width}px;padding:8px;background:var(--card);border:2px solid var(--gold);border-radius:12px;text-align:center;pointer-events:none;box-shadow:0 12px 40px rgba(212,167,116,.3);transform:scale(1.05)`;
   document.body.appendChild(ghost);
   if(evt.touches){
     document.addEventListener('touchmove',onFtDockDragMove,{passive:false});
@@ -3946,20 +3976,33 @@ function startFtDockDrag(evt, id){
 function onFtDockDragMove(evt){
   if(!ftDockDragging)return;
   evt.preventDefault();
-  const clientX=evt.touches?evt.touches[0].clientX:evt.clientX;
-  const clientY=evt.touches?evt.touches[0].clientY:evt.clientY;
+  ftDockDragging.curX=evt.touches?evt.touches[0].clientX:evt.clientX;
+  ftDockDragging.curY=evt.touches?evt.touches[0].clientY:evt.clientY;
+  if(!ftDockRaf)ftDockRaf=requestAnimationFrame(applyFtDockFrame);
+}
+let ftDockRaf=0;
+function applyFtDockFrame(){
+  ftDockRaf=0;
+  if(!ftDockDragging||ftDockDragging.curX==null)return;
   const ghost=document.getElementById('ftDockGhost');
-  if(ghost){ghost.style.left=(clientX-40)+'px';ghost.style.top=(clientY-30)+'px';}
+  if(ghost){ghost.style.left=(ftDockDragging.curX-40)+'px';ghost.style.top=(ftDockDragging.curY-30)+'px';}
+  // 悬停在画布上时高亮提示可放置
+  const canvas=document.getElementById('ftCanvas');
+  const r=canvas.getBoundingClientRect();
+  const over=ftDockDragging.curX>=r.left&&ftDockDragging.curX<=r.right&&ftDockDragging.curY>=r.top&&ftDockDragging.curY<=r.bottom;
+  canvas.classList.toggle('dock-over',over);
 }
 
 function onFtDockDragEnd(evt){
   if(!ftDockDragging)return;
+  if(ftDockRaf){cancelAnimationFrame(ftDockRaf);ftDockRaf=0;}
   const clientX=evt.changedTouches?evt.changedTouches[0].clientX:evt.clientX;
   const clientY=evt.changedTouches?evt.changedTouches[0].clientY:evt.clientY;
-  // Check if dropped inside the canvas area
+  // Check if dropped inside the canvas area (dock 现在在画布外侧, 无需再偏移)
   const canvas=document.getElementById('ftCanvas');
+  canvas.classList.remove('dock-over');
   const cRect=canvas.getBoundingClientRect();
-  const inCanvas=clientX>=cRect.left+160 && clientX<=cRect.right && clientY>=cRect.top && clientY<=cRect.bottom;
+  const inCanvas=clientX>=cRect.left && clientX<=cRect.right && clientY>=cRect.top && clientY<=cRect.bottom;
   if(inCanvas&&ftAdminMode){
     // Place the node at this position relative to SVG (accounting for scroll)
     const svg=document.getElementById('ftSvg');
@@ -3986,8 +4029,8 @@ function onFtDockDragEnd(evt){
 }
 
 function ftNodeClick(evt, id){
-  // Don't open modal if was dragging
-  if(ftDragging)return;
+  // Don't open modal if was dragging (或拖动刚结束的短暂窗口内)
+  if(ftDragging||Date.now()-ftJustDraggedAt<250)return;
   // 管理员编辑模式需要双击才进入编辑，单击不做操作
   // 非管理员单击查看成员详情
   if(isAdmin && ftAdminMode){
@@ -3999,7 +4042,7 @@ function ftNodeClick(evt, id){
 }
 
 function ftNodeDblClick(evt, id){
-  if(ftDragging)return;
+  if(ftDragging||Date.now()-ftJustDraggedAt<250)return;
   evt.preventDefault();evt.stopPropagation();
   if(isAdmin && ftAdminMode){
     openRelationPanel(id);
