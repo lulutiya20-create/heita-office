@@ -1588,6 +1588,23 @@ async function pushToCloud(data, force = false) {
 
   // 1) 优先推送 JSONBin (GitHub Pages 场景)
   if (jsonbinBinId && jsonbinMasterKey) {
+    // 冲突保护: 推送前检查云端是否被其他设备修改过, 防止旧页面数据整体覆盖最新数据
+    try {
+      const remote = await jsonbinRead();
+      if (remote && remote.members) {
+        const rfp = jsonbinFingerprint(remote);
+        if (rfp && lastCloudFingerprint && rfp !== lastCloudFingerprint) {
+          const okOverwrite = confirm('⚠️ 检测到云端数据已被其他设备修改过（本页数据可能过旧）。\n\n继续推送会用本页数据整体覆盖云端，可能丢失其他设备的修改。\n建议取消后点「🔄 拉取云端」刷新本页再操作。\n\n确定仍要覆盖云端吗？');
+          if (!okOverwrite) {
+            syncPending = false;
+            updateSyncStatus('error');
+            toast('❌ 已取消同步：请先点「🔄 拉取云端」更新本页数据');
+            return;
+          }
+          console.warn('[JSONBin 同步] 用户确认覆盖云端冲突数据');
+        }
+      }
+    } catch (e) { /* 预检失败不阻塞推送 */ }
     const cleanData = cleanCloudMeta(data);
     const ok = await pushToJsonbin(cleanData);
     if (ok) {
