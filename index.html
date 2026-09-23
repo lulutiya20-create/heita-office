@@ -3812,6 +3812,56 @@ function ftRowIndex(y){return Math.max(0,Math.round((y-FT_ROW_START)/FT_ROW_PITC
 function ftRowY(ri){return FT_ROW_START+ri*FT_ROW_PITCH;}
 function snapFtRow(y){return ftRowY(ftRowIndex(y));}
 
+// 把未定位但有关联的角色放到关联角色附近的空位（同行相邻，右找→左找），返回仍无锚点的
+function placeNearRelated(unsaved, positions){
+  const snapOn = app.treeLayered!==false;
+  let pending=unsaved.slice();
+  let placed=true;
+  while(pending.length&&placed){
+    placed=false;
+    for(let i=0;i<pending.length;i++){
+      const m=pending[i];
+      // 锚点: 我指向的人 + 指向我的人 中已有定位的
+      const anchors=[];
+      (m.relations||[]).forEach(r=>{if(positions[r.targetId])anchors.push(positions[r.targetId]);});
+      app.members.forEach(o=>{
+        if(o.id!==m.id&&(o.relations||[]).some(r=>r.targetId===m.id)&&positions[o.id])anchors.push(positions[o.id]);
+      });
+      if(!anchors.length)continue;
+      const a=anchors[0];
+      const rowY=snapOn?snapFtRow(a.y):a.y;
+      // 找空位: 同行为主, 被占满时考虑上下相邻行, 取离锚点最近的
+      let best=null;
+      const rowKey=ry=>snapOn?ftRowIndex(ry):ry;
+      // 同行为主, 上下各放宽2行, 各自找最近空位后按 横向距离+换行惩罚 取最优
+      const tryRows=snapOn?[-2,-1,0,1,2].map(d=>rowY+d*FT_ROW_PITCH):[rowY];
+      tryRows.forEach(ry=>{
+        const rowXs=Object.values(positions).filter(p=>rowKey(p.y)===rowKey(ry)).map(p=>p.x);
+        const occupied=x=>rowXs.some(tx=>Math.abs(tx-x)<FT_NODE_W+FT_GAP_X-10);
+        for(let k=0;k<80;k++){
+          const offs=k===0?[0]:(k%2===1?[Math.ceil(k/2),-Math.ceil(k/2)]:[-k/2,k/2]);
+          let foundX=null;
+          for(const o of offs){
+            const x=a.x+o*(FT_NODE_W+FT_GAP_X);
+            if(x<10||occupied(x))continue;
+            foundX=x;break;
+          }
+          if(foundX!=null){
+            const dist=Math.abs(foundX-a.x)+Math.abs(ry-rowY)*0.75;
+            if(!best||dist<best.dist)best={x:foundX,y:ry,dist};
+            break; // 该行最近空位已找到
+          }
+        }
+      });
+      if(!best)continue;
+      positions[m.id]={x:best.x, y:best.y};
+      pending.splice(i,1);i--;
+      placed=true;
+    }
+  }
+  return pending;
+}
+
 function computeFtLayout(members, w, h){
   const positions = {};
   // If we have saved positions, use them
@@ -3825,7 +3875,9 @@ function computeFtLayout(members, w, h){
     // Auto-layout unsaved ones
     const unsaved = members.filter(m=>!ftNodePositions[m.id]);
     if(unsaved.length){
-      autoLayoutNodes(unsaved, positions, w, h, members);
+      // 优先放在关联角色附近的空位; 完全没有关联锚点的才走通用树形布局
+      const rest=placeNearRelated(unsaved, positions);
+      if(rest.length)autoLayoutNodes(rest, positions, w, h, members);
     }
     return positions;
   }
