@@ -1687,6 +1687,40 @@ function saveLocal(data) {
   localStorage.setItem(DB_KEY, JSON.stringify(data));
 }
 
+// 按图片 URL 尽力删除 GitHub 上的旧文件 (替换头像/导师图后清理旧文件, 失败忽略)
+async function tryDeleteGithubImageByUrl(url) {
+  try {
+    if (!url || !loadGithubToken()) return;
+    const m = String(url).match(/cdn\.jsdelivr\.net\/gh\/lulutiya20-create\/([^/]+)@([^/]+)\/([^?]+?)(?:\?.*)?$/);
+    if (!m || m[1] !== GH_REPO) return;
+    const oldPath = decodeURIComponent(m[3]);
+    const r = await fetch(`https://api.github.com/repos/lulutiya20-create/${GH_REPO}/contents/${oldPath}`, {
+      headers: { 'Authorization': 'Bearer ' + (githubToken || loadGithubToken()), 'Accept': 'application/vnd.github+json' },
+      signal: AbortSignal.timeout(15000)
+    });
+    if (!r.ok) return;
+    const j = await r.json();
+    if (j.sha) await githubDeleteFile(oldPath, j.sha);
+    console.log('[图床] 旧图已清理:', oldPath);
+  } catch (e) { console.warn('[图床] 旧图清理失败(忽略):', e.message); }
+}
+
+// 点赞安全合并: likes 只增不减, 按键取较大值; likeLog 按 导师|成员|日期 去重并集
+// 用于推送前与云端合并, 防止本机数据落后时整包覆盖导致点赞丢失/回退
+function mergeLikeCounts(local, remote) {
+  const merged = Object.assign({}, remote || {});
+  Object.keys(local || {}).forEach(k => { merged[k] = Math.max(merged[k] || 0, local[k] || 0); });
+  return merged;
+}
+function mergeLikeLogs(a, b) {
+  const seen = new Set(); const out = [];
+  ([(a || []), (b || [])]).reduce((x, y) => x.concat(y), []).forEach(l => {
+    const k = l.mentorId + '|' + l.memberId + '|' + l.date;
+    if (!seen.has(k)) { seen.add(k); out.push(l); }
+  });
+  return out;
+}
+
 async function pushToCloud(data, force = false) {
   if (syncPending) return;
   syncPending = true;
@@ -1708,6 +1742,14 @@ async function pushToCloud(data, force = false) {
             return;
           }
           console.warn('[JSONBin 同步] 用户确认覆盖云端冲突数据');
+        }
+        // ★ 点赞安全合并 (只增不减, 无需用户参与):
+        // 本机数据落后时, 整包覆盖会把云端点赞打回旧版本, 这里先把云端的赞并回来
+        if (remote.likes || data.likes) {
+          data.likes = mergeLikeCounts(data.likes, remote.likes);
+        }
+        if ((remote.likeLog || []).length || (data.likeLog || []).length) {
+          data.likeLog = mergeLikeLogs(data.likeLog, remote.likeLog);
         }
       }
     } catch (e) { /* 预检失败不阻塞推送 */ }
@@ -2355,12 +2397,15 @@ async function uploadMentorImage() {
 
   try {
     const ext = mentorSelectedFile.name.split('.').pop() || 'jpg';
-    const path = `mentors/${mentorId}.${ext}`;
+    // ★ 换图用全新文件名: jsDelivr 按路径缓存(忽略 ?v=), 覆盖同名文件会命中 12h 旧缓存
+    const path = `mentors/${mentorId}-${Date.now()}.${ext}`;
+    const oldImgUrl = mentor.image;
     const result = await githubUploadImage(mentorSelectedFile, path, `update mentor ${mentorId} image`);
 
     mentor.image = result.url;
     saveLocal(app);
     renderMentorGrid();
+    if (oldImgUrl && oldImgUrl !== result.url) tryDeleteGithubImageByUrl(oldImgUrl);
 
     status.innerHTML = `✅ 导师图已更新! <a href="${result.url}" target="_blank" style="color:var(--gold)">查看原图 (${(result.size / 1024).toFixed(1)} KB)</a>`;
     status.style.color = '#27ae60';
@@ -2437,12 +2482,15 @@ async function uploadMemberAvatar() {
 
   try {
     const ext = avatarSelectedFile.name.split('.').pop() || 'jpg';
-    const path = `avatars/${memberId}.${ext}`;
+    // ★ 换图用全新文件名, 避开 jsDelivr 同路径旧缓存
+    const path = `avatars/${memberId}-${Date.now()}.${ext}`;
+    const oldAvatarUrl = member.avatar;
     const result = await githubUploadImage(avatarSelectedFile, path, `update member ${memberId} avatar`);
 
     member.avatar = result.url;
     saveLocal(app);
     renderAvatarGrid();
+    if (oldAvatarUrl && oldAvatarUrl !== result.url) tryDeleteGithubImageByUrl(oldAvatarUrl);
 
     status.innerHTML = `✅ 头像已更新! <a href="${result.url}" target="_blank" style="color:var(--gold)">查看原图 (${(result.size / 1024).toFixed(1)} KB)</a>`;
     status.style.color = '#27ae60';
@@ -3547,9 +3595,12 @@ function admUpsertMember(){
     const targetId = editingAdminMemberId || ('new-' + Date.now());
     const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
     const safeExt = ['jpg','jpeg','png','gif','webp'].includes(ext) ? ext : 'jpg';
-    const path = 'avatars/' + targetId + '.' + safeExt;
+    // ★ 编辑换图用全新文件名, 避开 jsDelivr 同路径旧缓存
+    const oldAvatarUrl = editingAdminMemberId ? ((app.members.find(m=>m.id===editingAdminMemberId)||{}).avatar||'') : '';
+    const path = 'avatars/' + targetId + '-' + Date.now() + '.' + safeExt;
     githubUploadImage(file, path, 'member avatar: ' + n).then(result => {
       setAdmGhStatus('adm-m-avatar-gh-status', '✅ 头像已上传: ' + result.url.substring(0, 50) + '...', '#27ae60');
+      if (oldAvatarUrl && oldAvatarUrl !== result.url) tryDeleteGithubImageByUrl(oldAvatarUrl);
       applyMember(result.url);
     }).catch(e => {
       setAdmGhStatus('adm-m-avatar-gh-status', '❌ ' + e.message, '#e74c3c');
@@ -3677,10 +3728,13 @@ async function admAddMentor(){
       try {
         const ext = (pendingMentorFile.name.split('.').pop() || 'jpg').toLowerCase();
         const safeExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext) ? ext : 'jpg';
-        const path = 'mentors/' + mt.id + '.' + safeExt;
+        // ★ 换图用全新文件名: jsDelivr 按路径缓存(忽略 ?v=), 覆盖同名文件会命中 12h 旧缓存
+        const path = 'mentors/' + mt.id + '-' + Date.now() + '.' + safeExt;
+        const oldImgUrl = mt.image;
         const result = await githubUploadImage(pendingMentorFile, path, 'update mentor ' + mt.id);
         mt.image = result.url;
         setAdmGhStatus('adm-mt-gh-status', '✅ 上传成功: ' + result.url.substring(0, 60) + '...', '#27ae60');
+        if (oldImgUrl && oldImgUrl !== result.url) tryDeleteGithubImageByUrl(oldImgUrl);
       } catch (e) {
         setAdmGhStatus('adm-mt-gh-status', '❌ ' + e.message, '#e74c3c');
         return;
