@@ -156,6 +156,39 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
 .event-body .dt{font-size:12px;color:var(--red2);margin-bottom:10px}
 .event-body .ds{font-size:13px;color:var(--muted);line-height:1.7}
 
+/* Gallery 图库 */
+.gallery-wrap{max-width:1200px;margin:0 auto;padding:0 20px 40px}
+.gallery-upload{background:linear-gradient(180deg,var(--card) 0%,var(--bg2) 100%);border:1px dashed var(--bdr);border-radius:var(--r);padding:16px 20px;margin-bottom:24px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.gallery-upload input[type=text]{flex:1;min-width:160px;padding:8px 12px;background:var(--card2);border:1px solid var(--bdr);color:var(--text);border-radius:6px}
+.gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.gl-item{position:relative;border-radius:var(--rs);overflow:hidden;border:1px solid var(--bdr);cursor:zoom-in;background:var(--card2);transition:var(--tr);aspect-ratio:4/3}
+.gl-item:hover{border-color:var(--crystal3);transform:translateY(-3px);box-shadow:0 8px 25px rgba(77,126,255,.22)}
+.gl-item img{width:100%;height:100%;object-fit:cover;display:block}
+.gl-item .gl-cap{position:absolute;left:0;right:0;bottom:0;padding:18px 10px 8px;background:linear-gradient(180deg,transparent 0%,rgba(10,14,26,.9) 100%);font-size:12px;color:#dfe7ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;transition:var(--tr)}
+.gl-item:hover .gl-cap{opacity:1}
+.gl-item .gl-del{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(10,14,26,.72);color:#ff8a8a;font-size:14px;cursor:pointer;display:none;align-items:center;justify-content:center;line-height:1}
+.gl-item:hover .gl-del{display:flex}
+.gl-item .gl-del:hover{background:var(--danger);color:#fff;border-color:var(--danger)}
+.gl-empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:60px 0}
+/* Lightbox 灯箱 */
+.gl-ov{position:fixed;inset:0;background:rgba(5,8,16,.94);z-index:2000;display:flex;flex-direction:column;backdrop-filter:blur(6px)}
+.gl-ov.hidden{display:none}
+.gl-top{display:flex;align-items:center;gap:10px;padding:12px 18px;color:#dfe7ff;font-size:13px;flex-wrap:wrap}
+.gl-top .gl-title{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--gold2);font-weight:600}
+.gl-btn{background:rgba(77,126,255,.12);border:1px solid var(--crystal3);color:#dfe7ff;padding:7px 14px;border-radius:20px;cursor:pointer;font-size:12px;transition:var(--tr)}
+.gl-btn:hover{background:rgba(77,126,255,.3)}
+.gl-btn.gl-danger{border-color:rgba(255,110,110,.5);color:#ff9a9a}
+.gl-btn.gl-danger:hover{background:var(--danger);color:#fff}
+.gl-stage{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;padding:10px 60px;position:relative}
+.gl-stage img{max-width:100%;max-height:100%;object-fit:contain;border-radius:4px;transition:transform .2s;cursor:zoom-in;box-shadow:0 10px 50px rgba(0,0,0,.6)}
+.gl-stage.zoomed{align-items:flex-start;justify-content:flex-start}
+.gl-stage.zoomed img{max-width:none;max-height:none;cursor:zoom-out}
+.gl-stage.zoomed img:hover{transform:none}
+.gl-arrow{position:fixed;top:50%;transform:translateY(-50%);width:46px;height:46px;border-radius:50%;border:1px solid var(--gold);background:rgba(212,167,116,.12);color:var(--gold);font-size:20px;cursor:pointer;z-index:10;transition:var(--tr)}
+.gl-arrow:hover{background:var(--gold);color:#0f0f1a}
+.gl-prev{left:14px}.gl-next{right:14px}
+.gl-count{text-align:center;color:var(--muted);font-size:12px;padding:10px}
+
 .mentor-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:22px;padding-bottom:40px}
 .mentor-card{background:linear-gradient(180deg,var(--card) 0%,#0d1830 100%);border:1px solid var(--bdr2);border-radius:var(--r);padding:26px;text-align:center;transition:var(--tr);box-shadow:inset 0 1px 0 rgba(110,155,255,.06)}
 .mentor-card:hover{border-color:var(--crystal2);box-shadow:0 8px 30px rgba(77,126,255,.2),inset 0 1px 0 rgba(110,155,255,.1);transform:translateY(-3px)}
@@ -451,6 +484,7 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
   <button class="nav-btn" data-path="/members" onclick="navigate('/members');closeMobileNav()">👥 成员</button>
   <button class="nav-btn" data-path="/familytree" onclick="navigate('/familytree');closeMobileNav()">🌳 黑塔族谱</button>
   <button class="nav-btn" data-path="/events" onclick="navigate('/events');closeMobileNav()">📅 事件</button>
+  <button class="nav-btn" data-path="/gallery" onclick="navigate('/gallery');closeMobileNav()">🖼️ 图库</button>
     <button class="nav-btn" data-path="/mentors" onclick="navigate('/mentors');closeMobileNav()">📋 导师</button>
   <button class="nav-btn" data-path="/messages" onclick="navigate('/messages');closeMobileNav()">💬 留言</button>
 </div>
@@ -550,6 +584,7 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
         <div class="home-card" onclick="navigate('/members')"><div class="hc-icon">👥</div><h3>成员名录</h3><p>查看全体成员信息</p></div>
         <div class="home-card" onclick="navigate('/familytree')"><div class="hc-icon">🌳</div><h3>黑塔族谱</h3><p>全员关系图谱</p></div>
         <div class="home-card" onclick="navigate('/events')"><div class="hc-icon">📅</div><h3>部队事件</h3><p>团建活动与重要事件</p></div>
+        <div class="home-card" onclick="navigate('/gallery')"><div class="hc-icon">🖼️</div><h3>图库</h3><p>部队精彩瞬间收藏</p></div>
         <div class="home-card" onclick="navigate('/mentors')"><div class="hc-icon">📋</div><h3>导师信息</h3><p>导师团队与专长</p></div>
         <div class="home-card" onclick="navigate('/messages')"><div class="hc-icon">💬</div><h3>留言板</h3><p>欢迎留下宝贵意见</p></div>
       </div>
@@ -639,6 +674,39 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
       <div class="msg-list" id="msgList"></div>
     </div>
   </div>
+</div>
+
+<!-- GALLERY PAGE -->
+<div class="page" id="page-gallery">
+  <div class="gallery-wrap">
+    <div class="page-header"><h2>图库</h2><p>部队的精彩瞬间 · 点击图片放大查看与下载</p></div>
+    <div class="gallery-upload hidden" id="galleryUploadBar">
+      <label style="font-size:13px;color:var(--gold2);white-space:nowrap">📤 上传图片（可多选）</label>
+      <input type="file" id="galleryFileInput" accept="image/*" multiple style="display:none" onchange="onGalleryFilesPick(this)">
+      <button class="btn btn-sm" onclick="document.getElementById('galleryFileInput').click()" style="background:var(--card2);color:var(--text)">选择文件</button>
+      <input type="text" id="galleryNameInput" placeholder="图片名称（可选，默认用文件名）" maxlength="60">
+      <button class="btn btn-ok btn-sm" id="galleryUploadBtn" onclick="uploadGalleryImages()" disabled style="opacity:.4">上传</button>
+      <span id="galleryUploadStatus" style="font-size:12px;color:var(--muted)"></span>
+    </div>
+    <div class="gallery-grid" id="galleryGrid"></div>
+  </div>
+</div>
+
+<!-- Gallery Lightbox -->
+<div class="gl-ov hidden" id="galleryLightbox">
+  <div class="gl-top">
+    <span class="gl-title" id="glTitle"></span>
+    <button class="gl-btn" onclick="galleryZoomToggle()" title="点击图片也可放大/还原">🔍 放大/还原</button>
+    <button class="gl-btn" onclick="galleryDownload()">⬇️ 下载原图</button>
+    <button class="gl-btn gl-danger hidden" id="glDeleteBtn" onclick="galleryDeleteCurrent()">🗑️ 删除</button>
+    <button class="gl-btn" onclick="galleryClose()">✕ 关闭</button>
+  </div>
+  <div class="gl-stage" id="glStage" onclick="galleryImgClick(event)">
+    <img id="glImg" src="" alt="">
+  </div>
+  <button class="gl-arrow gl-prev" onclick="galleryStep(-1);event.stopPropagation()">◀</button>
+  <button class="gl-arrow gl-next" onclick="galleryStep(1);event.stopPropagation()">▶</button>
+  <div class="gl-count" id="glCount"></div>
 </div>
 
 <!-- Member Detail Modal -->
@@ -1336,6 +1404,7 @@ const DEFAULTS = {
     {id:1781268844280532,name:'露露緹雅',content:'test成功',time:'2026-06-12 20:54'},
     {id:1781311830735884,name:'Hetian',content:'熬夜万岁（（（（（大家不要像我一样熬夜）',time:'2026-06-13 08:50'}
   ],
+  gallery:[],   // 图库: [{id, url, name, uploader, time, path, sha}]
   treeNodePositions:{"1781265442775372": {"x": 206, "y": 571}, "1781270492991774": {"x": 403.33331298828125, "y": 413}, "1781264631988060": {"x": 237, "y": 219}, "1781275479685253": {"x": 556.3333129882812, "y": 211.66665649414062}, "1781274831961022": {"x": 522, "y": 585}, "1781270533704364": {"x": 885, "y": 416}, "1781270458888535": {"x": 572, "y": 430}, "1781275162565912": {"x": 825, "y": 567}, "1781270509527252": {"x": 1047, "y": 573}, "1781270625683341": {"x": 820, "y": 726}, "1781270635985147": {"x": 843, "y": 848}, "1781270721550646": {"x": 972, "y": 670}, "1781270730688350": {"x": 1180, "y": 655}, "1781270947924747": {"x": 369, "y": 567}, "1781274976229300": {"x": 352, "y": 690}, "1781274787606056": {"x": 343, "y": 831}, "1781275036424644": {"x": 679, "y": 574}, "1781275198259204": {"x": 650, "y": 723}, "1781274941113450": {"x": 1180, "y": 423}, "1781270850892094": {"x": 29, "y": 543}, "1781270863310571": {"x": 36, "y": 673}, "1781270656571088": {"x": 742, "y": 469}},
   likes:{"1781275795519039":1},       // { [mentorId]: totalLikeCount }
   likeLog:[{mentorId:1781275795519039,memberId:1781275129298184,date:'2026-06-13'}]      // [{mentorId, memberId, date}] for daily limit tracking
@@ -1348,6 +1417,7 @@ let migrated=false;
 if(app.members){app.members.forEach(m=>{if(typeof m.password==='undefined'){m.password='abc123';migrated=true;}if(typeof m.isAdmin==='undefined'){m.isAdmin=false;migrated=true;}});}
 if(!app.likes){app.likes={};migrated=true;}
 if(!app.likeLog){app.likeLog=[];migrated=true;}
+if(!app.gallery){app.gallery=[];migrated=true;}
 if(migrated)saveLocal(app);
 // 清理旧数据：移除轮播图中默认的"图片"标题
 let cleaned=false;
@@ -2509,7 +2579,7 @@ function importData(event) {
 function navigate(path) {
   currentPage = path;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  const map = {'/':'page-home','/members':'page-members','/familytree':'page-familytree','/events':'page-events','/mentors':'page-mentors','/messages':'page-messages'};
+  const map = {'/':'page-home','/members':'page-members','/familytree':'page-familytree','/events':'page-events','/gallery':'page-gallery','/mentors':'page-mentors','/messages':'page-messages'};
   const pid = map[path]; if(pid) document.getElementById(pid).classList.add('active');
   updateNavHighlight();
   closeMobileNav();
@@ -2542,6 +2612,7 @@ function navigate(path) {
     renderFamilyTree();
   }
   else if(path==='/events') renderEvents();
+  else if(path==='/gallery') renderGallery();
   else if(path==='/mentors') renderMentors();
   else if(path==='/messages') renderMessages();
   closeRelationPanel();
@@ -2558,6 +2629,7 @@ function renderNav() {
     <button class="nav-btn${currentPage==='/members'?' active':''}" data-path="/members" onclick="navigate('/members')">成员</button>
     <button class="nav-btn${currentPage==='/familytree'?' active':''}" data-path="/familytree" onclick="navigate('/familytree')">族谱</button>
     <button class="nav-btn${currentPage==='/events'?' active':''}" data-path="/events" onclick="navigate('/events')">事件</button>
+    <button class="nav-btn${currentPage==='/gallery'?' active':''}" data-path="/gallery" onclick="navigate('/gallery')">图库</button>
     <button class="nav-btn${currentPage==='/mentors'?' active':''}" data-path="/mentors" onclick="navigate('/mentors')">导师</button>
     <button class="nav-btn${currentPage==='/messages'?' active':''}" data-path="/messages" onclick="navigate('/messages')">留言</button>`;
 }
@@ -2827,6 +2899,145 @@ function submitMsg() {
   const now=new Date(),time=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   app.messages.push({id:genNextId(),name,content,time});saveApp(app);document.getElementById('msgContent').value='';renderMessages();toast('留言已提交');
 }
+
+// ==================== 图库 ====================
+let galleryPick = [];  // 已选待上传文件
+function renderGallery(){
+  const grid=document.getElementById('galleryGrid');if(!grid)return;
+  // 上传栏仅管理员可见
+  const bar=document.getElementById('galleryUploadBar');
+  if(bar)bar.classList.toggle('hidden',!isAdmin);
+  const list=app.gallery||[];
+  if(!list.length){grid.innerHTML='<div class="gl-empty">🖼️ 暂无图片<br><span style="font-size:12px">管理员登录后可通过上方按钮上传</span></div>';return;}
+  grid.innerHTML=list.map((g,i)=>`<div class="gl-item" onclick="galleryOpen(${i})">
+    <img src="${esc(g.url)}" loading="lazy" alt="${esc(g.name||'图库图片')}" onerror="this.style.opacity=.25">
+    <div class="gl-cap">${esc(g.name||'未命名')}${g.uploader?' · '+esc(g.uploader):''}</div>
+    ${isAdmin?`<button class="gl-del" title="删除" onclick="galleryDelete(${i});event.stopPropagation()">✕</button>`:''}
+  </div>`).join('');
+}
+function onGalleryFilesPick(input){
+  galleryPick=[...(input.files||[])];
+  const btn=document.getElementById('galleryUploadBtn');
+  if(btn){btn.disabled=!galleryPick.length;btn.style.opacity=galleryPick.length?'1':'.4';}
+  const st=document.getElementById('galleryUploadStatus');
+  st.textContent=galleryPick.length?`✅ 已选 ${galleryPick.length} 个文件`:'';
+  st.style.color='var(--muted)';
+}
+function galleryUploaderName(){
+  try{const m=app.members.find(x=>x.id===currentUser.memberId);return m?m.name:'管理员';}catch(e){return '管理员';}
+}
+async function uploadGalleryImages(){
+  if(!isAdmin){toast('需要管理员权限');return;}
+  if(!galleryPick.length){toast('请先选择文件');return;}
+  if(!loadGithubToken()){toast('缺少 GitHub Token,无法上传');return;}
+  const status=document.getElementById('galleryUploadStatus');
+  const baseName=document.getElementById('galleryNameInput').value.trim();
+  if(!app.gallery)app.gallery=[];
+  const uploader=galleryUploaderName();
+  let okCount=0;
+  for(let i=0;i<galleryPick.length;i++){
+    const f=galleryPick[i];
+    if(f.size>20*1024*1024){status.textContent=`❌ ${f.name} 超过 20MB,已跳过`;status.style.color='#e74c3c';continue;}
+    status.textContent=`🚀 正在上传 (${i+1}/${galleryPick.length}): ${f.name}`;
+    status.style.color='var(--gold)';
+    try{
+      const ts=Date.now()+i;
+      const ext=(f.name.split('.').pop()||'jpg').toLowerCase();
+      const path=`gallery/${ts}.${ext}`;
+      const result=await githubUploadImage(f, path, 'upload gallery: '+(baseName||f.name));
+      // 同名文件覆盖时 sha 会变化, 记录最新 sha 供删除用
+      app.gallery.push({id:ts,url:result.url,name:baseName||f.name.replace(/\.[^.]+$/,''),uploader:uploader,time:todayStr(),path:path,sha:result.sha});
+      okCount++;
+    }catch(e){
+      status.textContent=`❌ ${f.name} 上传失败: ${e.message}`;status.style.color='#e74c3c';
+    }
+  }
+  if(okCount){
+    saveApp(app);renderGallery();
+    status.textContent=`✅ 成功上传 ${okCount} 张图片`;
+    status.style.color='#27ae60';
+    toast('✅ 图片已上传并同步到云端');
+  }
+  galleryPick=[];
+  document.getElementById('galleryFileInput').value='';
+  document.getElementById('galleryNameInput').value='';
+  const btn=document.getElementById('galleryUploadBtn');
+  if(btn){btn.disabled=true;btn.style.opacity='.4';}
+}
+async function galleryDelete(i){
+  if(!isAdmin){toast('需要管理员权限');return;}
+  const g=(app.gallery||[])[i];if(!g)return;
+  if(!confirm(`确定删除图片「${g.name||'未命名'}」吗?\n(会同时尝试删除 GitHub 上的文件)`))return;
+  // 尽力删除 GitHub 文件 (失败不阻塞记录删除)
+  if(g.path){
+    try{
+      let sha=g.sha;
+      if(!sha){
+        const r=await fetch(`https://api.github.com/repos/lulutiya20-create/${GH_REPO}/contents/${g.path}`,{headers:{'Authorization':'Bearer '+(githubToken||loadGithubToken()),'Accept':'application/vnd.github+json'}});
+        if(r.ok)sha=(await r.json()).sha;
+      }
+      if(sha)await githubDeleteFile(g.path,sha);
+    }catch(e){console.warn('[图库] GitHub 文件删除失败(忽略):',e);}
+  }
+  app.gallery.splice(i,1);
+  saveApp(app);renderGallery();
+  toast('🗑️ 已删除');
+}
+// ---- 灯箱 ----
+let glIdx=0;
+function galleryOpen(i){
+  if(!(app.gallery||[]).length)return;
+  glIdx=i;
+  document.getElementById('galleryLightbox').classList.remove('hidden');
+  document.body.style.overflow='hidden';
+  galleryRenderLb();
+}
+function galleryRenderLb(){
+  const g=(app.gallery||[])[glIdx];
+  if(!g){galleryClose();return;}
+  document.getElementById('glImg').src=g.url;
+  document.getElementById('glTitle').textContent=(g.name||'未命名')+(g.uploader?' · 上传者: '+g.uploader:'')+(g.time?' · '+g.time:'');
+  document.getElementById('glCount').textContent=`${glIdx+1} / ${app.gallery.length}`;
+  document.getElementById('glDeleteBtn').classList.toggle('hidden',!isAdmin);
+  document.getElementById('glStage').classList.remove('zoomed');
+}
+function galleryStep(d){
+  const n=(app.gallery||[]).length;if(!n)return;
+  glIdx=(glIdx+d+n)%n;galleryRenderLb();
+}
+function galleryClose(){
+  document.getElementById('galleryLightbox').classList.add('hidden');
+  document.body.style.overflow='';
+}
+function galleryImgClick(){document.getElementById('glStage').classList.toggle('zoomed');}
+function galleryZoomToggle(){document.getElementById('glStage').classList.toggle('zoomed');}
+async function galleryDownload(){
+  const g=(app.gallery||[])[glIdx];if(!g)return;
+  toast('⬇️ 正在准备下载...');
+  try{
+    const resp=await fetch(g.url,{signal:AbortSignal.timeout(120000)});
+    if(!resp.ok)throw new Error('HTTP '+resp.status);
+    const blob=await resp.blob();
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=g.name||('gallery-'+g.id+'.jpg');
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+    toast('✅ 已开始下载');
+  }catch(e){
+    // 回退: 新标签页打开手动保存
+    console.warn('[图库] blob 下载失败,回退新标签:',e);
+    window.open(g.url,'_blank');
+  }
+}
+// 灯箱键盘操作: Esc 关闭 / ←→ 切换
+document.addEventListener('keydown',e=>{
+  const lb=document.getElementById('galleryLightbox');
+  if(!lb||lb.classList.contains('hidden'))return;
+  if(e.key==='Escape')galleryClose();
+  else if(e.key==='ArrowLeft')galleryStep(-1);
+  else if(e.key==='ArrowRight')galleryStep(1);
+});
 
 // Admin
 function toggleAdmin(){
@@ -3500,7 +3711,7 @@ function toggleMemberAdmin(id){
 }
 
 function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
-function refreshAll(){renderCarousel();renderMembers();renderFamilyTree();renderEvents();renderMentors();renderMessages();}
+function refreshAll(){renderCarousel();renderMembers();renderFamilyTree();renderEvents();renderGallery();renderMentors();renderMessages();}
 
 // ===================== Mobile Nav =====================
 function toggleMobileNav(){
