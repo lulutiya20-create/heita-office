@@ -289,8 +289,6 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
 #page-familytree .ft-workspace{flex:1;min-height:0}
 #page-familytree .familytree-canvas{min-height:0;height:100%}
 .familytree-canvas{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);overflow:auto;position:relative;min-height:500px;touch-action:none;cursor:grab;flex:1;min-width:0}
-.ft-lane-line{stroke:rgba(212,167,116,.22);stroke-dasharray:6 10;stroke-width:1}
-.ft-lane-label{fill:#d4a574;font-size:13px;opacity:.85;letter-spacing:3px;font-weight:600}
 .ft-node{cursor:grab}
 .ft-node.dragging{cursor:grabbing}
 .ft-workspace.has-dock .familytree-canvas{border-radius:var(--r)}
@@ -573,7 +571,7 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
     <div class="page-header"><h2>🌳 黑塔族谱</h2><p id="ftSubtitle">全员关系图谱 · 点击节点编辑关系</p></div>
     <div class="familytree-actions" id="ftActions">
       <button class="btn btn-sync btn-sm hidden" id="ftResetBtn" onclick="resetTreePositions()">🔄 重置布局</button>
-      <button class="btn btn-ok btn-sm hidden" id="ftArrangeBtn" onclick="arrangeTreeByGeneration()">📐 按辈分排列</button>
+      <button class="btn btn-ok btn-sm hidden" id="ftArrangeBtn" onclick="arrangeTreeByGeneration()">📐 整理对齐</button>
       <button class="btn btn-outline btn-sm hidden" id="ftLayerToggleBtn" onclick="toggleTreeLayerMode()">🔀 切换自由布局</button>
       <button class="btn btn-outline btn-sm hidden" id="ftAdminBtn" onclick="toggleFtAdmin()">🔐 管理员编辑</button>
       <span id="ftAdminHint" class="hidden" style="font-size:12px;color:var(--muted)">请先登录管理员</span>
@@ -3678,20 +3676,24 @@ function renderFamilyTree(){
   const canvas=document.getElementById('ftCanvas');
   const minW=Math.max(canvas.clientWidth||700, 700);
   const w=relatedMembers.length<=2?minW:Math.max(minW,relatedMembers.length*260);
-  // 辈分分层模式: Y 固定到每代层线 (app.treeLayered===false 时为自由布局)
-  const layered = app.treeLayered!==false;
-  let positions, laneInfo=null, h;
-  if(layered){
-    laneInfo=layeredFtLayout(relatedMembers, w);
-    positions=laneInfo.positions;
-    h=Math.max(500, laneInfo.laneY(laneInfo.maxLvl)+FT_NODE_H+130);
+  // 吸附行模式(默认): Y 吸附到隐藏的固定行; app.treeLayered===false 时为完全自由布局
+  const snapMode = app.treeLayered!==false;
+  let positions, h;
+  if(snapMode){
+    positions=computeFtLayout(relatedMembers, w, Math.max(500,relatedMembers.length*130+200));
+    let maxRow=0;
+    Object.keys(positions).forEach(k=>{
+      positions[k].y=snapFtRow(positions[k].y);
+      maxRow=Math.max(maxRow,ftRowIndex(positions[k].y));
+    });
+    h=ftRowY(maxRow)+FT_NODE_H+130;
   }else{
     h=Math.max(500,relatedMembers.length*130+200);
     positions = computeFtLayout(relatedMembers, w, h);
   }
 
   // Draw
-  let lines='', nodes='', lanes='';
+  let lines='', nodes='';
   const nodeW=140, nodeH=70;
 
   // Lines first (with arrow markers)
@@ -3743,14 +3745,7 @@ function renderFamilyTree(){
     nodes+=`</g>`;
   });
 
-  // 辈分层参考线（第N代）
-  if(layered&&laneInfo){
-    for(let li=0;li<=laneInfo.maxLvl;li++){
-      const y=laneInfo.laneY(li)+FT_NODE_H/2;
-      lanes+=`<line class="ft-lane-line" x1="8" y1="${y}" x2="${w-8}" y2="${y}"/><text class="ft-lane-label" x="14" y="${y-10}">第${li+1}代</text>`;
-    }
-  }
-  svg.innerHTML=defs+lanes+lines+nodes;
+  svg.innerHTML=defs+lines+nodes;
   svg.setAttribute('viewBox',`0 0 ${w} ${h}`);
   svg.setAttribute('width',w);
   svg.setAttribute('height',h);
@@ -3792,72 +3787,12 @@ function renderFamilyTree(){
   }
 }
 
-// ===================== 辈分分层布局 =====================
-const FT_NODE_W=140, FT_NODE_H=70, FT_LANE_GAP=110, FT_LANE_START=80, FT_GAP_X=80;
-
-// 计算每个成员的辈分层级（导师→豆芽：被指向的是上一辈，BFS 从根往下分层）
-function computeFtLevels(allMembers){
-  const mentorIds=new Set(app.mentors.map(mt=>mt.memberId));
-  const adj={};
-  allMembers.forEach(m=>{adj[m.id]={children:[],parents:new Set()};});
-  allMembers.forEach(m=>{
-    (m.relations||[]).forEach(r=>{
-      if(adj[r.targetId]){
-        adj[m.id].parents.add(r.targetId);
-        adj[r.targetId].children.push(m.id);
-      }
-    });
-  });
-  const levels=[];const visited=new Set();
-  const roots=allMembers.filter(m=>!adj[m.id].parents.size);
-  const mentorRoots=roots.filter(r=>mentorIds.has(r.id));
-  const otherRoots=roots.filter(r=>!mentorIds.has(r.id));
-  const sortedRoots=[...mentorRoots,...otherRoots];
-  if(!sortedRoots.length&&allMembers.length)sortedRoots.push(allMembers[0]);
-  const queue=sortedRoots.map(r=>({id:r.id,level:0}));
-  queue.forEach(q=>visited.add(q.id));
-  while(queue.length){
-    const curr=queue.shift();
-    if(!levels[curr.level])levels[curr.level]=[];
-    levels[curr.level].push(curr.id);
-    (adj[curr.id]?.children||[]).forEach(cid=>{
-      if(!visited.has(cid)){visited.add(cid);queue.push({id:cid,level:curr.level+1});}
-    });
-  }
-  const cleanLevels=levels.filter(l=>l&&l.length);
-  const levelOf={};
-  cleanLevels.forEach((ids,li)=>ids.forEach(id=>levelOf[id]=li));
-  return {levels:cleanLevels, levelOf};
-}
-
-// 分层布局：Y 固定到每代层线，X 用已保存位置（无则层内自动排布）
-function layeredFtLayout(relatedMembers, w){
-  const {levels, levelOf}=computeFtLevels(app.members);
-  let maxLvl=levels.length-1;
-  const unlayered=relatedMembers.filter(m=>levelOf[m.id]===undefined);
-  if(unlayered.length){maxLvl++;unlayered.forEach(m=>levelOf[m.id]=maxLvl);}
-  const laneY=li=>FT_LANE_START+li*(FT_NODE_H+FT_LANE_GAP);
-  const saved=app.treeNodePositions||{};
-  const positions={};
-  for(let li=0;li<=maxLvl;li++){
-    const ids=relatedMembers.filter(m=>levelOf[m.id]===li).map(m=>m.id);
-    // 层内排序：已保存 X 的按 X 排（保持用户手动排的顺序），未保存的排后面按 id 稳定排序
-    ids.sort((a,b)=>{
-      const ax=saved[a]?saved[a].x:null, bx=saved[b]?saved[b].x:null;
-      if(ax!=null&&bx!=null)return ax-bx;
-      if(ax!=null)return -1;
-      if(bx!=null)return 1;
-      return String(a).localeCompare(String(b));
-    });
-    const packedW=ids.length*FT_NODE_W+Math.max(0,ids.length-1)*FT_GAP_X;
-    const sx=Math.max(150,(w-packedW)/2);
-    ids.forEach((id,i)=>{
-      const x=(saved[id]&&saved[id].x!=null)?saved[id].x:sx+i*(FT_NODE_W+FT_GAP_X);
-      positions[id]={x, y:laneY(li)};
-    });
-  }
-  return {positions, laneY, maxLvl, levelOf};
-}
+// ===================== 隐藏行吸附布局 =====================
+// 画布上有若干条不可见的固定行(Y), 节点拖动/放置后吸附到最近的行; 界面上不显示任何行的文字或线条
+const FT_NODE_W=140, FT_NODE_H=70, FT_ROW_START=80, FT_ROW_PITCH=180, FT_GAP_X=80;
+function ftRowIndex(y){return Math.max(0,Math.round((y-FT_ROW_START)/FT_ROW_PITCH));}
+function ftRowY(ri){return FT_ROW_START+ri*FT_ROW_PITCH;}
+function snapFtRow(y){return ftRowY(ftRowIndex(y));}
 
 function computeFtLayout(members, w, h){
   const positions = {};
@@ -4003,9 +3938,9 @@ function applyFtDragFrame(){
   if(!ftDragging||ftDragging.curX==null)return;
   const {id,curX,curY,startX,startY,origX,origY,lines}=ftDragging;
   const dx=curX-startX, dy=curY-startY;
-  // 分层模式下 Y 锁定在辈分层线上, 只允许横向移动
-  const layeredOn = app.treeLayered!==false;
-  const nx=origX+dx, ny=layeredOn?origY:origY+dy;
+  // 吸附行模式: Y 实时吸附到最近的隐藏行, 只在行间切换
+  const snapOn = app.treeLayered!==false;
+  const nx=origX+dx, ny=snapOn?snapFtRow(origY+dy):origY+dy;
   const node=document.getElementById('ft-node-'+id);
   if(node)node.setAttribute('transform',`translate(${nx},${ny})`);
   // Update all lines connected to this node (cached at drag start)
@@ -4145,13 +4080,8 @@ function onFtDockDragEnd(evt){
     const canvasScrollLeft=canvas.scrollLeft;
     const x=Math.max(10,(clientX-svgRect.left+canvasScrollLeft)-70);
     let y=Math.max(10,(clientY-svgRect.top+canvasScrollTop)-35);
-    // 分层模式: 吸附到该成员所属辈分的层线 (无关系成员放最底层)
-    if(app.treeLayered!==false){
-      const {levels, levelOf}=computeFtLevels(app.members);
-      let lvl=levelOf[ftDockDragging.id];
-      if(lvl===undefined)lvl=levels.length; // 无关系 → 最底一层
-      y=FT_LANE_START+lvl*(FT_NODE_H+FT_LANE_GAP);
-    }
+    // 吸附行模式: 吸附到最近的隐藏行
+    if(app.treeLayered!==false)y=snapFtRow(y);
     if(!app.treeNodePositions)app.treeNodePositions={};
     app.treeNodePositions[ftDockDragging.id]={x,y};
     saveApp(app);
@@ -4195,49 +4125,41 @@ function ftNodeDblClick(evt, id){
   }
 }
 
-// 一键按辈分排列: 每代一条层线, 层内节点均匀分布并保存
+// 一键整理: 把所有节点对齐到各自最近的隐藏行, 行内按原左右顺序均匀分布
 function arrangeTreeByGeneration(){
   if(!isAdmin||!ftAdminMode){toast('请先进入管理员编辑模式');return;}
-  const {levels, levelOf}=computeFtLevels(app.members);
-  let maxLvl=levels.length-1;
-  // 已放置到画布但无关系的成员 → 统一放到最底一层
   const saved=app.treeNodePositions||{};
-  const unlayered=Object.keys(saved).map(Number).filter(id=>levelOf[id]===undefined&&app.members.find(m=>m.id===id));
-  if(unlayered.length){maxLvl++;unlayered.forEach(id=>levelOf[id]=maxLvl);}
   const canvas=document.getElementById('ftCanvas');
-  const w=Math.max((canvas&&canvas.clientWidth)||700,700,relatedCount()*260);
+  const w=Math.max((canvas&&canvas.clientWidth)||700,700);
+  // 按行分组
+  const rows={};
+  Object.keys(saved).forEach(k=>{
+    const ri=ftRowIndex(saved[k].y);
+    (rows[ri]=rows[ri]||[]).push(k);
+  });
   const positions={};
-  for(let li=0;li<=maxLvl;li++){
-    const ids=Object.keys(levelOf).filter(id=>levelOf[id]===li).map(Number);
-    // 保持用户之前手动排的左右顺序
-    ids.sort((a,b)=>{
-      const ax=saved[a]?saved[a].x:Infinity, bx=saved[b]?saved[b].x:Infinity;
-      return (ax-bx)||String(a).localeCompare(String(b));
-    });
+  Object.keys(rows).forEach(ri=>{
+    const ids=rows[ri].slice().sort((a,b)=>saved[a].x-saved[b].x);
     const packedW=ids.length*FT_NODE_W+Math.max(0,ids.length-1)*FT_GAP_X;
-    const sx=Math.max(150,(w-packedW)/2);
-    ids.forEach((id,i)=>{positions[id]={x:sx+i*(FT_NODE_W+FT_GAP_X), y:FT_LANE_START+li*(FT_NODE_H+FT_LANE_GAP)};});
-  }
+    const sx=Math.max(40,(w-packedW)/2);
+    ids.forEach((id,i)=>{positions[id]={x:sx+i*(FT_NODE_W+FT_GAP_X), y:ftRowY(ri)};});
+  });
   app.treeNodePositions=positions;ftNodePositions=positions;
   saveApp(app);renderFamilyTree();
-  toast(`已按辈分分层排列，共 ${maxLvl+1} 代`);
-}
-function relatedCount(){
-  const allT=new Set();app.members.forEach(m=>{(m.relations||[]).forEach(r=>allT.add(r.targetId));});
-  return app.members.filter(m=>(m.relations||[]).length>0||allT.has(m.id)||(app.treeNodePositions&&app.treeNodePositions[m.id])).length;
+  toast('已整理对齐');
 }
 
-// 切换 辈分分层 / 自由布局
+// 切换 吸附行 / 完全自由拖动
 function toggleTreeLayerMode(){
   if(!isAdmin){toast('需要管理员权限');return;}
   app.treeLayered=(app.treeLayered===false)?true:false;
   saveApp(app);renderFamilyTree();
-  toast(app.treeLayered===false?'已切换为自由布局（节点可任意拖动）':'已切换为辈分分层布局（每代固定一条层线）');
+  toast(app.treeLayered===false?'已切换为自由拖动（上下位置不受限制）':'已切换为行吸附（拖动后自动对齐到固定行）');
 }
 function updateLayerToggleBtn(){
   const b=document.getElementById('ftLayerToggleBtn');
   if(!b)return;
-  b.textContent=(app.treeLayered===false)?'📐 恢复辈分分层':'🔀 切换自由布局';
+  b.textContent=(app.treeLayered===false)?'🔀 恢复行吸附':'🔀 切换自由拖动';
 }
 
 function resetTreePositions(){
@@ -4245,7 +4167,7 @@ function resetTreePositions(){
   app.treeNodePositions={};ftNodePositions={};
   // 分层模式下直接清空位置重新计算层线布局即可
   if(app.treeLayered!==false){
-    saveApp(app);renderFamilyTree();toast('已重置为辈分分层布局');
+    saveApp(app);renderFamilyTree();toast('已重置为默认布局');
     return;
   }
   // 重置后立即计算树形布局并保存位置，确保刷新后也是树形
