@@ -126,7 +126,6 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
 .ph-crest{position:absolute;top:-38px;left:50%;transform:translateX(-50%);height:150px;width:auto;object-fit:contain;opacity:.15;pointer-events:none;z-index:0;filter:drop-shadow(0 2px 8px rgba(0,0,0,.3))}
 .pg-corner{position:fixed;bottom:12px;width:110px;opacity:.26;pointer-events:none;z-index:-1;filter:drop-shadow(0 2px 10px rgba(0,0,0,.45))}
 .pg-corner.l{left:10px}.pg-corner.r{right:10px;transform:scaleX(-1)}
-.pg-spr{position:absolute;pointer-events:none;z-index:-1;opacity:.5;animation:stickerFloat 6s ease-in-out infinite;filter:drop-shadow(0 3px 8px rgba(0,0,0,.35))}
 .ph-divider{display:flex;align-items:center;justify-content:center;gap:12px;margin:10px auto 0;max-width:400px;pointer-events:none}
 .ph-divider::before,.ph-divider::after{content:'';flex:1;height:1px;opacity:.55}
 .ph-divider::before{background:linear-gradient(90deg,transparent,#d4a574)}
@@ -141,7 +140,7 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
 .ph-deco.right{right:6%}
 .ph-deco.left{left:6%;animation-delay:-2.5s}
 @keyframes stickerFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-9px) rotate(2deg)}}
-@media(max-width:768px){.ph-deco{display:none}.ph-en{height:22px}.pg-corner{display:none}.pg-spr{display:none}.ph-bunting{width:190px;top:-8px}.ph-divider{max-width:240px}.ph-divider img{height:22px}#page-events .page-header,#page-gallery .page-header{padding-top:100px}#page-events .ph-bunting,#page-gallery .ph-bunting{top:-26px}}
+@media(max-width:768px){.ph-deco{display:none}.ph-en{height:22px}.pg-corner{display:none}.ph-bunting{width:190px;top:-8px}.ph-divider{max-width:240px}.ph-divider img{height:22px}#page-events .page-header,#page-gallery .page-header{padding-top:100px}#page-events .ph-bunting,#page-gallery .ph-bunting{top:-26px}}
 
 /* Sync bar */
 .sync-bar{background:var(--card);border-bottom:1px solid var(--bdr);padding:8px 20px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
@@ -4885,43 +4884,16 @@ function loadAppFallback() {
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',corners);
   else corners();
-  // 各页散布 Gpose 贴纸装饰 (p=页 id, id=素材号, t=top%, l=left% 或 r=right%, s=尺寸px, d=动画延迟s)
-  var SPR=[
-    {p:'page-home',id:'076755',t:42,l:4,s:74},
-    {p:'page-home',id:'076766',t:26,r:5,s:56,d:1.2},
-    {p:'page-home',id:'076709',t:74,l:8,s:60,d:2.1},
-    {p:'page-members',id:'076723',t:56,l:3,s:58},
-    {p:'page-members',id:'076730',t:74,r:3,s:66,d:1.5},
-    {p:'page-familytree',id:'076706',t:56,l:2,s:52,d:.8},
-    {p:'page-events',id:'076707',t:44,r:6,s:64},
-    {p:'page-events',id:'076759',t:70,r:4,s:58,d:2.4},
-    {p:'page-gallery',id:'076705',t:60,l:4,s:60,d:1},
-    {p:'page-gallery',id:'076724',t:34,r:5,s:56,d:1.8},
-    {p:'page-mentors',id:'076749',t:34,l:6,s:62},
-    {p:'page-mentors',id:'076711',t:66,r:5,s:60,d:2.2},
-    {p:'page-messages',id:'076761',t:30,l:5,s:60,d:.6},
-    {p:'page-messages',id:'076725',t:46,r:5,s:62,d:1.4},
-    {p:'page-messages',id:'076728',t:70,l:6,s:56,d:2},
-    {p:'page-messages',id:'076729',t:82,r:6,s:64,d:2.8}
-  ];
-  function scatter(){
-    var SB='https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/stickers/';
-    var SFB='https://fastly.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/stickers/';
-    SPR.forEach(function(c){
-      var pg=document.getElementById(c.p);
-      if(!pg||pg.querySelector('.pg-spr[data-sid="'+c.id+'"]'))return;
-      var im=document.createElement('img');
-      im.className='pg-spr';im.alt='';im.loading='lazy';im.dataset.sid=c.id;
-      im.style.top=c.t+'%';im.style.width=c.s+'px';
-      if(c.l!=null)im.style.left=c.l+'%';else im.style.right=c.r+'%';
-      im.style.animationDelay=(c.d||0)+'s';
-      im.src=SB+c.id+'.png';
-      im.onerror=function(){if(!this.dataset.f){this.dataset.f=1;this.src=SFB+c.id+'.png';}else{this.style.display='none';}};
-      pg.appendChild(im);
-    });
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',scatter);
-  else scatter();
+  // 全局图片容错: cdn.jsdelivr.net 失败自动切 fastly,再失败则隐藏 (捕获阶段拦截,字母区已有内联兜底故跳过)
+  document.addEventListener('error',function(e){
+    var t=e.target;
+    if(!t||t.tagName!=='IMG'||t.dataset.cdf)return;
+    if(t.closest&&t.closest('.ph-en'))return;
+    t.dataset.cdf='1';
+    var s=t.getAttribute('src')||'';
+    if(s.indexOf('cdn.jsdelivr.net')>-1){t.src=s.replace('cdn.jsdelivr.net','fastly.jsdelivr.net');}
+    else{t.style.display='none';}
+  },true);
   setTimeout(render,800);
 })();
 </script>
