@@ -118,7 +118,7 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
 .page-header h2::after{content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:50px;height:3px;background:var(--red);border-radius:2px}
 .page-header p{color:var(--muted);margin-top:14px;font-size:14px}
 /* 英文游戏字符副标题 (creditplayer 单字拼合) */
-.ph-en{display:flex;align-items:flex-end;justify-content:center;gap:3px;height:26px;margin-bottom:12px;opacity:.92}
+.ph-en{display:flex;align-items:flex-end;justify-content:center;gap:4px;height:30px;margin-bottom:12px;opacity:.92}
 .ph-en img{height:100%;width:auto}
 .ph-en .sp{width:12px}
 /* 页面标题旁 Gpose 贴纸装饰 */
@@ -126,7 +126,7 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
 .ph-deco.right{right:6%}
 .ph-deco.left{left:6%;animation-delay:-2.5s}
 @keyframes stickerFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-9px) rotate(2deg)}}
-@media(max-width:768px){.ph-deco{display:none}.ph-en{height:20px}}
+@media(max-width:768px){.ph-deco{display:none}.ph-en{height:22px}}
 
 /* Sync bar */
 .sync-bar{background:var(--card);border-bottom:1px solid var(--bdr);padding:8px 20px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
@@ -4797,8 +4797,8 @@ function loadAppFallback() {
 <!-- GAME TITLE LETTERS: 英文副标题用 creditplayer 单字拼合 -->
 <script>
 (function(){
-  var LB='https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/fonts/letters/';
-  var FB='https://fastly.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/fonts/letters/';
+  var LB='https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/fonts/letters2/';
+  var FB='https://fastly.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/fonts/letters2/';
   var altDone=false;
   function render(){
     var els=document.querySelectorAll('.ph-en');
