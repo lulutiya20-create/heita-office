@@ -347,6 +347,20 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
 
 .toast{position:fixed;top:20px;right:20px;background:var(--card);border:1px solid var(--red);color:var(--text);padding:12px 20px;border-radius:var(--rs);z-index:9999;animation:slIn .3s ease;font-size:13px;box-shadow:0 4px 20px rgba(0,0,0,.3);max-width:360px}
 @keyframes slIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* 统一风格对话框 (替代原生 prompt/confirm) */
+.ui-overlay{position:fixed;inset:0;background:radial-gradient(ellipse at center,rgba(10,14,26,.85) 0%,rgba(0,0,0,.9) 100%);z-index:5000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+.ui-dialog{background:linear-gradient(180deg,var(--card) 0%,#0d1830 100%);border:1px solid var(--crystal3);border-radius:var(--r);padding:26px 28px 22px;width:min(92vw,420px);box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 40px rgba(77,126,255,.15),inset 0 1px 0 rgba(110,155,255,.08);animation:mdIn .28s ease}
+.ui-dialog::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold2),transparent);border-radius:var(--r) var(--r) 0 0}
+.ui-dialog{position:relative}
+.ui-dlg-title{font-size:18px;color:var(--gold2);font-weight:700;margin-bottom:14px;letter-spacing:1px;text-shadow:0 1px 8px rgba(212,167,116,.25)}
+.ui-dlg-label{font-size:13px;color:var(--muted);margin-bottom:8px}
+.ui-dlg-input{width:100%;box-sizing:border-box;padding:11px 14px;background:var(--bg);border:1px solid var(--bdr);border-radius:var(--rs);color:var(--text);font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s}
+.ui-dlg-input:focus{border-color:var(--crystal);box-shadow:0 0 0 3px rgba(77,126,255,.18)}
+.ui-dlg-msg{font-size:14px;color:var(--text);line-height:1.8;white-space:pre-wrap;max-height:50vh;overflow-y:auto}
+.ui-dlg-btns{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+.ui-dlg-btns .btn{min-width:86px;padding:9px 18px}
+.btn-danger{background:linear-gradient(135deg,#ff6b6b,#c0392b);color:#fff;box-shadow:0 4px 15px rgba(231,76,60,.35),inset 0 1px 0 rgba(255,255,255,.2);border:1px solid #e74c3c}
 .footer{text-align:center;padding:24px;border-top:1px solid var(--bdr);color:var(--muted);font-size:12px}
 .empty{text-align:center;padding:40px;color:var(--muted);border:2px dashed var(--bdr);border-radius:var(--r);font-size:14px}
 .empty .ic{font-size:40px;margin-bottom:10px}
@@ -640,6 +654,18 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
 
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:18px;border-top:1px solid var(--bdr);padding-top:12px">
       <button class="btn" onclick="closeImageManager()" style="background:var(--card2);color:var(--text)">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 统一风格对话框 (替代原生 prompt/confirm) -->
+<div class="ui-overlay" id="uiDlg">
+  <div class="ui-dialog">
+    <div class="ui-dlg-title" id="uiDlgTitle"></div>
+    <div id="uiDlgBody"></div>
+    <div class="ui-dlg-btns">
+      <button class="btn" id="uiDlgCancel" style="background:var(--card2);color:var(--text)">取消</button>
+      <button class="btn btn-red" id="uiDlgOk">确定</button>
     </div>
   </div>
 </div>
@@ -1830,7 +1856,7 @@ async function pushToCloud(data, force = false) {
       if (remote && remote.members) {
         const rfp = jsonbinFingerprint(remote);
         if (rfp && lastCloudFingerprint && rfp !== lastCloudFingerprint) {
-          const okOverwrite = confirm('⚠️ 检测到云端数据已被其他设备修改过（本页数据可能过旧）。\n\n继续推送会用本页数据整体覆盖云端，可能丢失其他设备的修改。\n建议取消后点「🔄 拉取云端」刷新本页再操作。\n\n确定仍要覆盖云端吗？');
+          const okOverwrite = await uiConfirm({title:'⚠️ 同步冲突', message:'检测到云端数据已被其他设备修改过（本页数据可能过旧）。\n\n继续推送会用本页数据整体覆盖云端，可能丢失其他设备的修改。\n建议取消后点「🔄 拉取云端」刷新本页再操作。\n\n确定仍要覆盖云端吗？', okText:'覆盖云端', danger:true});
           if (!okOverwrite) {
             syncPending = false;
             updateSyncStatus('error');
@@ -2261,8 +2287,8 @@ async function testJsonbin() {
   }
 }
 
-function clearJsonbinConfig() {
-  if (!confirm('确定要清除 JSONBin 配置吗?这会停止多设备同步。')) return;
+async function clearJsonbinConfig() {
+  if (!(await uiConfirm({title:'清除 JSONBin 配置', message:'确定要清除 JSONBin 配置吗？\n这会停止多设备同步。', okText:'清除', danger:true}))) return;
   localStorage.removeItem('jsonbin_bin_id');
   localStorage.removeItem('jsonbin_master_key');
   localStorage.removeItem('jsonbin_poll_interval');
@@ -2415,8 +2441,8 @@ async function uploadCarouselImage() {
   }
 }
 
-function replaceCarouselFromUrl(i) {
-  const url = prompt('输入新图片 URL (推荐先用 GitHub 图床上传):', app.carouselImages[i].url || '');
+async function replaceCarouselFromUrl(i) {
+  const url = await uiPrompt({title:'更换轮播图', label:'输入新图片 URL（推荐先用 GitHub 图床上传）:', value:app.carouselImages[i].url||'', placeholder:'https://...'});
   if (!url) return;
   app.carouselImages[i].url = url;
   saveLocal(app);
@@ -2425,8 +2451,8 @@ function replaceCarouselFromUrl(i) {
   toast('✅ 轮播图 URL 已更新');
 }
 
-function deleteCarouselImage(i) {
-  if (!confirm('确认删除这张轮播图?\n(只删数据记录, GitHub 上的文件需要手动去仓库删除)')) return;
+async function deleteCarouselImage(i) {
+  if (!(await uiConfirm({title:'删除轮播图', message:'确认删除这张轮播图？\n(只删数据记录, GitHub 上的文件需要手动去仓库删除)', okText:'删除', danger:true}))) return;
   app.carouselImages.splice(i, 1);
   saveLocal(app);
   renderCarouselGrid();
@@ -2697,7 +2723,7 @@ function exportData() {
   a.click(); URL.revokeObjectURL(url);
   toast('数据已导出为JSON文件 — 建议保存到安全位置');
 }
-function forcePushToCloud(){
+async function forcePushToCloud(){
   if(!currentUser||currentUser.type==='normal'){toast('需要管理员权限');return;}
   if(!cloudEnabled){toast('云服务器未连接');return;}
   if(!jsonbinMasterKey && (!jsonbinBinId || !jsonbinReadKey)){
@@ -2705,7 +2731,7 @@ function forcePushToCloud(){
     showJsonbinConfig();
     return;
   }
-  if(!confirm('☁️ 强制同步到云端\n\n将用当前本地数据覆盖云端所有数据。\n确定继续？'))return;
+  if(!(await uiConfirm({title:'☁️ 强制同步', message:'将用当前本地数据覆盖云端所有数据。\n确定继续？', okText:'强制同步', danger:true})))return;
   toast('正在强制同步到云端...');
   pushToCloud(app, true);
 }
@@ -2716,11 +2742,11 @@ function importData(event) {
   const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = async function(e) {
     try {
       const data = JSON.parse(e.target.result);
       if (!data.members && !data.carouselImages) { toast('无效的数据文件'); return; }
-      if (!confirm('导入数据将覆盖当前所有数据并同步到云端，确定继续？')) return;
+      if (!(await uiConfirm({title:'导入数据', message:'导入数据将覆盖当前所有数据并同步到云端，确定继续？', okText:'导入并覆盖', danger:true}))) return;
       const merged = { ...DEFAULTS, ...data };
       app = merged;
       saveLocal(app);
@@ -3121,29 +3147,29 @@ function galleryUploaderName(){
   try{const m=app.members.find(x=>x.id===currentUser.memberId);return m?m.name:'管理员';}catch(e){return '管理员';}
 }
 // ---- 相册管理 (仅管理员) ----
-function galleryCreateAlbum(){
+async function galleryCreateAlbum(){
   if(!isAdmin){toast('需要管理员权限');return;}
-  const n=(prompt('新相册名称:')||'').trim();if(!n)return;
+  const n=((await uiPrompt({title:'新建相册', label:'新相册名称:', placeholder:'例如：绝亚猴改革纪念'}))||'').trim();if(!n)return;
   if(galleryAlbums().some(a=>a.name===n)){toast('已存在同名相册');return;}
   const id='alb'+Date.now();
   app.albums.push({id,name:n,created:todayStr()});
   saveApp(app);glView=id;renderGallery();
   toast('✅ 相册「'+n+'」已创建');
 }
-function galleryRenameAlbum(id){
+async function galleryRenameAlbum(id){
   if(!isAdmin){toast('需要管理员权限');return;}
   const a=galleryAlbums().find(x=>x.id===id);if(!a)return;
-  const n=(prompt('重命名相册「'+a.name+'」为:',a.name)||'').trim();
+  const n=((await uiPrompt({title:'重命名相册', label:'重命名相册「'+a.name+'」为:', value:a.name}))||'').trim();
   if(!n||n===a.name)return;
   if(app.albums.some(x=>x.name===n&&x.id!==id)){toast('已存在同名相册');return;}
   a.name=n;saveApp(app);renderGallery();
   toast('✅ 已重命名为「'+n+'」');
 }
-function galleryDeleteAlbum(id){
+async function galleryDeleteAlbum(id){
   if(!isAdmin){toast('需要管理员权限');return;}
   const a=galleryAlbums().find(x=>x.id===id);if(!a)return;
   const cnt=galleryListFor(id).length;
-  if(!confirm(`删除相册「${a.name}」?\n相册内 ${cnt} 张图片会移到"未分类",不会被删除。`))return;
+  if(!(await uiConfirm({title:'删除相册', message:`删除相册「${a.name}」?\n相册内 ${cnt} 张图片会移到"未分类",不会被删除。`, okText:'删除相册', danger:true})))return;
   (app.gallery||[]).forEach(g=>{if(g.album===id)delete g.album;});
   app.albums=app.albums.filter(x=>x.id!==id);
   if(glView===id)glView='all';
@@ -3196,7 +3222,7 @@ async function uploadGalleryImages(){
 async function galleryDelete(i){
   if(!isAdmin){toast('需要管理员权限');return;}
   const g=glCurList[i];if(!g)return;
-  if(!confirm(`确定删除图片「${g.name||'未命名'}」吗?\n(会同时尝试删除 GitHub 上的文件)`))return;
+  if(!(await uiConfirm({title:'删除图片', message:`确定删除图片「${g.name||'未命名'}」吗?\n(会同时尝试删除 GitHub 上的文件)`, okText:'删除', danger:true})))return;
   // 尽力删除 GitHub 文件 (失败不阻塞记录删除)
   if(g.path){
     try{
@@ -3520,11 +3546,11 @@ function updateFtSubtitle(){
   const isAdminUser=currentUser&&(currentUser.type==='super'||currentUser.type==='admin');
   el.textContent=isAdminUser?'全员关系图谱 · 点击节点编辑关系':'全员关系图谱';
 }
-function changePwd(){
+async function changePwd(){
   if(!currentUser){toast('请先登录');return;}
   // 超级管理员改管理员密码
-  const op=prompt('请输入原密码：');if(!op)return;
-  const np=prompt('请输入新密码（至少4位）：');if(!np||np.length<4){toast('新密码至少4位');return;}
+  const op=await uiPrompt({title:'修改密码', label:'请输入原密码：', password:true});if(!op)return;
+  const np=await uiPrompt({title:'修改密码', label:'请输入新密码（至少4位）：', password:true});if(!np||np.length<4){toast('新密码至少4位');return;}
   if(currentUser.type==='super'){
     if(op!==app.adminPassword){toast('原密码错误');return;}
     app.adminPassword=np;saveApp(app);toast('管理员密码已修改');
@@ -3536,10 +3562,10 @@ function changePwd(){
   }
 }
 // 成员在个人页面改密码
-function changeMemberPwd(){
+async function changeMemberPwd(){
   if(!currentUser||!currentUser.memberId){showLoginModal();return;}
-  const op=prompt('请输入当前密码：');if(!op)return;
-  const np=prompt('请输入新密码（至少4位）：');if(!np||np.length<4){toast('新密码至少4位');return;}
+  const op=await uiPrompt({title:'修改密码', label:'请输入当前密码：', password:true});if(!op)return;
+  const np=await uiPrompt({title:'修改密码', label:'请输入新密码（至少4位）：', password:true});if(!np||np.length<4){toast('新密码至少4位');return;}
   const m=app.members.find(x=>x.id===currentUser.memberId);
   if(!m)return;
   if(op!==(m.password||'abc123')){toast('当前密码错误');return;}
@@ -3774,9 +3800,9 @@ function compressAvatar(dataUrl,callback){compressImage(dataUrl,300,300,0.75,cal
 function compressCarouselImg(dataUrl,callback){compressImage(dataUrl,1920,1080,0.9,callback);}
 function compressEventImg(dataUrl,callback){compressImage(dataUrl,1920,1080,0.9,callback);}
 function compressMentorImg(dataUrl,callback){compressImage(dataUrl,1080,1920,0.9,callback);}
-function admDelMember(id){if(!confirm('确定删除该成员？'))return;app.mentors=app.mentors.filter(mt=>mt.memberId!==id);app.members.forEach(m=>{m.relations=(m.relations||[]).filter(r=>r.targetId!==id);});app.members=app.members.filter(m=>m.id!==id);if(app.treeNodePositions)delete app.treeNodePositions[id];saveApp(app);renderMembers();renderFamilyTree();renderMentors();refreshAdminPanel();toast('已删除');}
+async function admDelMember(id){if(!(await uiConfirm({title:'删除成员', message:'确定删除该成员？\n其导师信息、族谱关系将一并移除。', okText:'删除', danger:true})))return;app.mentors=app.mentors.filter(mt=>mt.memberId!==id);app.members.forEach(m=>{m.relations=(m.relations||[]).filter(r=>r.targetId!==id);});app.members=app.members.filter(m=>m.id!==id);if(app.treeNodePositions)delete app.treeNodePositions[id];saveApp(app);renderMembers();renderFamilyTree();renderMentors();refreshAdminPanel();toast('已删除');}
 // admAddEvent replaced below with file upload support
-function admDelEvent(id){if(!confirm('确定删除？'))return;app.events=app.events.filter(e=>e.id!==id);saveApp(app);renderEvents();refreshAdminPanel();toast('已删除');}
+async function admDelEvent(id){if(!(await uiConfirm({title:'删除事件', message:'确定删除该事件？', okText:'删除', danger:true})))return;app.events=app.events.filter(e=>e.id!==id);saveApp(app);renderEvents();refreshAdminPanel();toast('已删除');}
 let editingAdminMentorId = null; // 正在编辑的导师 ID
 
 function updateMentorSelect(){
@@ -3888,7 +3914,7 @@ async function admAddMentor(){
   renderMentors(); renderMembers(); renderFamilyTree(); refreshAdminPanel();
   toast('✅ 导师已设置并同步');
 }
-function admDelMentor(id){if(!confirm('确定取消？'))return;app.mentors=app.mentors.filter(m=>m.id!==id);if(editingAdminMentorId===id)cancelEditMentor();saveApp(app);renderMentors();renderMembers();renderFamilyTree();refreshAdminPanel();toast('已取消');}
+async function admDelMentor(id){if(!(await uiConfirm({title:'取消导师', message:'确定取消该成员的导师身份？', okText:'取消导师', danger:true})))return;app.mentors=app.mentors.filter(m=>m.id!==id);if(editingAdminMentorId===id)cancelEditMentor();saveApp(app);renderMentors();renderMembers();renderFamilyTree();refreshAdminPanel();toast('已取消');}
 function editAdminMentor(id){
   const mt = app.mentors.find(x => x.id === id);
   if (!mt) return;
@@ -3934,11 +3960,11 @@ function cancelEditMentor(){
 function admDelMsg(id){app.messages=app.messages.filter(m=>m.id!==id);saveApp(app);renderMessages();refreshAdminPanel();toast('已删除');}
 
 // 管理员重置成员密码
-function admResetPwd(id){
+async function admResetPwd(id){
   if(!isAdmin){toast('需要管理员权限');return;}
   const m=app.members.find(x=>x.id===id);
   if(!m)return;
-  const np=prompt('为「'+m.name+'」设置新密码（4-20位，留空并确定则恢复默认 abc123）：');
+  const np=await uiPrompt({title:'重置密码', label:'为「'+m.name+'」设置新密码（4-20位，留空并确定则恢复默认 abc123）：', password:true});
   if(np===null)return; // 用户取消
   const v=np.trim();
   if(v){
@@ -4039,6 +4065,52 @@ function renderHomeLinks(){
     wrap.appendChild(a);
   });
 }
+
+// ==================== 统一风格对话框 (替代原生 prompt/confirm) ====================
+// uiPrompt({title,label,value,placeholder,password,okText,danger}) -> Promise<string|null>
+// uiConfirm({title,message,okText,danger}) -> Promise<boolean>
+let _uiDlgResolve=null;
+function uiPrompt(o){
+  return new Promise(res=>{
+    _uiDlgResolve=res;
+    document.getElementById('uiDlgTitle').textContent=o.title||'请输入';
+    document.getElementById('uiDlgBody').innerHTML=
+      (o.label?`<div class="ui-dlg-label">${esc(o.label)}</div>`:'')+
+      `<input type="${o.password?'password':'text'}" id="uiDlgInput" class="ui-dlg-input" value="${esc(o.value||'')}" placeholder="${esc(o.placeholder||'')}" autocomplete="off" spellcheck="false">`;
+    _uiDlgShow(o);
+  });
+}
+function uiConfirm(o){
+  return new Promise(res=>{
+    _uiDlgResolve=res;
+    document.getElementById('uiDlgTitle').textContent=o.title||'请确认';
+    document.getElementById('uiDlgBody').innerHTML=`<div class="ui-dlg-msg">${esc(o.message||'')}</div>`;
+    _uiDlgShow(o);
+  });
+}
+function _uiDlgShow(o){
+  const ok=document.getElementById('uiDlgOk');
+  ok.textContent=o&&o.okText?o.okText:'确定';
+  ok.classList.toggle('btn-danger',!!(o&&o.danger));
+  ok.classList.toggle('btn-red',!(o&&o.danger));
+  document.getElementById('uiDlg').style.display='flex';
+  setTimeout(()=>{const ip=document.getElementById('uiDlgInput');if(ip){ip.focus();if(ip.value)ip.select();}},60);
+}
+function uiDlgClose(v){
+  document.getElementById('uiDlg').style.display='none';
+  if(_uiDlgResolve){const r=_uiDlgResolve;_uiDlgResolve=null;r(v);}
+}
+(function(){
+  document.getElementById('uiDlgOk').addEventListener('click',()=>{const ip=document.getElementById('uiDlgInput');uiDlgClose(ip?ip.value:true);});
+  document.getElementById('uiDlgCancel').addEventListener('click',()=>uiDlgClose(null));
+  document.getElementById('uiDlg').addEventListener('click',e=>{if(e.target.id==='uiDlg')uiDlgClose(null);});
+  document.addEventListener('keydown',e=>{
+    const ov=document.getElementById('uiDlg');
+    if(!ov||ov.style.display!=='flex')return;
+    if(e.key==='Escape'){e.stopPropagation();uiDlgClose(null);}
+    else if(e.key==='Enter'){e.preventDefault();const ip=document.getElementById('uiDlgInput');uiDlgClose(ip?ip.value:true);}
+  });
+})();
 
 // ===================== Mobile Nav =====================
 function toggleMobileNav(){
@@ -4777,8 +4849,8 @@ function updateLayerToggleBtn(){
   b.textContent=(app.treeLayered===false)?'🔀 恢复行吸附':'🔀 切换自由拖动';
 }
 
-function resetTreePositions(){
-  if(!confirm('确定重置所有节点位置？（将恢复为自动排布）'))return;
+async function resetTreePositions(){
+  if(!(await uiConfirm({title:'重置族谱布局', message:'确定重置所有节点位置？（将恢复为自动排布）', okText:'重置', danger:true})))return;
   app.treeNodePositions={};ftNodePositions={};
   // 分层模式下直接清空位置重新计算层线布局即可
   if(app.treeLayered!==false){
