@@ -104,7 +104,7 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
 .home-card h3{font-size:20px;color:var(--gold2);margin-bottom:8px}
 .home-card p{font-size:13px;color:var(--muted);line-height:1.7}
 
-.page{display:none;min-height:calc(100vh - 68px)}
+.page{display:none;min-height:calc(100vh - 68px);position:relative}
 .page.active{display:block}
 .page-header{position:relative;text-align:center;padding:50px 0 30px}
 /* 大标题: 游戏结算风格金色渐变衬线字 (creditplayer 风格) */
@@ -126,6 +126,7 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
 .ph-crest{position:absolute;top:-38px;left:50%;transform:translateX(-50%);height:150px;width:auto;object-fit:contain;opacity:.15;pointer-events:none;z-index:0;filter:drop-shadow(0 2px 8px rgba(0,0,0,.3))}
 .pg-corner{position:fixed;bottom:12px;width:110px;opacity:.26;pointer-events:none;z-index:-1;filter:drop-shadow(0 2px 10px rgba(0,0,0,.45))}
 .pg-corner.l{left:10px}.pg-corner.r{right:10px;transform:scaleX(-1)}
+.pg-spr{position:absolute;pointer-events:none;z-index:-1;opacity:.5;animation:stickerFloat 6s ease-in-out infinite;filter:drop-shadow(0 3px 8px rgba(0,0,0,.35))}
 .ph-divider{display:flex;align-items:center;justify-content:center;gap:12px;margin:10px auto 0;max-width:400px;pointer-events:none}
 .ph-divider::before,.ph-divider::after{content:'';flex:1;height:1px;opacity:.55}
 .ph-divider::before{background:linear-gradient(90deg,transparent,#d4a574)}
@@ -140,7 +141,7 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
 .ph-deco.right{right:6%}
 .ph-deco.left{left:6%;animation-delay:-2.5s}
 @keyframes stickerFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-9px) rotate(2deg)}}
-@media(max-width:768px){.ph-deco{display:none}.ph-en{height:22px}.pg-corner{display:none}.ph-bunting{width:190px;top:-8px}.ph-divider{max-width:240px}.ph-divider img{height:22px}#page-events .page-header,#page-gallery .page-header{padding-top:100px}#page-events .ph-bunting,#page-gallery .ph-bunting{top:-26px}}
+@media(max-width:768px){.ph-deco{display:none}.ph-en{height:22px}.pg-corner{display:none}.pg-spr{display:none}.ph-bunting{width:190px;top:-8px}.ph-divider{max-width:240px}.ph-divider img{height:22px}#page-events .page-header,#page-gallery .page-header{padding-top:100px}#page-events .ph-bunting,#page-gallery .ph-bunting{top:-26px}}
 
 /* Sync bar */
 .sync-bar{background:var(--card);border-bottom:1px solid var(--bdr);padding:8px 20px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
@@ -1391,6 +1392,8 @@ const DEFAULTS = {
   adminPassword:'admin123',
   // 默认头像: FF14 Moogle (莫古) — jsDelivr CDN 加速
   defaultAvatar: 'https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/avatars/default-avatar.png',
+  // Gpose 贴纸随机头像池 (无自定义头像的成员按 id 稳定分配其一)
+  stickerAvatars: ['076990','076991','076992','076993','076994','076951','076952','076953','076954','076955','076956','076957','076958','076959','076960','076961','076962','076963','076964','076965','076966','076967','076968','076969','076970','076971','076972','076973','076974','076975','076976','076977','076978','076979'].map(function(id){return 'https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/avatars/stickers/'+id+'.png'}),
   carouselImages:[
     {id:1,title:'黑塔办事处全景',url:'https://picsum.photos/seed/heita1/1200/480'},
     {id:2,title:'团队合影',url:'https://picsum.photos/seed/heita2/1200/480'},
@@ -1398,6 +1401,7 @@ const DEFAULTS = {
   ],
   members:[
     {id:1781264631988060,name:'露露緹雅',role:'永青一页',info:'高难苦手，全职业精通（大概）',avatar:'https://picsum.photos/seed/露露緹雅/200/200',relations:[{"targetId": 1781265442775372, "label": "导师→豆芽"}, {"targetId": 1781270850892094, "label": "导师→豆芽"}],password:'abc123',isAdmin:true},
+
     {id:1781265442775372,name:'阿换',role:'瞬灭二页',info:'',avatar:'https://picsum.photos/seed/阿换/200/200',relations:[],password:'abc123',isAdmin:true},
     {id:1781270458888535,name:'千早铃',role:'瞬灭二页',info:'',avatar:'https://picsum.photos/seed/千早铃/200/200',relations:[{"targetId": 1781274831961022, "label": "导师→豆芽"}, {"targetId": 1781270947924747, "label": "导师→豆芽"}, {"targetId": 1781275036424644, "label": "导师→豆芽"}, {"targetId": 1781270656571088, "label": "导师→豆芽"}],password:'abc123',isAdmin:true},
     {id:1781270492991774,name:'洛格芙',role:'瞬灭二页',info:'休闲玩法高手',avatar:'https://picsum.photos/seed/洛格芙/200/200',relations:[],password:'abc123',isAdmin:true},
@@ -1454,6 +1458,15 @@ const DEFAULTS = {
   likeLog:[{mentorId:1781275795519039,memberId:1781275129298184,date:'2026-06-13'}]      // [{mentorId, memberId, date}] for daily limit tracking
 };
 
+// 按 key 稳定哈希,从贴纸池取一个随机头像 (同一成员每次结果一致)
+function stickerAvatarFor(key){
+  var pool=DEFAULTS.stickerAvatars;
+  key=String(key||'x');
+  var h=0;
+  for(var i=0;i<key.length;i++){h=(h*31+key.charCodeAt(i))>>>0;}
+  return pool[h%pool.length];
+}
+
 let app = loadApp();
 refreshQuotaBadge();  // 页面加载时立即刷新 Header 额度角标
 // 数据迁移：为旧成员添加 password/isAdmin 字段
@@ -1507,12 +1520,15 @@ function normalizeDataTypes(d) {
   if (d.mentors) d.mentors.forEach(mt => { if (mt.image) mt.image = toFastCdn(mt.image); });
   if (d.members) d.members.forEach(m => {
     if (m.avatar) m.avatar = toFastCdn(m.avatar);
-    // 补默认头像 (空字符串 / 已删除的 picsum URL)
+    // 补默认头像 (空字符串 / 已删除的 picsum URL) → Gpose 贴纸随机头像
     if (!m.avatar || m.avatar.startsWith('data:') === false && m.avatar.includes('picsum.photos/seed/member-')) {
-      // picsum 占位图替换为默认莫古
-      m.avatar = 'https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/avatars/default-avatar.png';
+      // picsum 占位图替换为贴纸随机头像
+      m.avatar = stickerAvatarFor(m.id || m.name);
     } else if (!m.avatar) {
-      m.avatar = 'https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/avatars/default-avatar.png';
+      m.avatar = stickerAvatarFor(m.id || m.name);
+    } else if (!m.avatar.startsWith('data:') && m.avatar.includes('/avatars/default-avatar.png')) {
+      // 旧的统一默认莫古头像 → 升级为贴纸随机头像
+      m.avatar = stickerAvatarFor(m.id || m.name);
     }
   });
   if (d.events) d.events.forEach(e => { if (e.image) e.image = toFastCdn(e.image); });
@@ -2786,7 +2802,7 @@ function renderMembers() {
   if(!app.members.length){g.innerHTML='<div class="empty"><div class="ic">👥</div><p>暂无成员</p></div>';return;}
   g.innerHTML=app.members.map(m=>{
     const im=app.mentors.find(mt=>mt.memberId===m.id);
-    const avatarSrc = m.avatar || DEFAULTS.defaultAvatar;
+    const avatarSrc = m.avatar || stickerAvatarFor(m.id || m.name);
     const avatarHtml=`<div class="av" style="overflow:hidden;padding:0"><img src="${esc(avatarSrc)}" style="width:100%;height:100%;object-fit:cover" alt="" onerror="this.onerror=null;this.src='${esc(DEFAULTS.defaultAvatar)}'"></div>`;
     const isSelf = currentUser && currentUser.memberId === m.id;
     return `<div class="member-card" onclick="showMemberDetail(${m.id})" style="cursor:pointer;${isSelf?'border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)':''}">
@@ -2801,7 +2817,7 @@ function showMemberDetail(id) {
   const m=app.members.find(x=>x.id===id);if(!m)return;
   const im=app.mentors.find(mt=>mt.memberId===m.id);
   const isSelf = currentUser && currentUser.memberId === m.id;
-  const avatarSrc = m.avatar || DEFAULTS.defaultAvatar;
+  const avatarSrc = m.avatar || stickerAvatarFor(m.id || m.name);
   const avatarDisp=`<div class="ma-lg" style="overflow:hidden;padding:0"><img src="${esc(avatarSrc)}" decoding="async" style="width:100%;height:100%;object-fit:cover" alt="" onerror="cdnFallback(this)"></div>`;
   // 自己: 简介可编辑 + 改密码; 别人: 只读
   const infoBox = isSelf
@@ -3609,7 +3625,8 @@ function admUpsertMember(){
       renderMembers(); renderFamilyTree(); renderMentors(); refreshAdminPanel();
       toast('✅ 成员信息已更新');
     } else {
-      const newMember = { id: genNextId(), ...memberData, avatar: memberData.avatar || DEFAULTS.defaultAvatar, relations: [], password:'abc123', isAdmin:false };
+      const newId = genNextId();
+      const newMember = { id: newId, ...memberData, avatar: memberData.avatar || stickerAvatarFor(newId), relations: [], password:'abc123', isAdmin:false };
       app.members.push(newMember);
       saveApp(app);
       pushToCloud(app, true);
@@ -4868,6 +4885,43 @@ function loadAppFallback() {
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',corners);
   else corners();
+  // 各页散布 Gpose 贴纸装饰 (p=页 id, id=素材号, t=top%, l=left% 或 r=right%, s=尺寸px, d=动画延迟s)
+  var SPR=[
+    {p:'page-home',id:'076755',t:42,l:4,s:74},
+    {p:'page-home',id:'076766',t:26,r:5,s:56,d:1.2},
+    {p:'page-home',id:'076709',t:74,l:8,s:60,d:2.1},
+    {p:'page-members',id:'076723',t:56,l:3,s:58},
+    {p:'page-members',id:'076730',t:74,r:3,s:66,d:1.5},
+    {p:'page-familytree',id:'076706',t:56,l:2,s:52,d:.8},
+    {p:'page-events',id:'076707',t:44,r:6,s:64},
+    {p:'page-events',id:'076759',t:70,r:4,s:58,d:2.4},
+    {p:'page-gallery',id:'076705',t:60,l:4,s:60,d:1},
+    {p:'page-gallery',id:'076724',t:34,r:5,s:56,d:1.8},
+    {p:'page-mentors',id:'076749',t:34,l:6,s:62},
+    {p:'page-mentors',id:'076711',t:66,r:5,s:60,d:2.2},
+    {p:'page-messages',id:'076761',t:30,l:5,s:60,d:.6},
+    {p:'page-messages',id:'076725',t:46,r:5,s:62,d:1.4},
+    {p:'page-messages',id:'076728',t:70,l:6,s:56,d:2},
+    {p:'page-messages',id:'076729',t:82,r:6,s:64,d:2.8}
+  ];
+  function scatter(){
+    var SB='https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/stickers/';
+    var SFB='https://fastly.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/stickers/';
+    SPR.forEach(function(c){
+      var pg=document.getElementById(c.p);
+      if(!pg||pg.querySelector('.pg-spr[data-sid="'+c.id+'"]'))return;
+      var im=document.createElement('img');
+      im.className='pg-spr';im.alt='';im.loading='lazy';im.dataset.sid=c.id;
+      im.style.top=c.t+'%';im.style.width=c.s+'px';
+      if(c.l!=null)im.style.left=c.l+'%';else im.style.right=c.r+'%';
+      im.style.animationDelay=(c.d||0)+'s';
+      im.src=SB+c.id+'.png';
+      im.onerror=function(){if(!this.dataset.f){this.dataset.f=1;this.src=SFB+c.id+'.png';}else{this.style.display='none';}};
+      pg.appendChild(im);
+    });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',scatter);
+  else scatter();
   setTimeout(render,800);
 })();
 </script>
