@@ -121,6 +121,10 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
 .ph-en{display:flex;align-items:flex-end;justify-content:center;gap:4px;height:30px;margin-bottom:12px;opacity:.92}
 .ph-en img{height:100%;width:auto}
 .ph-en .sp{width:12px}
+/* 游戏铭牌装饰素材 (肖像装饰框/大军徽章) */
+.page-header h2{position:relative;z-index:1}
+.ph-crest{position:absolute;top:-38px;left:50%;transform:translateX(-50%);height:150px;width:auto;object-fit:contain;opacity:.15;pointer-events:none;z-index:0;filter:drop-shadow(0 2px 8px rgba(0,0,0,.3))}
+.mc-card .mc-frame{position:absolute;top:0;left:0;object-fit:fill !important;pointer-events:none;z-index:3;filter:drop-shadow(0 3px 10px rgba(0,0,0,.35))}
 /* 页面标题旁 Gpose 贴纸装饰 */
 .ph-deco{position:absolute;top:34px;pointer-events:none;user-select:none;opacity:.85;filter:drop-shadow(0 4px 10px rgba(0,0,0,.4));animation:stickerFloat 5s ease-in-out infinite;z-index:1}
 .ph-deco.right{right:6%}
@@ -165,7 +169,7 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
 .rel-list-item span{color:var(--gold)}
 
 .event-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:22px;padding-bottom:40px}
-.event-card{background:linear-gradient(180deg,var(--card) 0%,var(--bg2) 100%);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden;transition:var(--tr);box-shadow:inset 0 1px 0 rgba(110,155,255,.06)}
+.event-card{background:linear-gradient(180deg,var(--card) 0%,var(--bg2) 100%);border:18px solid transparent;border-image:url('https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/frames/191007.png') 40 fill / 18px stretch;border-radius:0;overflow:hidden;transition:var(--tr);box-shadow:0 4px 18px rgba(0,0,0,.35)}
 .event-card:hover{border-color:var(--crystal3);transform:translateY(-3px);box-shadow:0 8px 25px rgba(77,126,255,.2)}
 .event-card img{width:100%;height:200px;object-fit:contain;background:var(--card2)}
 .event-body{padding:20px}
@@ -271,7 +275,7 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
 .msg-form textarea{width:100%;min-height:70px;resize:vertical}
 .msg-form input:focus,.msg-form textarea:focus{outline:none;border-color:var(--gold)}
 .msg-list{display:flex;flex-direction:column;gap:14px;max-height:450px;overflow-y:auto}
-.msg-item{background:linear-gradient(180deg,var(--card) 0%,var(--bg2) 100%);border:1px solid var(--bdr);border-radius:var(--rs);padding:14px;box-shadow:inset 0 1px 0 rgba(110,155,255,.05)}
+.msg-item{background:linear-gradient(180deg,var(--card) 0%,var(--bg2) 100%);border:13px solid transparent;border-image:url('https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/frames/191007.png') 40 fill / 13px stretch;border-radius:0;padding:14px;box-shadow:0 3px 12px rgba(0,0,0,.3)}
 .msg-item:hover{border-color:var(--crystal3)}
 .msg-item .mh{display:flex;justify-content:space-between;margin-bottom:6px}
 .msg-item .mn{font-weight:600;color:var(--gold2);font-size:14px}
@@ -2875,7 +2879,7 @@ function renderMentors() {
   const total=app.mentors.length;
   track.innerHTML=app.mentors.map((mt,i)=>{
     const m=app.members.find(x=>x.id===mt.memberId);
-    const imgHtml=mt.image?`<img src="${esc(mt.image)}" alt="${m?esc(m.name):''}" loading="lazy" decoding="async" onerror="cdnFallback(this)">`:'';
+    const imgHtml=mt.image?`<img src="${esc(mt.image)}" alt="${m?esc(m.name):''}" loading="lazy" decoding="async" onerror="cdnFallback(this)">`+'<img class="mc-frame" src="https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/frames/191426.png" alt="" loading="lazy" onerror="if(!this.dataset.f){this.dataset.f=1;this.src=\'https://fastly.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/frames/191426.png\';}else{this.style.display=\'none\';}">':'';
     const totalLikes=(app.likes||{})[mt.id]||0;
     const hasLikedToday=currentUser&&currentUser.memberId?(app.likeLog||[]).filter(l=>l.mentorId===mt.id&&l.memberId===currentUser.memberId&&l.date===todayStr()).length>0:false;
     // 有照片：点赞按钮在角色名旁；无照片：点赞按钮在底部
@@ -4807,6 +4811,14 @@ function loadAppFallback() {
       var txt=(el.getAttribute('data-en')||'').toUpperCase();
       if(!txt)return;
       el.dataset.done='1';
+      var ph=el.closest('.page-header');
+      if(ph&&!ph.querySelector('.ph-crest')){
+        var c=document.createElement('img');
+        c.className='ph-crest';c.alt='';c.loading='lazy';
+        c.src='https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/frames/192427.png';
+        c.onerror=function(){if(!this.dataset.f){this.dataset.f=1;this.src='https://fastly.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/frames/192427.png';}else{this.style.display='none';}};
+        ph.insertBefore(c,ph.firstChild);
+      }
       el.innerHTML=txt.split('').map(function(ch){
         if(ch===' ')return '<span class="sp"></span>';
         return '<img src="'+LB+ch+'.png" alt="'+ch+'" loading="lazy" onerror="if(!this.dataset.f){this.dataset.f=1;this.src=\''+FB+ch+'.png\';}else{this.style.display=\'none\';}">';
