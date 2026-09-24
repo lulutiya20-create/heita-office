@@ -10,7 +10,7 @@ const pw = require('playwright-core');
   await page.waitForTimeout(2500);
 
   const tabs = await page.$$eval('#bmNav .bm-tab', els => els.map(e => ({
-    name: e.querySelector('.bm-name').textContent,
+    name: e.querySelector('.bm-pop-name') ? e.querySelector('.bm-pop-name').textContent : '?',
     href: e.getAttribute('href'),
     w: Math.round(e.getBoundingClientRect().width),
     h: Math.round(e.getBoundingClientRect().height),
@@ -27,8 +27,12 @@ const pw = require('playwright-core');
     await tabsEls[1].hover();
     await page.waitForTimeout(600);
     if (top) await top.screenshot({ path: 'C:/Users/Administrator/WorkBuddy/2026-06-12-18-25-30/_bm_hover.png' });
-    const we = await tabsEls[1].evaluate(e => Math.round(e.getBoundingClientRect().width));
-    console.log('hover width tab2:', we);
+    const we = await tabsEls[1].evaluate(e => {
+      const pop = e.querySelector('.bm-pop');
+      const cs = getComputedStyle(pop);
+      return JSON.stringify({ opacity: cs.opacity, transform: cs.transform.slice(0, 60), w: Math.round(pop.getBoundingClientRect().width), h: Math.round(pop.getBoundingClientRect().height) });
+    });
+    console.log('hover pop tab2:', we);
   }
 
   // 移动端视口

@@ -117,13 +117,16 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
 .home-top .page-header .ph-deco.right{right:-120px}
 .home-top-spacer{grid-column:3;grid-row:1}
 .bm-nav{display:flex;gap:8px;align-items:center;flex-wrap:nowrap}
-.bm-tab{display:flex;align-items:center;height:58px;width:58px;border-radius:14px;background:linear-gradient(180deg,color-mix(in srgb,var(--c,#4d7eff) 82%,#fff) 0%,var(--c,#4d7eff) 60%);overflow:hidden;text-decoration:none;transition:width .35s cubic-bezier(.4,0,.2,1),transform .2s;box-shadow:0 4px 16px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.25);flex:0 0 auto}
-.bm-tab:hover{width:220px;transform:translateY(-3px)}
+.bm-tab{position:relative;display:flex;align-items:center;justify-content:center;height:58px;width:58px;border-radius:14px;background:linear-gradient(180deg,color-mix(in srgb,var(--c,#4d7eff) 82%,#fff) 0%,var(--c,#4d7eff) 60%);overflow:visible;text-decoration:none;transition:transform .2s;box-shadow:0 4px 16px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.25);flex:0 0 auto}
+.bm-tab:hover{transform:translateY(-2px);z-index:60}
 .bm-ic{flex:0 0 58px;height:58px;display:flex;align-items:center;justify-content:center}
 .bm-ic img{width:32px;height:32px;object-fit:contain;filter:drop-shadow(0 1px 3px rgba(0,0,0,.4))}
-.bm-name{color:#fff;font-weight:700;font-size:15px;white-space:nowrap;opacity:0;transform:translateX(-8px);transition:opacity .25s .08s,transform .25s .08s;padding-right:18px;text-shadow:0 1px 4px rgba(0,0,0,.45);letter-spacing:1px}
-.bm-tab:hover .bm-name{opacity:1;transform:none}
-.bm-tab .bm-fallback{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;color:#fff;background:rgba(0,0,0,.22);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.5)}
+/* 向下弹出的大卡片 (ffxiv.cn 风格) */
+.bm-pop{position:absolute;top:calc(100% + 10px);left:0;display:flex;align-items:center;gap:14px;width:max-content;max-width:280px;padding:20px 26px 20px 20px;border-radius:18px;background:linear-gradient(160deg,color-mix(in srgb,var(--c,#4d7eff) 78%,#fff) 0%,var(--c,#4d7eff) 55%);box-shadow:0 14px 36px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.3);opacity:0;transform:translateY(-10px) scale(.9) rotate(-3deg);transform-origin:18% -6px;transition:opacity .26s ease,transform .3s cubic-bezier(.34,1.45,.5,1);pointer-events:none;z-index:60}
+.bm-tab:hover .bm-pop{opacity:1;transform:translateY(0) scale(1) rotate(-2deg);pointer-events:auto}
+.bm-pop img{width:52px;height:52px;object-fit:contain;filter:drop-shadow(0 2px 5px rgba(0,0,0,.35))}
+.bm-pop .bm-fallback{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:26px;color:#fff;background:rgba(0,0,0,.22);box-shadow:inset 0 0 0 2px rgba(255,255,255,.5)}
+.bm-pop .bm-pop-name{color:#fff;font-weight:800;font-size:20px;white-space:nowrap;text-shadow:0 2px 5px rgba(0,0,0,.45);letter-spacing:2px}
 
 .page{display:none;min-height:calc(100vh - 68px);position:relative}
 .page.active{display:block}
@@ -442,8 +445,10 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
   .bm-tab{height:50px;width:50px;border-radius:12px}
   .bm-ic{flex:0 0 50px;height:50px}
   .bm-ic img{width:26px;height:26px}
-  .bm-tab:hover{width:190px}
-  .bm-name{font-size:13px}
+  .bm-pop{padding:14px 20px 14px 14px;border-radius:14px}
+  .bm-pop img{width:38px;height:38px}
+  .bm-pop .bm-fallback{width:38px;height:38px;font-size:20px}
+  .bm-pop .bm-pop-name{font-size:15px}
   .home-card{padding:24px 16px}
   .home-card .hc-icon{font-size:36px}
   .home-card h3{font-size:16px}
@@ -4009,7 +4014,7 @@ const LINK_COLORS=['#4d7eff','#d4a574','#39c5a3','#9d7eff','#ff7eb3','#ffa94d','
 const DEFAULT_LINKS=[
   {id:9001,name:'中文维基',url:'https://ff14.huijiwiki.com/wiki/%E9%A6%96%E9%A1%B5',desc:'FF14 中文 Wiki',color:'#4d7eff'},
   {id:9002,name:'素素辣鸡排',url:'https://tools.ffsusu.com/lajipai/',desc:'素素工具箱',color:'#ffa94d'},
-  {id:9003,name:'石之家',url:'https://ff14risingstones.web.sdo.com/',desc:'光之战士社区',color:'#39c5a3'},
+  {id:9003,name:'石之家',url:'https://ff14risingstones.web.sdo.com/pc/',desc:'光之战士社区',color:'#39c5a3'},
   {id:9004,name:'新大陆见闻',url:'https://ff14.org/',desc:'FF14 攻略百科',color:'#9d7eff'}
 ];
 function renderHomeLinks(){
@@ -4029,7 +4034,8 @@ function renderHomeLinks(){
     a.title=l.desc||l.name;
     a.style.setProperty('--c',color);
     a.href=l.url;a.target='_blank';a.rel='noopener noreferrer';
-    a.innerHTML=`<span class="bm-ic">${favicon?`<img src="${esc(favicon)}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${letterSvg}'">`:`<img src="${letterSvg}" alt="">`}</span><span class="bm-name">${esc(l.name)}</span>`;
+    const iconHtml=favicon?`<img src="${esc(favicon)}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${letterSvg}'">`:`<img src="${letterSvg}" alt="">`;
+    a.innerHTML=`<span class="bm-ic">${iconHtml}</span><span class="bm-pop">${iconHtml.replace(' loading="lazy"','')}<span class="bm-pop-name">${esc(l.name)}</span></span>`;
     wrap.appendChild(a);
   });
 }
