@@ -124,13 +124,23 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
 /* 游戏铭牌装饰素材 (肖像装饰框/大军徽章) */
 .page-header h2{position:relative;z-index:1}
 .ph-crest{position:absolute;top:-38px;left:50%;transform:translateX(-50%);height:150px;width:auto;object-fit:contain;opacity:.15;pointer-events:none;z-index:0;filter:drop-shadow(0 2px 8px rgba(0,0,0,.3))}
+.pg-corner{position:fixed;bottom:12px;width:110px;opacity:.26;pointer-events:none;z-index:-1;filter:drop-shadow(0 2px 10px rgba(0,0,0,.45))}
+.pg-corner.l{left:10px}.pg-corner.r{right:10px;transform:scaleX(-1)}
+.ph-divider{display:flex;align-items:center;justify-content:center;gap:12px;margin:10px auto 0;max-width:400px;pointer-events:none}
+.ph-divider::before,.ph-divider::after{content:'';flex:1;height:1px;opacity:.55}
+.ph-divider::before{background:linear-gradient(90deg,transparent,#d4a574)}
+.ph-divider::after{background:linear-gradient(90deg,#d4a574,transparent)}
+.ph-divider img{height:30px;width:auto;object-fit:contain;opacity:.85;filter:drop-shadow(0 1px 4px rgba(0,0,0,.4))}
+.ph-bunting{position:absolute;top:-14px;left:50%;transform:translateX(-50%);width:300px;pointer-events:none;opacity:.95;z-index:0;filter:drop-shadow(0 3px 8px rgba(0,0,0,.35))}
+#page-events .page-header,#page-gallery .page-header{padding-top:150px}
+#page-events .ph-bunting,#page-gallery .ph-bunting{top:-46px;width:280px}
 .mc-card .mc-frame{position:absolute;top:0;left:0;object-fit:fill !important;pointer-events:none;z-index:3;filter:drop-shadow(0 3px 10px rgba(0,0,0,.35))}
 /* 页面标题旁 Gpose 贴纸装饰 */
 .ph-deco{position:absolute;top:34px;pointer-events:none;user-select:none;opacity:.85;filter:drop-shadow(0 4px 10px rgba(0,0,0,.4));animation:stickerFloat 5s ease-in-out infinite;z-index:1}
 .ph-deco.right{right:6%}
 .ph-deco.left{left:6%;animation-delay:-2.5s}
 @keyframes stickerFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-9px) rotate(2deg)}}
-@media(max-width:768px){.ph-deco{display:none}.ph-en{height:22px}}
+@media(max-width:768px){.ph-deco{display:none}.ph-en{height:22px}.pg-corner{display:none}.ph-bunting{width:190px;top:-8px}.ph-divider{max-width:240px}.ph-divider img{height:22px}#page-events .page-header,#page-gallery .page-header{padding-top:100px}#page-events .ph-bunting,#page-gallery .ph-bunting{top:-26px}}
 
 /* Sync bar */
 .sync-bar{background:var(--card);border-bottom:1px solid var(--bdr);padding:8px 20px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
@@ -2879,7 +2889,7 @@ function renderMentors() {
   const total=app.mentors.length;
   track.innerHTML=app.mentors.map((mt,i)=>{
     const m=app.members.find(x=>x.id===mt.memberId);
-    const imgHtml=mt.image?`<img src="${esc(mt.image)}" alt="${m?esc(m.name):''}" loading="lazy" decoding="async" onerror="cdnFallback(this)">`+'<img class="mc-frame" src="https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/frames/191426.png" alt="" loading="lazy" onerror="if(!this.dataset.f){this.dataset.f=1;this.src=\'https://fastly.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/frames/191426.png\';}else{this.style.display=\'none\';}">':'';
+    const imgHtml=mt.image?`<img src="${esc(mt.image)}" alt="${m?esc(m.name):''}" loading="lazy" decoding="async" onerror="cdnFallback(this)">`+'<img class="mc-frame" src="https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/frames/191717.png" alt="" loading="lazy" onerror="if(!this.dataset.f){this.dataset.f=1;this.src=\'https://fastly.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/frames/191717.png\';}else{this.style.display=\'none\';}">':'';
     const totalLikes=(app.likes||{})[mt.id]||0;
     const hasLikedToday=currentUser&&currentUser.memberId?(app.likeLog||[]).filter(l=>l.mentorId===mt.id&&l.memberId===currentUser.memberId&&l.date===todayStr()).length>0:false;
     // 有照片：点赞按钮在角色名旁；无照片：点赞按钮在底部
@@ -4818,6 +4828,24 @@ function loadAppFallback() {
         c.src='https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/frames/192427.png';
         c.onerror=function(){if(!this.dataset.f){this.dataset.f=1;this.src='https://fastly.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/frames/192427.png';}else{this.style.display='none';}};
         ph.insertBefore(c,ph.firstChild);
+        // 标题下金色饰线 + 翅膀纹章
+        var dv=document.createElement('div');
+        dv.className='ph-divider';
+        var ci=document.createElement('img');
+        ci.alt='';ci.loading='lazy';
+        ci.src='https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/frames/192419.png';
+        ci.onerror=function(){if(!this.dataset.f){this.dataset.f=1;this.src='https://fastly.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/frames/192419.png';}else{this.style.display='none';}};
+        dv.appendChild(ci);
+        el.insertAdjacentElement('afterend',dv);
+        // 活动/图库页顶部彩旗
+        var pid=ph.closest('.page')?ph.closest('.page').id:(ph.parentElement&&ph.parentElement.id||'');
+        if(pid==='page-events'||pid==='page-gallery'){
+          var bt=document.createElement('img');
+          bt.className='ph-bunting';bt.alt='';bt.loading='lazy';
+          bt.src='https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/frames/192663.png';
+          bt.onerror=function(){if(!this.dataset.f){this.dataset.f=1;this.src='https://fastly.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/frames/192663.png';}else{this.style.display='none';}};
+          ph.insertBefore(bt,ph.firstChild);
+        }
       }
       el.innerHTML=txt.split('').map(function(ch){
         if(ch===' ')return '<span class="sp"></span>';
@@ -4827,6 +4855,19 @@ function loadAppFallback() {
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',render);
   else render();
+  // 全站左右下角翅膀纹章装饰
+  function corners(){
+    if(document.querySelector('.pg-corner'))return;
+    ['l','r'].forEach(function(side){
+      var g=document.createElement('img');
+      g.className='pg-corner '+side;g.alt='';g.loading='lazy';
+      g.src='https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/frames/192503b.png';
+      g.onerror=function(){if(!this.dataset.f){this.dataset.f=1;this.src='https://fastly.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/frames/192503b.png';}else{this.style.display='none';}};
+      document.body.appendChild(g);
+    });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',corners);
+  else corners();
   setTimeout(render,800);
 })();
 </script>

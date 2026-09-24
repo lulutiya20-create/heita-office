@@ -37,7 +37,7 @@ function api(method, path, body) {
 
 (async () => {
   let ok = 0, fail = 0;
-  for (const f of ['191426', '191511', '192427', '191007']) {
+  for (const f of ['192503b']) {
     const local = `_frames/${f}.png`;
     if (!fs.existsSync(local)) { console.log('skip', f); fail++; continue; }
     const content = fs.readFileSync(local).toString('base64');
