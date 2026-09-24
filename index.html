@@ -48,7 +48,7 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
 }
 .header-logo{display:flex;align-items:center;gap:12px;cursor:pointer}
 .header-logo .icon{width:46px;height:46px;background:linear-gradient(135deg,var(--crystal2),var(--crystal3));border:1px solid var(--gold3);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 0 24px rgba(77,126,255,.4),inset 0 1px 0 rgba(255,255,255,.15)}
-.header-logo h1{font-size:22px;font-weight:400;letter-spacing:3px;background:linear-gradient(135deg,var(--gold2) 0%,#fff 50%,var(--crystal2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-shadow:0 0 30px rgba(212,167,116,.3)}
+.header-logo h1{font-size:22px;font-weight:400;letter-spacing:3px;font-family:'Times New Roman','STZhongsong','STSong','SimSun',serif;background:linear-gradient(180deg,#fdf3d0 0%,#ecd3a0 32%,#c9a05e 55%,#93724a 74%,#e8cf9a 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5)) drop-shadow(0 0 12px rgba(212,167,116,.25))}
 .header-nav{display:flex;gap:4px}
 .nav-btn{padding:8px 18px;border:none;border-radius:20px;cursor:pointer;font-size:13px;font-weight:600;transition:var(--tr);background:transparent;color:var(--muted)}
 .nav-btn:hover,.nav-btn.active{background:linear-gradient(180deg,rgba(77,126,255,.18) 0%,rgba(77,126,255,.08) 100%);color:var(--crystal2);text-shadow:0 0 8px rgba(110,155,255,.5)}
@@ -106,10 +106,27 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
 
 .page{display:none;min-height:calc(100vh - 68px)}
 .page.active{display:block}
-.page-header{text-align:center;padding:50px 0 30px}
-.page-header h2{font-size:34px;color:var(--gold2);letter-spacing:4px;position:relative;display:inline-block;font-weight:400;text-shadow:0 0 20px rgba(212,167,116,.4)}
+.page-header{position:relative;text-align:center;padding:50px 0 30px}
+/* 大标题: 游戏结算风格金色渐变衬线字 (creditplayer 风格) */
+.page-header h2{
+  font-size:34px;letter-spacing:5px;position:relative;display:inline-block;font-weight:400;
+  font-family:'Times New Roman','STZhongsong','STSong','SimSun',serif;
+  background:linear-gradient(180deg,#fdf3d0 0%,#ecd3a0 32%,#c9a05e 55%,#93724a 74%,#e8cf9a 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
+  filter:drop-shadow(0 2px 3px rgba(0,0,0,.55)) drop-shadow(0 0 14px rgba(212,167,116,.25));
+}
 .page-header h2::after{content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:50px;height:3px;background:var(--red);border-radius:2px}
 .page-header p{color:var(--muted);margin-top:14px;font-size:14px}
+/* 英文游戏字符副标题 (creditplayer 单字拼合) */
+.ph-en{display:flex;align-items:flex-end;justify-content:center;gap:3px;height:26px;margin-bottom:12px;opacity:.92}
+.ph-en img{height:100%;width:auto}
+.ph-en .sp{width:12px}
+/* 页面标题旁 Gpose 贴纸装饰 */
+.ph-deco{position:absolute;top:34px;pointer-events:none;user-select:none;opacity:.85;filter:drop-shadow(0 4px 10px rgba(0,0,0,.4));animation:stickerFloat 5s ease-in-out infinite;z-index:1}
+.ph-deco.right{right:6%}
+.ph-deco.left{left:6%;animation-delay:-2.5s}
+@keyframes stickerFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-9px) rotate(2deg)}}
+@media(max-width:768px){.ph-deco{display:none}.ph-en{height:20px}}
 
 /* Sync bar */
 .sync-bar{background:var(--card);border-bottom:1px solid var(--bdr);padding:8px 20px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
@@ -588,7 +605,7 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
   </section>
   <section class="home-section">
     <div class="container">
-      <div class="page-header"><h2>功能导航</h2><p>点击进入各功能模块</p></div>
+      <div class="page-header"><div class="ph-en" data-en="HOME"></div><h2>功能导航</h2><img class="ph-deco right" src="https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/stickers/moogle.png" alt="" loading="lazy" width="84" height="84"><p>点击进入各功能模块</p></div>
       <div class="home-cards">
         <div class="home-card" onclick="navigate('/members')"><div class="hc-icon">👥</div><h3>成员名录</h3><p>查看全体成员信息</p></div>
         <div class="home-card" onclick="navigate('/familytree')"><div class="hc-icon">🌳</div><h3>黑塔族谱</h3><p>全员关系图谱</p></div>
@@ -604,7 +621,7 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
 <!-- MEMBERS PAGE -->
 <div class="page" id="page-members">
   <div class="container">
-    <div class="page-header"><h2>成员名录</h2><p>黑塔办事处全体成员 · 点击卡片查看详情</p></div>
+    <div class="page-header"><div class="ph-en" data-en="MEMBERS"></div><h2>成员名录</h2><img class="ph-deco left" src="https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/stickers/sheep.png" alt="" loading="lazy" width="76" height="76"><p>黑塔办事处全体成员 · 点击卡片查看详情</p></div>
     <div class="member-grid" id="memberGrid"></div>
   </div>
 </div>
@@ -612,7 +629,7 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
 <!-- FAMILY TREE PAGE (黑塔族谱) -->
 <div class="page" id="page-familytree">
   <div class="familytree-container">
-    <div class="page-header"><h2>🌳 黑塔族谱</h2><p id="ftSubtitle">全员关系图谱 · 点击节点编辑关系</p></div>
+    <div class="page-header"><div class="ph-en" data-en="FAMILY TREE"></div><h2>🌳 黑塔族谱</h2><p id="ftSubtitle">全员关系图谱 · 点击节点编辑关系</p></div>
     <div class="familytree-actions" id="ftActions">
       <button class="btn btn-sync btn-sm hidden" id="ftResetBtn" onclick="resetTreePositions()">🔄 重置布局</button>
       <button class="btn btn-ok btn-sm hidden" id="ftArrangeBtn" onclick="arrangeTreeByGeneration()">📐 整理对齐</button>
@@ -650,7 +667,7 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
 <!-- EVENTS PAGE -->
 <div class="page" id="page-events">
   <div class="container">
-    <div class="page-header"><h2>部队事件</h2><p>团建活动与重要事件记录</p></div>
+    <div class="page-header"><div class="ph-en" data-en="EVENTS"></div><h2>部队事件</h2><img class="ph-deco right" src="https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/stickers/star.png" alt="" loading="lazy" width="64" height="64"><p>团建活动与重要事件记录</p></div>
     <div class="event-grid" id="eventGrid"></div>
   </div>
 </div>
@@ -658,7 +675,7 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
 <!-- MENTORS PAGE -->
 <div class="page" id="page-mentors">
   <div class="mentor-carousel-container">
-    <div class="page-header"><h2>导师信息</h2><p>黑塔办事处的导师团队</p></div>
+    <div class="page-header"><div class="ph-en" data-en="MENTORS"></div><h2>导师信息</h2><img class="ph-deco left" src="https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/stickers/ttcard.png" alt="" loading="lazy" width="72" height="72"><p>黑塔办事处的导师团队</p></div>
     <div class="mentor-carousel" id="mentorCarousel">
       <button class="mc-arrow mc-prev" onclick="mentorCarouselPrev()" aria-label="上一个">◀</button>
       <div class="mc-viewport" id="mcViewport">
@@ -673,7 +690,7 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
 <!-- MESSAGES PAGE -->
 <div class="page" id="page-messages">
   <div class="container">
-    <div class="page-header"><h2>留言板</h2><p>欢迎留下您的宝贵意见</p></div>
+    <div class="page-header"><div class="ph-en" data-en="MESSAGES"></div><h2>留言板</h2><img class="ph-deco right" src="https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/stickers/hearts.png" alt="" loading="lazy" width="70" height="70"><p>欢迎留下您的宝贵意见</p></div>
     <div class="msg-board">
       <div class="msg-form">
         <div id="msgIdentity" style="font-size:12px;color:var(--gold2);margin-bottom:8px;display:none"></div>
@@ -688,7 +705,7 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
 <!-- GALLERY PAGE -->
 <div class="page" id="page-gallery">
   <div class="gallery-wrap">
-    <div class="page-header"><h2>图库</h2><p>部队的精彩瞬间 · 点击图片放大查看与下载</p></div>
+    <div class="page-header"><div class="ph-en" data-en="GALLERY"></div><h2>图库</h2><img class="ph-deco left" src="https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/stickers/shiba.png" alt="" loading="lazy" width="78" height="78"><p>部队的精彩瞬间 · 点击图片放大查看与下载</p></div>
     <div class="gallery-upload hidden" id="galleryUploadBar">
       <label style="font-size:13px;color:var(--gold2);white-space:nowrap">📤 上传图片（可多选）</label>
       <input type="file" id="galleryFileInput" accept="image/*" multiple style="display:none" onchange="onGalleryFilesPick(this)">
@@ -2951,7 +2968,7 @@ function renderMessages() {
       idEl.style.color='var(--danger)';
     }
   }
-  if(!msgs.length){l.innerHTML='<div class="empty"><p>暂无留言，欢迎留下第一条</p></div>';return;}
+  if(!msgs.length){l.innerHTML='<div class="empty"><img src="https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/stickers/pixie.png" alt="" loading="lazy" style="width:72px;height:72px;opacity:.85;margin-bottom:10px;animation:stickerFloat 5s ease-in-out infinite"><p>暂无留言，欢迎留下第一条</p></div>';return;}
   l.innerHTML=msgs.map(m=>`<div class="msg-item"><div class="mh"><span class="mn">${esc(m.name||'匿名')}</span><span class="mt">${esc(m.time)}</span></div><div class="mc">${esc(m.content)}</div></div>`).join('');
 }
 function submitMsg() {
@@ -3006,7 +3023,7 @@ function renderGallery(){
   }
   glCurList=galleryListFor(glView);
   const emptyMsg=glView==='all'?'暂无图片':(glView==='none'?'未分类下暂无图片':'相册内暂无图片');
-  if(!glCurList.length){grid.innerHTML=`<div class="gl-empty">🖼️ ${emptyMsg}<br><span style="font-size:12px">${isAdmin?'可通过上方按钮上传':'管理员登录后可上传'}</span></div>`;return;}
+  if(!glCurList.length){grid.innerHTML=`<div class="gl-empty"><img src="https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/stickers/mandragora.png" alt="" loading="lazy" style="width:76px;height:76px;opacity:.85;margin-bottom:12px;animation:stickerFloat 5s ease-in-out infinite"><br>${emptyMsg}<br><span style="font-size:12px">${isAdmin?'可通过上方按钮上传':'管理员登录后可上传'}</span></div>`;return;}
   grid.innerHTML=glCurList.map((g,i)=>`<div class="gl-item" onclick="galleryOpen(${i})">
     <img src="${esc(g.url)}" loading="lazy" alt="${esc(g.name||'图库图片')}" onerror="this.style.opacity=.25">
     <div class="gl-cap">${esc(g.name||'未命名')}${g.uploader?' · '+esc(g.uploader):''}</div>
@@ -4775,7 +4792,31 @@ function loadAppFallback() {
   setTimeout(clean,500);
   setTimeout(clean,1000);
 })();
+</script>
 
+<!-- GAME TITLE LETTERS: 英文副标题用 creditplayer 单字拼合 -->
+<script>
+(function(){
+  var LB='https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/fonts/letters/';
+  var FB='https://fastly.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/fonts/letters/';
+  var altDone=false;
+  function render(){
+    var els=document.querySelectorAll('.ph-en');
+    els.forEach(function(el){
+      if(el.dataset.done)return;
+      var txt=(el.getAttribute('data-en')||'').toUpperCase();
+      if(!txt)return;
+      el.dataset.done='1';
+      el.innerHTML=txt.split('').map(function(ch){
+        if(ch===' ')return '<span class="sp"></span>';
+        return '<img src="'+LB+ch+'.png" alt="'+ch+'" loading="lazy" onerror="if(!this.dataset.f){this.dataset.f=1;this.src=\''+FB+ch+'.png\';}else{this.style.display=\'none\';}">';
+      }).join('');
+    });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',render);
+  else render();
+  setTimeout(render,800);
+})();
 </script>
 
 </body>
