@@ -110,6 +110,21 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
 .home-card h3{font-size:20px;color:var(--gold2);margin-bottom:8px}
 .home-card p{font-size:13px;color:var(--muted);line-height:1.7}
 
+/* 首页书签导航 (FF14 官网风格: 彩色方块, hover 展开站名) */
+.home-top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px}
+.home-top .bm-nav{grid-column:1;grid-row:1}
+.home-top .page-header{grid-column:2;grid-row:1;margin:0;min-width:320px}
+.home-top .page-header .ph-deco.right{right:-120px}
+.home-top-spacer{grid-column:3;grid-row:1}
+.bm-nav{display:flex;gap:8px;align-items:center;flex-wrap:nowrap}
+.bm-tab{display:flex;align-items:center;height:58px;width:58px;border-radius:14px;background:linear-gradient(180deg,color-mix(in srgb,var(--c,#4d7eff) 82%,#fff) 0%,var(--c,#4d7eff) 60%);overflow:hidden;text-decoration:none;transition:width .35s cubic-bezier(.4,0,.2,1),transform .2s;box-shadow:0 4px 16px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.25);flex:0 0 auto}
+.bm-tab:hover{width:220px;transform:translateY(-3px)}
+.bm-ic{flex:0 0 58px;height:58px;display:flex;align-items:center;justify-content:center}
+.bm-ic img{width:32px;height:32px;object-fit:contain;filter:drop-shadow(0 1px 3px rgba(0,0,0,.4))}
+.bm-name{color:#fff;font-weight:700;font-size:15px;white-space:nowrap;opacity:0;transform:translateX(-8px);transition:opacity .25s .08s,transform .25s .08s;padding-right:18px;text-shadow:0 1px 4px rgba(0,0,0,.45);letter-spacing:1px}
+.bm-tab:hover .bm-name{opacity:1;transform:none}
+.bm-tab .bm-fallback{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;color:#fff;background:rgba(0,0,0,.22);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.5)}
+
 .page{display:none;min-height:calc(100vh - 68px);position:relative}
 .page.active{display:block}
 .page-header{position:relative;text-align:center;padding:50px 0 30px}
@@ -420,6 +435,15 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
   .carousel-btn{width:32px;height:32px;font-size:14px}
   .carousel-slide .cap h3{font-size:18px}
   .home-cards{grid-template-columns:1fr 1fr;gap:14px}
+  .home-top{grid-template-columns:1fr;gap:18px}
+  .home-top .page-header{grid-column:1;grid-row:1}
+  .home-top .bm-nav{grid-column:1;grid-row:2;justify-content:center;flex-wrap:wrap}
+  .home-top-spacer{display:none}
+  .bm-tab{height:50px;width:50px;border-radius:12px}
+  .bm-ic{flex:0 0 50px;height:50px}
+  .bm-ic img{width:26px;height:26px}
+  .bm-tab:hover{width:190px}
+  .bm-name{font-size:13px}
   .home-card{padding:24px 16px}
   .home-card .hc-icon{font-size:36px}
   .home-card h3{font-size:16px}
@@ -625,7 +649,11 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
   </section>
   <section class="home-section">
     <div class="container">
-      <div class="page-header"><div class="ph-en" data-en="HOME"></div><h2>功能导航</h2><img class="ph-deco right" src="https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/stickers/moogle.png" alt="" loading="lazy" width="84" height="84"><p>点击进入各功能模块</p></div>
+      <div class="home-top">
+        <nav class="bm-nav" id="bmNav" aria-label="常用站点书签"></nav>
+        <div class="page-header"><div class="ph-en" data-en="HOME"></div><h2>功能导航</h2><img class="ph-deco right" src="https://cdn.jsdelivr.net/gh/lulutiya20-create/heita-office-images@main/stickers/moogle.png" alt="" loading="lazy" width="84" height="84"><p>点击进入各功能模块</p></div>
+        <div class="home-top-spacer"></div>
+      </div>
       <div class="home-cards">
         <div class="home-card" onclick="navigate('/members')"><div class="hc-icon">👥</div><h3>成员名录</h3><p>查看全体成员信息</p></div>
         <div class="home-card" onclick="navigate('/familytree')"><div class="hc-icon">🌳</div><h3>黑塔族谱</h3><p>全员关系图谱</p></div>
@@ -884,7 +912,7 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
       <div id="adm-msg-list"></div>
     </div>
     <div class="admin-tab-content" id="adm-links">
-      <p style="color:var(--muted);margin-bottom:10px;font-size:13px">首页外部链接卡片 — 显示在功能导航下方，点击新窗口打开</p>
+      <p style="color:var(--muted);margin-bottom:10px;font-size:13px">首页书签导航 — 显示在功能导航标题左侧，鼠标悬停展开站名，点击新窗口打开</p>
       <div class="admin-fg"><label>名称</label><input id="adm-l-name" placeholder="例如：FF14 中文维基"></div>
       <div class="admin-fg"><label>网址</label><input id="adm-l-url" placeholder="https://..."></div>
       <div class="admin-fg"><label>简介（可选）</label><input id="adm-l-desc" placeholder="一句话介绍"></div>
@@ -3927,7 +3955,8 @@ function refreshAdminPanel() {
   document.getElementById('adm-msg-list').innerHTML=app.messages.length?[...app.messages].reverse().map(m=>`<div class="admin-item"><div class="it"><strong>${esc(m.name)}</strong><span>${esc(m.content.substring(0,30))}... · ${esc(m.time)}</span></div><div class="ia"><button class="btn btn-del btn-sm" onclick="admDelMsg(${m.id})">删除</button></div></div>`).join(''):'<div class="empty" style="padding:20px"><p>暂无</p></div>';
   // 角色权限列表（仅超级管理员可操作，但所有管理员可见）
   if(document.getElementById('adm-roles-list')) refreshRolesList();
-  document.getElementById('adm-links-list').innerHTML=(app.links&&app.links.length)?app.links.map(l=>`<div class="admin-item"><div class="it"><strong style="color:${l.color||'#4d7eff'}">${esc(l.name)}</strong><span>${esc(l.url.substring(0,45))}</span></div><div class="ia"><button class="btn btn-del btn-sm" onclick="admDelLink(${l.id})">删除</button></div></div>`).join(''):'<div class="empty" style="padding:20px"><p>暂无外部链接</p></div>';
+  const effLinks=(app.links&&app.links.length)?app.links:((app.linksSeeded?[]:DEFAULT_LINKS));
+  document.getElementById('adm-links-list').innerHTML=effLinks.length?effLinks.map(l=>`<div class="admin-item"><div class="it"><strong style="color:${l.color||'#4d7eff'}">${esc(l.name)}</strong><span>${esc(l.url.substring(0,45))}</span></div><div class="ia"><button class="btn btn-del btn-sm" onclick="admDelLink(${l.id})">删除</button></div></div>`).join(''):'<div class="empty" style="padding:20px"><p>暂无外部链接</p></div>';
 }
 
 function admAddLink(){
@@ -3938,6 +3967,7 @@ function admAddLink(){
   if(!url){toast('请输入网址');return;}
   if(!/^https?:\/\//i.test(url))url='https://'+url;
   try{new URL(url);}catch(e){toast('网址格式不正确');return;}
+  if(!app.linksSeeded){app.links=DEFAULT_LINKS.slice();app.linksSeeded=true;}
   app.links.push({id:genNextId(),name,url,desc});
   saveApp(app);
   document.getElementById('adm-l-name').value='';document.getElementById('adm-l-url').value='';document.getElementById('adm-l-desc').value='';
@@ -3945,6 +3975,7 @@ function admAddLink(){
   toast('✅ 链接已添加');
 }
 function admDelLink(id){
+  if(!app.linksSeeded){app.links=DEFAULT_LINKS.slice();app.linksSeeded=true;}
   app.links=app.links.filter(l=>l.id!==id);
   saveApp(app);
   refreshAdminPanel();renderHomeLinks();
@@ -3972,23 +4003,33 @@ function toggleMemberAdmin(id){
 function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 function refreshAll(){renderCarousel();renderMembers();renderFamilyTree();renderEvents();renderGallery();renderMentors();renderMessages();renderHomeLinks();}
 
-// 首页外部链接卡片
+// 首页书签导航 (FF14 官网风格: 彩色方块, hover 展开站名)
 const LINK_COLORS=['#4d7eff','#d4a574','#39c5a3','#9d7eff','#ff7eb3','#ffa94d','#5ec8ff','#8fce5e'];
+// 默认书签 (管理员一旦增删过链接即写入 linksSeeded, 之后完全以 app.links 为准)
+const DEFAULT_LINKS=[
+  {id:9001,name:'中文维基',url:'https://ff14.huijiwiki.com/wiki/%E9%A6%96%E9%A1%B5',desc:'FF14 中文 Wiki',color:'#4d7eff'},
+  {id:9002,name:'素素辣鸡排',url:'https://tools.ffsusu.com/lajipai/',desc:'素素工具箱',color:'#ffa94d'},
+  {id:9003,name:'石之家',url:'https://ff14risingstones.web.sdo.com/',desc:'光之战士社区',color:'#39c5a3'},
+  {id:9004,name:'新大陆见闻',url:'https://ff14.org/',desc:'FF14 攻略百科',color:'#9d7eff'}
+];
 function renderHomeLinks(){
-  const wrap=document.querySelector('.home-cards');
+  const wrap=document.getElementById('bmNav');
   if(!wrap)return;
-  wrap.querySelectorAll('a.home-card.ext').forEach(a=>a.remove());
-  (app.links||[]).forEach((l,idx)=>{
+  wrap.innerHTML='';
+  let links=app.links||[];
+  if(!links.length&&!app.linksSeeded)links=DEFAULT_LINKS;
+  links.forEach((l,idx)=>{
     const color=l.color||LINK_COLORS[idx%LINK_COLORS.length];
     let domain='';try{domain=new URL(l.url).origin;}catch(e){}
     const favicon=domain?domain+'/favicon.ico':'';
     const letter=(l.name||'?').charAt(0);
-    const letterSvg="data:image/svg+xml,"+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="10" fill="${color}"/><text x="24" y="33" font-size="24" font-family="sans-serif" fill="#fff" text-anchor="middle">${letter}</text></svg>`);
+    const letterSvg="data:image/svg+xml,"+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><text x="24" y="34" font-size="28" font-weight="bold" font-family="sans-serif" fill="#fff" text-anchor="middle">${letter}</text></svg>`);
     const a=document.createElement('a');
-    a.className='home-card ext';
-    a.style.setProperty('--lc',color);
+    a.className='bm-tab';
+    a.title=l.desc||l.name;
+    a.style.setProperty('--c',color);
     a.href=l.url;a.target='_blank';a.rel='noopener noreferrer';
-    a.innerHTML=`<span class="ext-badge">↗</span><div class="hc-icon">${favicon?`<img src="${esc(favicon)}" alt="" data-fav="1" loading="lazy" onerror="this.onerror=null;this.src='${letterSvg}'">`:`<img src="${letterSvg}" alt="">`}</div><h3>${esc(l.name)}</h3><p>${esc(l.desc||'')}</p>`;
+    a.innerHTML=`<span class="bm-ic">${favicon?`<img src="${esc(favicon)}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${letterSvg}'">`:`<img src="${letterSvg}" alt="">`}</span><span class="bm-name">${esc(l.name)}</span>`;
     wrap.appendChild(a);
   });
 }
@@ -4949,6 +4990,7 @@ function loadAppFallback() {
     var t=e.target;
     if(!t||t.tagName!=='IMG'||t.dataset.cdf)return;
     if(t.closest&&t.closest('.ph-en'))return;
+    if(t.closest&&t.closest('.bm-nav'))return;
     if(t.dataset.fav)return;
     t.dataset.cdf='1';
     var s=t.getAttribute('src')||'';
