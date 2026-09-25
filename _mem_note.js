@@ -1,10 +1,10 @@
 const fs = require('fs');
 const dir = 'C:/Users/Administrator/WorkBuddy/2026-06-12-18-25-30/.workbuddy/memory';
 const f = dir + '/2026-09-25.md';
-const note = '\n## 2026-09-25 装饰增强二期 (commit 4e489fc)\n' +
-'- 导师卡肖像框按用户指定换成 191717(古铜金四角花纹框,384x630 palette PNG 仅6KB)\n' +
-'- 新增页面装饰: 全部页标题下金色饰线+翅膀纹章(192419,插在.ph-en后); 活动/图库页顶部彩旗(192663,从导航栏下垂,这两页header padding-top加到150px防遮挡); 全站左右下角水晶纹章(192503b,z-index:-1在卡片后面,隐藏于≤768px)\n' +
-'- 192503 原图底部带罗马数字横幅(XI/IX含义随机),裁掉底部28%后以新文件名 192503b.png 上传(规避jsDelivr 12h缓存)\n' +
-'- 彩旗最初居中且遮住字母标题 → 加高header解决; 角落纹章最初z-index:0会压住卡片文字 → 降为-1\n';
+const note = '\n## 2026-09-25 统一风格对话框替代原生弹窗 (commit 748b3fc)\n' +
+'- 用户反馈原生 prompt() 弹窗(修改密码/新建相册等)与站点风格割裂 → 建 uiPrompt/uiConfirm 组件(FF14主题深色卡+金色标题+顶部金线+毛玻璃遮罩 z-index:5000)\n' +
+'- API: uiPrompt({title,label,value,placeholder,password,okText,danger})→Promise<string|null>; uiConfirm({title,message,okText,danger})→Promise<boolean>; 危险操作加 danger:true 红色按钮(.btn-danger); Enter确定/Esc取消/点遮罩取消\n' +
+'- 19处调用点全部替换为 async/await(含 reader.onload 改 async); 全站已无原生 prompt/confirm; playwright 验证 Promise resolve/cancel/Esc 全通过\n' +
+'- 要点: onclick 直接调 async 函数没问题; 替换 confirm 时同步函数要标 async; 测试对话框可用 playwright page.evaluate 直接调页面函数(与 agent-browser 的隔离世界不同)\n';
 fs.appendFileSync(f, note);
 console.log('ok');

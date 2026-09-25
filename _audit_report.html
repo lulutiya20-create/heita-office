@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>黑塔办事处 · 全站优化体检报告</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0e1a;--card:#10182e;--bdr:#1e2a45;--crystal:#4d7eff;--gold:#d4a574;--gold2:#f0d6b8;--text:#e0e6f0;--muted:#8896b0;--red:#e74c3c;--green:#27ae60;--orange:#e67e22}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.75;padding:32px 16px}
+.wrap{max-width:960px;margin:0 auto}
+h1{font-size:26px;color:var(--gold2);text-align:center;margin-bottom:6px}
+.sub{text-align:center;color:var(--muted);font-size:13px;margin-bottom:28px}
+h2{font-size:19px;color:var(--crystal);margin:34px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--bdr)}
+.card{background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:16px 18px;margin-bottom:12px}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 10px;border-radius:10px;margin-right:8px;vertical-align:1px}
+.t-high{background:rgba(231,76,60,.18);color:#ff8a80;border:1px solid rgba(231,76,60,.5)}
+.t-mid{background:rgba(230,126,34,.15);color:#ffcc80;border:1px solid rgba(230,126,34,.45)}
+.t-low{background:rgba(39,174,96,.15);color:#81c784;border:1px solid rgba(39,174,96,.45)}
+.t-title{font-weight:700;font-size:15px;color:var(--gold2)}
+.card p{font-size:13.5px;color:var(--text);margin-top:6px}
+.card .fix{margin-top:8px;font-size:13px;color:var(--muted)}
+.card .fix b{color:#8fb4ff;font-weight:600}
+code{background:#0d1426;border:1px solid var(--bdr);border-radius:4px;padding:1px 6px;font-size:12px;color:#9ecbff;font-family:Consolas,monospace}
+.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:8px}
+.sum{background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:14px;text-align:center}
+.sum .n{font-size:26px;font-weight:800}
+.sum .l{font-size:12px;color:var(--muted)}
+.n-red{color:#ff8a80}.n-orange{color:#ffcc80}.n-green{color:#81c784}
+.footer{margin-top:36px;text-align:center;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>黑塔办事处 · 全站优化体检报告</h1>
+<div class="sub">对象：public/index.html（单文件 SPA，5086 行 / 276KB）· 生成时间 2026-09-25</div>
+
+<div class="summary-grid">
+  <div class="sum"><div class="n n-red">3</div><div class="l">高优先（明显影响体验）</div></div>
+  <div class="sum"><div class="n n-orange">6</div><div class="l">中优先（建议近期处理）</div></div>
+  <div class="sum"><div class="n n-green">8</div><div class="l">低优先 / 加分项</div></div>
+</div>
+
+<h2>一、响应速度</h2>
+
+<div class="card">
+<span class="tag t-high">高</span><span class="t-title">首屏白屏等待云端拉取</span>
+<p>页脚主脚本 <code>init()</code> → <code>loadAppAsync()</code> 会先 <code>await tryJsonbin()</code>（网络超时上限 15s）才开始首次渲染。网络慢时用户面对长时间白屏。代码里其实已有本地优先的 <code>loadApp()</code>（注释写明"先用 localStorage 快速渲染，避免白屏"），但 init 没有使用它。</p>
+<div class="fix"><b>建议：</b>init 改为「先用 localStorage 立即渲染 → 异步拉 JSONBin → 有差异再合并刷新」。首屏可从秒级降到几乎瞬时。</div>
+</div>
+
+<div class="card">
+<span class="tag t-high">高</span><span class="t-title">头部第三方统计脚本阻塞渲染</span>
+<p><code>&lt;script src="https://beacon.cdn.qq.com/sdk/..."&gt;</code> 位于 head 且无 async/defer，是渲染阻塞资源；该 CDN 慢或超时会直接拖慢 LCP。</p>
+<div class="fix"><b>建议：</b>加 <code>defer</code>（或移到 body 末尾）。一行改动，零风险。</div>
+</div>
+
+<div class="card">
+<span class="tag t-mid">中</span><span class="t-title">字体未 preload、格式偏重</span>
+<p>5 个 TTF/OTF 字体走 jsDelivr，已设 font-display:swap（好），但主标题字体 JupiterPro 无 preload，TTF 体积比 woff2 大 50%+。</p>
+<div class="fix"><b>建议：</b>① 对 JupiterPro 加 <code>&lt;link rel="preload" as="font"&gt;</code>；② 有空时用 fonttools 转 woff2 并子集化（拉丁字符集很小，预计可减 60% 以上）。</div>
+</div>
+
+<div class="card">
+<span class="tag t-mid">中</span><span class="t-title">移动端滚动重绘开销</span>
+<p>body 使用 <code>background-attachment:fixed</code>（移动端滚动时反复重绘，低端机明显卡顿），header 使用 <code>backdrop-filter:blur(10px)</code> 且 sticky。</p>
+<div class="fix"><b>建议：</b>在 <code>@media(max-width:768px)</code> 里去掉 fixed（背景本来就是渐变，滚动时几乎看不出差别）；backdrop-filter 可降为半透明纯色背景。</div>
+</div>
+
+<div class="card">
+<span class="tag t-low">低</span><span class="t-title">图库 / 留言板一次性全量渲染</span>
+<p><code>renderGallery()</code> / <code>renderMessages()</code> 把全部条目拼成一个 innerHTML 一次插入，无分页。图片有 loading=lazy 兜底，几十张没问题，但照片/留言涨到几百条后 DOM 数量与解码压力会显现。</p>
+<div class="fix"><b>建议：</b>做"加载更多"分页（每页 30~50 条）即可，无需虚拟列表。</div>
+</div>
+
+<div class="card">
+<span class="tag t-low">低</span><span class="t-title">未使用 Service Worker / PWA</span>
+<p>纯静态站非常适合加 SW：缓存字体、框架图（frames/）、贴纸等不变资源后，二次打开速度大幅提升，断网也能看缓存内容。</p>
+<div class="fix"><b>建议：</b>加一个简单的 SW（cache-first 静态资源 + network-first 数据）。注意 GitHub Pages 子路径部署时 base path 要写对。</div>
+</div>
+
+<h2>二、稳定性 / 数据层</h2>
+
+<div class="card">
+<span class="tag t-high">高</span><span class="t-title">saveLocal 无配额保护</span>
+<p><code>localStorage.setItem(DB_KEY, ...)</code> 没有 try/catch。存量数据含 base64 头像/旧图，一旦超出 5MB 配额会抛 QuotaExceededError，直接中断 saveApp 流程——表现为"点了保存/留言没反应"，且很难排查。</p>
+<div class="fix"><b>建议：</b>① 包 try/catch + toast 提示；② 做一次性迁移：把存量 base64 头像/事件图转存 GitHub 图床，把 JSON 体积压下来。</div>
+</div>
+
+<div class="card">
+<span class="tag t-mid">中</span><span class="t-title">全量 JSON.stringify 对比</span>
+<p>轮询与冲突检测用 <code>JSON.stringify(newApp)!==JSON.stringify(app)</code> 全量对比，数据大时（几百 KB）每次变更要序列化两遍。项目里已有 <code>jsonbinFingerprint()</code>，本地对比可以复用同一指纹思路。</p>
+<div class="fix"><b>建议：</b>本地缓存一份上次指纹做对比，替代双序列化。</div>
+</div>
+
+<div class="card">
+<span class="tag t-low">低</span><span class="t-title">3 秒遮罩保险 watchdog</span>
+<p>init 里有一个每 3 秒查询 DOM 的 <code>setInterval</code>，只为兜底关闭异常遮罩。成本很小，但属于常驻轮询。</p>
+<div class="fix"><b>建议：</b>改为在打开遮罩的函数里记录状态、或用 MutationObserver；不急。</div>
+</div>
+
+<div class="card">
+<span class="tag t-low">低</span><span class="t-title">多设备并发写窗口较大</span>
+<p>轮询间隔 30 分钟（受 JSONBin 免费额度约束，48 读/天/设备 ≈ 1440 读/月，在 10k 额度内）。两台设备 30 分钟内同时改动时，靠推送前的"读预检 + 冲突弹窗"兜底，整体是稳的，但窗口偏大。</p>
+<div class="fix"><b>建议：</b>维持现状即可；若额度富余可降到 10 分钟。推送前的点赞合并（mergeLikeCounts）设计得很好，保留。</div>
+</div>
+
+<h2>三、界面 / 交互</h2>
+
+<div class="card">
+<span class="tag t-mid">中</span><span class="t-title">无 URL 路由（刷新回首页）</span>
+<p><code>navigate()</code> 只切换 DOM 的 active 类，不写 location.hash。刷新后回到首页、无法把"族谱页/图库某相册"链接直接发给别人。</p>
+<div class="fix"><b>建议：</b>navigate 时写 <code>location.hash</code>，启动时读 hash 恢复页面。改动小、收益大（约 10 行）。</div>
+</div>
+
+<div class="card">
+<span class="tag t-mid">中</span><span class="t-title">切回首页总是重建轮播</span>
+<p>每次 navigate('/') 都执行 <code>renderCarousel()</code> 重建 track 的 innerHTML 并重启计时器，切页往返时可能闪一下、播放进度重置。</p>
+<div class="fix"><b>建议：</b>加脏标记：数据没变就跳过重建。</div>
+</div>
+
+<div class="card">
+<span class="tag t-low">低</span><span class="t-title">移动端书签条可能溢出</span>
+<p><code>.bm-nav</code> 为 <code>flex-wrap:nowrap</code>，58px 方块 × N 个，小屏书签超过 5 个就会横向溢出。</p>
+<div class="fix"><b>建议：</b>小屏允许横向滚动（overflow-x:auto）或换行。</div>
+</div>
+
+<div class="card">
+<span class="tag t-low">低</span><span class="t-title">可访问性欠账</span>
+<p>全站仅 3 处 aria-label；头部 ☁/📊 等图标按钮无文字替代；留言板无字数上限提示。整体 contrast 达标，键盘 Esc 关闭遮罩已做（好）。</p>
+<div class="fix"><b>建议：</b>给图标按钮补 aria-label / title；留言输入加 maxlength（如 500）。</div>
+</div>
+
+<h2>四、代码质量 / 安全</h2>
+
+<div class="card">
+<span class="tag t-mid">中</span><span class="t-title">族谱 SVG 节点成员名未转义</span>
+<p><code>renderFamilyTree()</code> 中节点名称直接插值 <code>${m.name}</code>（其余字段都走了 <code>esc()</code>）。成员名由管理员设置，风险低，但破坏了全站统一的转义约定。</p>
+<div class="fix"><b>建议：</b>补一个 <code>esc(m.name)</code> 即可。</div>
+</div>
+
+<div class="card">
+<span class="tag t-low">低</span><span class="t-title">相册 id 拼进 onclick 字符串</span>
+<p><code>onclick="gallerySetView('${a.id}')"</code> 为字符串拼接。id 目前是内部生成的，无实际风险；统一改为 esc 或事件委托更稳。</p>
+<div class="fix"><b>建议：</b>顺手统一，不急。</div>
+</div>
+
+<div class="card">
+<span class="tag t-low">低</span><span class="t-title">initApiEndpoint 已空转</span>
+<p>该函数候选列表为空、永远返回 false，init 每次都 await 它。逻辑无害但属于历史遗留。</p>
+<div class="fix"><b>建议：</b>可整体删除 /api/data 相关死代码（safeFetchJson 轮询分支、API_DATA 等），减少约百余行维护负担。删除前确认无回退需求。</div>
+</div>
+
+<h2>五、功能增强方向（可选）</h2>
+<div class="card">
+<p>· <b>搜索</b>：成员名录 / 图库 / 留言板加一个前端过滤框（纯前端即可）。<br>
+· <b>留言增强</b>：删自己的留言、留言点赞。<br>
+· <b>灯箱手势</b>：移动端双指缩放 + 左右滑动切图。<br>
+· <b>骨架屏</b>：配合"本地优先渲染"，首屏即使拉云端也无感知。<br>
+· <b>图库分页</b>：与上面"加载更多"合并实现。</p>
+</div>
+
+<h2>六、建议的处理顺序</h2>
+<div class="card">
+<p><b>第一批（小改动、大收益，约半小时）：</b>本地优先渲染（白屏）、beacon 加 defer、saveLocal 加保护、族谱名字转义、hash 路由。<br>
+<b>第二批：</b>图库/留言分页、轮播脏标记、移动端背景与书签条适配、图标按钮 aria-label。<br>
+<b>第三批（可选）：</b>Service Worker、字体 woff2 子集化、死代码清理、搜索等新功能。</p>
+</div>
+
+<div class="footer">黑塔办事处 · 全站体检 · 2026-09-25</div>
+</div>
+</body>
+</html>

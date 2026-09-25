@@ -516,9 +516,10 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
   .admin-tab{padding:4px 8px;font-size:10px}
 }
 </style>
-<script src="https://beacon.cdn.qq.com/sdk/4.5.9/beacon_web.min.js"></script>
+<script defer src="https://beacon.cdn.qq.com/sdk/4.5.9/beacon_web.min.js"></script>
 <script>
-(function(){
+// defer 加载的 SDK 会在 load 事件前执行完毕, 故延后到 load 再上报, 不阻塞首屏渲染
+function __reportBeaconView(){
   try{
     var beacon=new BeaconAction({
       appkey:'0WEB06U85YBSLJNL',
@@ -536,7 +537,9 @@ h1,h2,h3,h4,.header-logo h1,.page-header h2{font-family:'JupiterPro','AxisStd','
       'sandbox_id':'77e9f79eef6748d0b2d9b9856b959368'
     });
   }catch(e){}
-})();
+}
+if(document.readyState==='complete')__reportBeaconView();
+else window.addEventListener('load',__reportBeaconView);
 </script></head>
 <body>
 
@@ -1806,7 +1809,16 @@ function saveLocal(data) {
   if(data){
     data._lastLocalModified = new Date().toISOString();
   }
-  localStorage.setItem(DB_KEY, JSON.stringify(data));
+  try {
+    localStorage.setItem(DB_KEY, JSON.stringify(data));
+  } catch(e) {
+    // 配额满等写入失败不能中断业务流程: 云端仍有完整数据
+    console.warn('[本地存储] 写入失败(可能配额已满):', e);
+    if(!window.__quotaWarned){
+      window.__quotaWarned = true;
+      try{ toast('⚠️ 本地存储空间不足，改动已同步到云端，建议清理浏览器站点数据'); }catch(_e){}
+    }
+  }
 }
 
 // 按图片 URL 尽力删除 GitHub 上的旧文件 (替换头像/导师图后清理旧文件, 失败忽略)
@@ -2762,11 +2774,16 @@ function importData(event) {
 }
 
 // Navigation
-function navigate(path) {
+const NAV_PATH_MAP = {'/':'page-home','/members':'page-members','/familytree':'page-familytree','/events':'page-events','/gallery':'page-gallery','/mentors':'page-mentors','/messages':'page-messages'};
+function navigate(path, skipHashSync) {
+  if(!NAV_PATH_MAP[path]) path='/'; // 非法路径兜底
   currentPage = path;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  const map = {'/':'page-home','/members':'page-members','/familytree':'page-familytree','/events':'page-events','/gallery':'page-gallery','/mentors':'page-mentors','/messages':'page-messages'};
-  const pid = map[path]; if(pid) document.getElementById(pid).classList.add('active');
+  const pid = NAV_PATH_MAP[path]; if(pid) document.getElementById(pid).classList.add('active');
+  // URL hash 同步: 刷新/分享链接可直达指定页; 浏览器前进后退可用
+  if(!skipHashSync){
+    try{ if(('#'+path)!==location.hash) history.pushState({page:path}, '', '#'+path); }catch(e){}
+  }
   updateNavHighlight();
   closeMobileNav();
   if(path==='/') renderCarousel();
@@ -2809,6 +2826,11 @@ function updateNavHighlight() {
   const a = document.querySelector(`.nav-btn[data-path="${currentPage}"]`);
   if(a) a.classList.add('active');
 }
+// 浏览器前进/后退时恢复对应页面 (skipHashSync 防止再 push 一条重复历史)
+window.addEventListener('hashchange', function(){
+  const p=(location.hash||'').replace(/^#/,'')||'/';
+  if(p!==currentPage && NAV_PATH_MAP[p]) navigate(p, true);
+});
 function renderNav() {
   document.getElementById('headerNav').innerHTML = `
     <button class="nav-btn${currentPage==='/'?' active':''}" data-path="/" onclick="navigate('/')">首页</button>
@@ -4374,7 +4396,7 @@ function renderFamilyTree(){
     }
     // Drag handle icon (visible on hover)
     nodes+=`<text x="${nodeW-18}" y="18" font-size="11" fill="var(--gold)" class="ft-node-handle" opacity="0">⠿</text>`;
-    nodes+=`<text x="${nodeW/2}" y="30" text-anchor="middle" fill="#f0d6b8" font-size="13" font-weight="600">${m.name}</text>`;
+    nodes+=`<text x="${nodeW/2}" y="30" text-anchor="middle" fill="#f0d6b8" font-size="13" font-weight="600">${esc(m.name)}</text>`;
     nodes+=`<text x="${nodeW/2}" y="${nodeH-14}" text-anchor="middle" fill="#aaa" font-size="11">${esc(m.role||'成员')}</text>`;
     nodes+=`<text x="${nodeW/2}" y="${nodeH-2}" text-anchor="middle" fill="#666" font-size="9">${(m.relations||[]).length}个关系</text>`;
     nodes+=`</g>`;
@@ -4916,13 +4938,18 @@ function toggleFtAdmin(){
       app = loadAppFallback();
     }
   } else {
-    // 无云服务器：使用本地数据
-    app = loadAppFallback();
+    // app 已在模块顶层由 loadApp() 本地优先加载(含后台云端合并刷新), 无需重复读取;
+    // 仅在异常情况下(数据缺失)兜底
+    if (!app || !Array.isArray(app.members)) {
+      app = loadAppFallback();
+    }
   }
 
   renderNav();
   refreshAll();
-  navigate('/');
+  // 支持 hash 直达: 如 /#/familytree, 刷新或分享链接可恢复到指定页面
+  const hashPath = (location.hash || '').replace(/^#/, '') || '/';
+  navigate(NAV_PATH_MAP[hashPath] ? hashPath : '/');
   updateSyncStatus(cloudEnabled ? 'synced' : 'offline');
 
   // 恢复登录状态（刷新页面后保持登录）
